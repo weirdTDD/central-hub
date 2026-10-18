@@ -1,18 +1,21 @@
-import { useEffect } from "react"
-import { LogsProvider } from "./dashboard/LogsContext"
-import AppRoutes from "./routes/AppRoutes"
-import { applyTheme, readTheme } from "./settings/theme"
+import { useEffect } from "react";
+import { AuthProvider } from "./auth/AuthContext";
+import { LogsProvider } from "./dashboard/LogsContext";
+import AppRoutes from "./routes/AppRoutes";
+import { applyTheme, readTheme } from "./settings/theme";
 
 function App() {
   useEffect(() => {
-    applyTheme(readTheme())
-  }, [])
+    applyTheme(readTheme());
+  }, []);
 
   return (
-    <LogsProvider>
-      <AppRoutes />
-    </LogsProvider>
-  )
+    <AuthProvider>
+      <LogsProvider>
+        <AppRoutes />
+      </LogsProvider>
+    </AuthProvider>
+  );
 }
 
-export default App
+export default App;
