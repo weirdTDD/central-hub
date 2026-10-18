@@ -1,10 +1,12 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom"
+import { Navigate, Route, Routes, BrowserRouter } from "react-router-dom"
+import ReportPage from "../report/reportPage/Page"
 
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="*" element={<div className="p-8 text-xl font-semibold">DailyLogs</div>} />
+        <Route path="/" element={<Navigate to="/reports" replace />} />
+        <Route path="/reports" element={<ReportPage />} />
       </Routes>
     </BrowserRouter>
   )
