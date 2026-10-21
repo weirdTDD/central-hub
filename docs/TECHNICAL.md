@@ -30,6 +30,7 @@ Theme preference is applied on boot via `applyTheme(readTheme())` from `src/sett
 - `/` and unknown paths redirect based on auth (`/dashboard` or `/login`)
 - App pages wrap with `ProtectedRoute`
 - Settings uses nested routes under `/settings`
+- `/notifications` is the workflow inbox (Phase 6); its provider lives on that route
 
 ---
 
@@ -117,10 +118,20 @@ Reports consume `useLogs()` so create/edit/delete on the dashboard also updates 
 | `SettingsPage.jsx` | Layout + tab nav (Profile / Notification / Integration) |
 | `theme.js` | Theme read/write + `document.documentElement` class toggle |
 | `components/ProfileScreen.jsx` | Profile form + appearance (Light / Dark / System) |
-| `components/NotificationScreen.jsx` | Preference toggles |
+| `components/NotificationScreen.jsx` | Points at the Notifications page and lists the real channel states |
 | `components/IntegrationScreen.jsx` | SSO rows (Google connected, Microsoft connect, SAML) |
 
 **Theme key:** `localStorage["dailylogs-theme"]`
+
+### Notifications & workflows — `src/features/notifications/`
+
+| File | Role |
+|------|------|
+| `workflowEngine.js` | The PURE rules: next occurrence (timezone-aware), conditions, quiet hours, retry backoff, state machines, idempotency keys |
+| `NotificationsContext.jsx` | Loads the inbox, workflows, runs, approvals and preferences; realtime sync |
+| `NotificationsPage.jsx` | `/notifications`: inbox, workflows, approvals, preferences, execution history |
+
+Data layer: `src/lib/notifications.js`. Scheduler runtime: `scripts/worker.mjs`.
 
 ### Shared UI — `src/components/ui/`
 
@@ -172,7 +183,80 @@ pnpm approve-builds   # if pnpm blocks esbuild lifecycle scripts
 pnpm dev
 pnpm build
 pnpm lint
+
+node scripts/verify-tracking.mjs    # time-tracking domain rules
+node scripts/verify-planned-actual.mjs   # planned vs actual: estimates, recorded time, unattributed time
+node scripts/verify-contracts.mjs   # app vocabularies vs the SQL constraints
+node scripts/verify-integrations.mjs   # integration contract, adapter parsing and dedup rules
+node scripts/verify-notifications.mjs  # workflow, quiet-hours, retry and idempotency rules
+node scripts/worker.mjs --once      # run the workflow scheduler once (see below)
 ```
+
+### The workflow worker (the scheduler)
+
+The workflow schedule lives in the database (`workflows.next_run_at`), so it survives
+a restart of the app and of the worker. It is **executed** by a separate process:
+
+```bash
+CENTRAL_HUB_URL="https://<project>.supabase.co" \
+CENTRAL_HUB_ANON_KEY="<anon key>" \
+CENTRAL_HUB_ACCESS_TOKEN="<a signed-in user's access token>" \
+node scripts/worker.mjs            # runs every 30s
+node scripts/worker.mjs --once     # a single tick, then exit
+node scripts/worker.mjs --interval=60000
+```
+
+- The worker runs **as the signed-in user**, so it needs no service-role key and it
+  is bound by the same row-level security as the app.
+- While the worker is not running, no workflow is executed. The Notifications page
+  says exactly that — it never claims a scheduler is running.
+- The worker talks to the REST API with `fetch` (not `@supabase/supabase-js`): the
+  browser client needs a global `WebSocket` (Node.js 22+).
+- An unconfigured worker prints `Not connected: …` and exits with a non-zero code.
+- To run it continuously, use a service manager (systemd, `pm2`, a container) on the
+  machine that should run the schedules.
+
+**What the worker does on a tick**
+
+1. It reads the clock workflows whose `next_run_at` has passed, evaluates their
+   conditions and delivers a notification for the ones that match.
+2. It re-executes the runs whose retry is due (the run row is reused, so a retry can
+   never produce a second execution).
+3. It reads the EVENT workflows: the tasks that reached `completed` after the
+   workflow's `event_cursor`, delivers a notification for each of them, and advances
+   the cursor. The only event that exists is `task_completed` (D-011).
+
+
+### Deploy checklist (order matters)
+
+The frontend reads columns and tables that only exist after the migrations have been
+applied. **Apply the migrations BEFORE deploying a new frontend build**, in this
+order:
+
+1. `supabase/migrations/20261020090000_work_logs_phase2.sql` — adds `log_date`,
+   `duration_seconds`, `display_name` to `work_logs` (creates the table if missing).
+2. `supabase/migrations/20261020091000_tasks_phase3.sql` — creates `tasks`. Requires
+   nothing from step 1.
+3. `supabase/migrations/20261020100000_time_tracking_phase4.sql` — creates
+   `observations`, `sessions`, `session_corrections`. **Requires step 2** (it refuses to
+   run while `public.tasks` is missing).
+4. `supabase/migrations/20261020110000_integrations_phase5.sql` — creates
+   `integrations`, `integration_sync_runs` and adds `observations.integration_id`.
+   **Requires step 3** (it refuses to run while `public.observations` is missing).
+5. `supabase/migrations/20261020120000_notifications_workflows_phase6.sql` — creates
+   `workflows`, `workflow_runs`, `notifications`, `notification_preferences` and
+   `approvals`. It has no dependency on the earlier migrations, but it must be applied
+   before the `/notifications` page is used.
+
+Apply them with the Supabase SQL Editor (paste the file, run) or `supabase db push`.
+Afterwards, tell PostgREST to pick up the new schema:
+
+```sql
+NOTIFY pgrst, 'reload schema';
+```
+
+If a build is deployed without the matching migration, the dashboard and reports fail
+with `42703 column … does not exist` (or `PGRST205` for a missing table).
 
 ---
 
