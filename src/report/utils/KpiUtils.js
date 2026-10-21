@@ -1,60 +1,38 @@
-/**
- * * @param {Array} logs - The filtered list of work logs.
- * @returns {Object} An object containing calculated KPI values and mock trends.
- */
-export const calculateKPIs = (logs) => {
-  if (logs.length === 0) {
-    return {
-      totalTimeLogged: "0.0",
-      totalTasksCompleted: 0,
-      totalTasks: 0,
-      avgDailyHours: "0.0",
-      trendTime: "0%",
-      trendTasks: "0%",
-      trendAvg: "0%",
-      trendDirection: {
-        totalTimeLogged: "up",
-        totalTasksCompleted: "up",
-        avgDailyHours: "up",
-      },
-    };
-  }
+import { durationSecondsOf, hasRecordedDuration } from "../../dashboard/logUtils";
 
-  const totalTimeMinutes = logs.reduce(
-    (sum, log) => sum + log.timeSpentMinutes,
+/**
+ * Calculates report KPIs from validated work logs.
+ *
+ * Missing data is missing, never zero: log entries without a recorded duration
+ * are counted separately and excluded from duration totals, so a total never
+ * silently mixes "no data" with "zero minutes".
+ *
+ * Totals are summed from the CANONICAL duration (integer seconds), not from the
+ * per-entry rounded minutes, so ten 90-second entries report 15 minutes and not 20.
+ *
+ * @param {Array} logs - The filtered list of work logs.
+ * @returns {Object} KPI values plus data-completeness counters.
+ */
+export const calculateKPIs = (logs = []) => {
+  const list = Array.isArray(logs) ? logs : [];
+  const totalLogEntries = list.length;
+
+  const withDuration = list.filter(hasRecordedDuration);
+
+  const totalTimeSeconds = withDuration.reduce(
+    (sum, log) => sum + (durationSecondsOf(log) ?? 0),
     0
   );
-  const totalTasks = logs.length;
 
-  const totalTasksCompleted = logs.filter(
-    (log) => log.status === "Completed"
-  ).length;
-
-  // Calculate Average Daily Hours
-  const uniqueDates = [...new Set(logs.map((log) => log.date))].length;
-  const totalTimeHours = totalTimeMinutes / 60;
-  const avgDailyHours = uniqueDates > 0 ? totalTimeHours / uniqueDates : 0;
+  const activeDays = [...new Set(withDuration.map((log) => log.date))].length;
+  const totalTimeHours = totalTimeSeconds / 3600;
+  const avgDailyHours = activeDays > 0 ? totalTimeHours / activeDays : 0;
 
   return {
-    // KPI 1: Total Time Logged (in hours, rounded to one decimal)
     totalTimeLogged: totalTimeHours.toFixed(1),
-
-    // KPI 2: Task Completed
-    totalTasksCompleted: totalTasksCompleted,
-    totalTasks: totalTasks,
-
-    // KPI 3: Average Daily Hours (rounded to one decimal)
+    totalLogEntries,
+    logsMissingDuration: totalLogEntries - withDuration.length,
     avgDailyHours: avgDailyHours.toFixed(1),
-
-    // Mock trend values for visual demo
-    trendTime: "12%",
-    trendTasks: "4%",
-    trendAvg: "0.7%",
-    // Mock trend directions
-    trendDirection: {
-      totalTimeLogged: "up",
-      totalTasksCompleted: "down",
-      avgDailyHours: "up",
-    },
+    activeDays,
   };
 };

@@ -1,9 +1,7 @@
 "use client"
 
-import { TrendingUp } from "lucide-react"
+import { useMemo } from "react"
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
-
-
 
 import {
   Card,
@@ -20,68 +18,80 @@ import {
   ChartTooltipContent,
 } from "../../components/ui/chart"
 
-export const description = "A line chart with dots"
+export const description = "Log entries recorded per day of the week"
 
-
-
-
-const mockData = [
-  { day: "Mon", completed: 10 },
-  { day: "Tue", completed: 95 },
-  { day: "Wed", completed: 20 },
-  { day: "Thu", completed: 70 },
-  { day: "Fri", completed: 5 },
-  { day: "Sat", completed: 5 },
-  { day: "Sun", completed: 5 },
-]
-
+const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 const chartConfig = {
   completed: {
-    label: "Tasks Completed",
-    color: "#5520b1",
+    label: "Log Entries",
+    color: "var(--progress)",
   },
 }
 
+/**
+ * Counts real log entries per weekday.
+ * A log entry is an observation of recorded work, not proof of a completed task.
+ */
+export function ChartLineDots({ logs = [] }) {
+  const chartData = useMemo(() => {
+    const counts = new Array(7).fill(0)
+    const list = Array.isArray(logs) ? logs : []
 
-export function ChartLineDots() {
+    list.forEach((log) => {
+      if (!log?.date) return
+      const parsed = new Date(`${log.date}T00:00:00`)
+      if (Number.isNaN(parsed.getTime())) return
+      // getDay() is Sunday-based; shift so Monday is index 0.
+      counts[(parsed.getDay() + 6) % 7] += 1
+    })
+
+    return DAY_LABELS.map((day, index) => ({ day, completed: counts[index] }))
+  }, [logs])
+
+  const totalEntries = chartData.reduce((sum, day) => sum + day.completed, 0)
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Total Task Completions</CardTitle>
-        <CardDescription>40 task completed</CardDescription>
+        <CardTitle>Log Entries by Day of Week</CardTitle>
+        <CardDescription>
+          {totalEntries === 0
+            ? "No log entries recorded in the selected range"
+            : `${totalEntries} log entr${totalEntries === 1 ? "y" : "ies"} recorded in the selected range`}
+        </CardDescription>
       </CardHeader>
 
       <CardContent>
-        <div style={{ 
-          width: "100%", 
-          height: "250px", 
+        <div style={{
+          width: "100%",
+          height: "250px",
           minHeight: "250px",
-          minWidth: "0", // This fixes flexbox issues
+          minWidth: "0",
           position: "relative"
-          }}>
+        }}>
           <ChartContainer config={chartConfig} className="h-full w-full min-w-0 rounded-xl">
             <LineChart
               accessibilityLayer
-              data={mockData}
+              data={chartData}
               margin={{ left: 0, right: 12 }}
             >
-              <CartesianGrid vertical={false} strokeDasharray=" 6 6"   stroke="#d1d5db" />
-              <YAxis 
+              <CartesianGrid vertical={false} strokeDasharray=" 6 6" stroke="var(--border)" />
+              <YAxis
                 tickLine={false}
                 axisLine={false}
+                allowDecimals={false}
                 tickFormatter={(data) => `${data}`}
               />
               <XAxis
                 dataKey="day"
                 tickLine={false}
                 axisLine={false}
-                tick={{ fill: "#6b7280", fontSize: 14 }}
-                tickFormatter={(value) => value.slice(0, 3)}
+                tick={{ fill: "var(--muted-foreground)", fontSize: 14 }}
               />
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent formatter={(completed) => `${completed} Task Completed`} />}
+                content={<ChartTooltipContent formatter={(value) => `${value} log entr${value === 1 ? "y" : "ies"}`} />}
               />
               <Line
                 dataKey="completed"
@@ -97,12 +107,8 @@ export function ChartLineDots() {
       </CardContent>
 
       <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 leading-none font-medium">
-          Trending up by 5.2% this week
-          <TrendingUp className="h-4 w-4" />
-        </div>
         <div className="text-muted-foreground leading-none">
-          Showing total task completions for the last 7 days
+          Counts log entries only. Time spent is not a measure of completion or progress.
         </div>
       </CardFooter>
     </Card>

@@ -1,51 +1,96 @@
-import React from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import ReactECharts from "echarts-for-react";
+import { hasRecordedDuration } from "../../dashboard/logUtils";
+import { subscribeTheme, isDark } from "../../settings/theme";
 
-const TaskStatusChart = () => {
+/**
+ * Reads a design token from the document so charts follow the active theme
+ * instead of hard-coding a colour literal in this component.
+ */
+function readToken(name, fallback) {
+  if (typeof window === "undefined") return fallback;
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+  return value || fallback;
+}
 
-  const option = {
-    tooltip: { trigger: "item" },
-    legend: {
-      orient: "vertical",
-      top: "middle",
-      right: -5,
-      itemGap: 10,
-    },
-    series: [
-      {
-        name: "",
-        type: "pie",
-        center:["29%", "42%"],
-        radius: ["41%", "58%"],
-        right:10,
-        avoidLabelOverlap: true,
-        padAngle: 5,
-        itemStyle: { borderRadius: 10 },
-        label: { show: false, position: "center" },
-        emphasis: {
-          label: {
-            show: true,
-            fontSize: 18,
-            fontWeight: "bold",
-          },
+/**
+ * Data coverage for the selected range.
+ *
+ * Work logs have no task status until task management exists, so this chart
+ * reports what the data actually supports: how many log entries carry a
+ * recorded duration and how many do not. It never invents progress.
+ */
+const TaskStatusChart = ({ logs = [] }) => {
+  const themeSnapshot = useSyncExternalStore(subscribeTheme, isDark);
+
+  const { option, hasData } = useMemo(() => {
+    void themeSnapshot; // re-read DOM tokens on theme change
+
+    const list = Array.isArray(logs) ? logs : [];
+    const withDuration = list.filter(hasRecordedDuration).length;
+    const withoutDuration = list.length - withDuration;
+
+    const accent = readToken("--progress", "#2563eb");
+    const muted = readToken("--muted-foreground", "#3d4d66");
+
+    const data = [];
+    if (withDuration > 0) {
+      data.push({ value: withDuration, name: "Duration recorded", itemStyle: { color: accent } });
+    }
+    if (withoutDuration > 0) {
+      data.push({ value: withoutDuration, name: "No duration recorded", itemStyle: { color: muted } });
+    }
+
+    return {
+      hasData: data.length > 0,
+      option: {
+        tooltip: { trigger: "item" },
+        legend: {
+          orient: "vertical",
+          top: "middle",
+          right: -5,
+          itemGap: 10,
         },
-        labelLine: { show: true },
-        fontSize:16,
-        fontWeight: "bold",
-        data: [
-          { value: 30, name: "30 Drafted" },
-          { value: 80, name: "80 in Progress" },
-          { value: 30, name: "30 completed" },
-          { value: 3, name: "3 Launched" },
+        series: [
+          {
+            name: "Data coverage",
+            type: "pie",
+            center: ["29%", "42%"],
+            radius: ["41%", "58%"],
+            right: 10,
+            avoidLabelOverlap: true,
+            padAngle: 5,
+            itemStyle: { borderRadius: 10 },
+            label: { show: false, position: "center" },
+            emphasis: {
+              label: {
+                show: true,
+                fontSize: 18,
+                fontWeight: "bold",
+              },
+            },
+            labelLine: { show: true },
+            fontSize: 16,
+            fontWeight: "bold",
+            data,
+          },
         ],
       },
-    ],
-  };
+    };
+  }, [logs, themeSnapshot]);
 
   return (
-    <div className="contentContainer border border-gray-200 rounded-xl shadow-xl h-full md:h-90 p-6 hover:border-purple-400">
-      <h3 className="text-gray-700 font-semibold text-lg">Task by Status</h3>
-      <ReactECharts option={option} style={{ height: 400 }} />
+    <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-sm md:h-90">
+      <h3 className="text-lg font-semibold text-card-foreground">Data Coverage</h3>
+      {hasData ? (
+        <ReactECharts option={option} style={{ height: 400 }} />
+      ) : (
+        <p className="py-24 text-center text-sm text-muted-foreground">
+          No data collected for the selected range.
+        </p>
+      )}
     </div>
   );
 };

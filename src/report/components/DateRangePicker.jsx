@@ -1,46 +1,58 @@
-import { useState } from 'react';
-import { DayPicker } from 'react-day-picker';
-import 'react-day-picker/dist/style.css';
-import { format } from 'date-fns';
-import { CalendarDays } from 'lucide-react';
+import { useState } from "react";
+import { format } from "date-fns";
+import { CalendarDays } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
-const DateRangePicker = ({ value, onChange }) => {
+function keepCalendarOpen(event) {
+  const target = event.target;
+  if (target instanceof Element && target.closest("[data-slot=select-content]")) {
+    event.preventDefault();
+  }
+}
+
+const DateRangePicker = ({ value, onChange, toDate, className, align = "start" }) => {
   const [open, setOpen] = useState(false);
+  const label =
+    value?.from && value?.to
+      ? `${format(value.from, "MMM d, yyyy")} – ${format(value.to, "MMM d, yyyy")}`
+      : "Select date range";
 
   return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 border border-gray-200 rounded-lg bg-white px-3 py-3"
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          className={cn("h-11 justify-start gap-2 rounded-xl px-3 font-normal", className)}
+        >
+          <CalendarDays className="text-muted-foreground" />
+          <span>{label}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-auto p-0"
+        align={align}
+        collisionPadding={16}
+        onInteractOutside={keepCalendarOpen}
+        onFocusOutside={keepCalendarOpen}
       >
-        <span className="text-sm text-gray-700">
-          {value?.from && value?.to
-            ? `${format(value.from, 'MMM d, yyyy')} – ${format(value.to, 'MMM d, yyyy')}`
-            : 'Select date range'}
-        </span>
-        <CalendarDays className="w-4 h-4 text-gray-700 " />
-      </button>
-
-      {open && (
-        <div className="absolute z-50 mt-2 bg-white border rounded-xl shadow-lg p-4 ">
-          <DayPicker
-            mode="range"
-            selected={value}
-              onSelect={(range) => {
-                onChange(range);
-
-                if (range?.from && range?.to) {
-                  setOpen(false);
-                }
-              }}
-            captionLayout="dropdown"
-            fromYear={2024}
-            toYear={2034}
-            className=' text-gray-600'
-          />
-        </div>
-      )}
-    </div>
+        <Calendar
+          mode="range"
+          selected={value}
+          captionLayout="dropdown"
+          startMonth={new Date(2024, 0)}
+          endMonth={toDate ?? new Date(2034, 11)}
+          disabled={toDate ? { after: toDate } : undefined}
+          onSelect={(range) => {
+            onChange(range);
+            if (range?.from && range?.to) setOpen(false);
+          }}
+        />
+      </PopoverContent>
+    </Popover>
   );
 };
 
