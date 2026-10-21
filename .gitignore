@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# This project uses pnpm: pnpm-lock.yaml is the tracked lockfile.
+package-lock.json
+yarn.lock
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -26,3 +30,7 @@ dist-ssr
 .env
 .git
 .git_disabled
+
+.env
+.env.*
+!.env.example
