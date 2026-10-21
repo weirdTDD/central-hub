@@ -5,7 +5,7 @@ import { useAuth } from "./AuthContext";
 import AuthIllustration from "./AuthIllustration";
 
 const inputClass =
-  "peer w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-transparent focus:border-[#5B16E1] focus:ring-2 focus:ring-[#5B16E1]/20";
+  "peer w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-transparent focus:border-primary focus:ring-2 focus:ring-primary/20";
 
 function FloatingField({ id, label, type = "text", value, onChange, autoComplete, trailing }) {
   return (
@@ -22,7 +22,7 @@ function FloatingField({ id, label, type = "text", value, onChange, autoComplete
       />
       <label
         htmlFor={id}
-        className="pointer-events-none absolute left-3 top-0 -translate-y-1/2 bg-[#f7f7fb] px-1 text-xs font-medium text-gray-500 transition peer-placeholder-shown:top-1/2 peer-placeholder-shown:bg-transparent peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400 peer-focus:top-0 peer-focus:bg-[#f7f7fb] peer-focus:text-xs peer-focus:text-[#5B16E1]"
+        className="pointer-events-none absolute left-3 top-0 -translate-y-1/2 bg-background px-1 text-xs font-medium text-muted-foreground transition peer-placeholder-shown:top-1/2 peer-placeholder-shown:bg-transparent peer-placeholder-shown:text-sm peer-placeholder-shown:text-muted-foreground peer-focus:top-0 peer-focus:bg-background peer-focus:text-xs peer-focus:text-primary"
       >
         {label}
       </label>
@@ -33,12 +33,21 @@ function FloatingField({ id, label, type = "text", value, onChange, autoComplete
 
 export default function AuthPage() {
   const navigate = useNavigate();
-  const { isAuthenticated, login, loginWithGoogle } = useAuth();
+  const {
+    isAuthenticated,
+    loading,
+    isConfigured,
+    notConfiguredMessage,
+    signUp,
+    signIn,
+    signInWithGoogle,
+  } = useAuth();
   const [mode, setMode] = useState("signup");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [form, setForm] = useState({
-    fullName: "Bright Kelly",
+    fullName: "",
     email: "",
     password: "",
   });
@@ -49,11 +58,14 @@ export default function AuthPage() {
 
   const update = (key) => (event) => {
     setError("");
+    setNotice("");
     setForm((current) => ({ ...current, [key]: event.target.value }));
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
+    setError("");
+    setNotice("");
     if (!form.email.trim() || !form.password.trim()) {
       setError("Email and password are required.");
       return;
@@ -63,24 +75,52 @@ export default function AuthPage() {
       return;
     }
 
-    login({
-      fullName: mode === "signup" ? form.fullName : form.email.split("@")[0],
-      email: form.email,
-    });
-    navigate("/dashboard", { replace: true });
+    try {
+      if (mode === "signup") {
+        const result = await signUp({
+          email: form.email.trim(),
+          password: form.password,
+          fullName: form.fullName.trim(),
+        });
+
+        // This project requires email confirmation, so signup returns a user but
+        // no session. Sign-in is not complete until the address is confirmed.
+        if (!result.session) {
+          setNotice(
+            "Account created. Check your email to confirm your address, then sign in."
+          );
+          setMode("login");
+          return;
+        }
+      } else {
+        await signIn({
+          email: form.email.trim(),
+          password: form.password,
+        });
+      }
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      setError(err?.message || "Authentication failed. Please try again.");
+    }
   };
 
-  const handleGoogle = () => {
-    loginWithGoogle();
-    navigate("/dashboard", { replace: true });
+  const handleGoogle = async () => {
+    setError("");
+    setNotice("");
+    try {
+      // OAuth redirects the browser to the provider; no local navigation here.
+      await signInWithGoogle();
+    } catch (err) {
+      setError(err?.message || "Google sign-in failed. Please try again.");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f7fb] text-gray-900">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto grid min-h-screen w-full max-w-7xl lg:grid-cols-[minmax(0,1fr)_minmax(340px,0.95fr)]">
         <section className="relative flex flex-col px-6 py-8 sm:px-10 lg:px-16 lg:py-10">
           <Link to="/login" className="inline-flex w-fit">
-            <img src="/logo.svg" alt="Dailylogs" className="h-10 w-auto object-contain" />
+            <img src="/logo.svg" alt="Dailylogs" className="h-10 w-auto object-contain dark:brightness-0 dark:invert" />
           </Link>
 
           <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
@@ -92,6 +132,16 @@ export default function AuthPage() {
             </p>
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+              {!isConfigured ? (
+                <div
+                  role="status"
+                  className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                >
+                  <p className="font-semibold">Not connected</p>
+                  <p className="mt-1">{notConfiguredMessage}</p>
+                </div>
+              ) : null}
+
               {mode === "signup" ? (
                 <FloatingField
                   id="fullName"
@@ -131,12 +181,18 @@ export default function AuthPage() {
               />
 
               {error ? <p className="text-sm text-red-600">{error}</p> : null}
+              {notice ? (
+                <p role="status" className="text-sm text-emerald-700 dark:text-emerald-400">
+                  {notice}
+                </p>
+              ) : null}
 
               <button
                 type="submit"
-                className="mt-2 w-full rounded-xl bg-[#5B16E1] px-4 py-3 text-sm font-semibold text-white hover:bg-[#4a11c0]"
+                disabled={loading || !isConfigured}
+                className="mt-2 w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
               >
-                Login to Continue
+                {loading ? "Signing in..." : "Login to Continue"}
               </button>
             </form>
 
@@ -148,7 +204,7 @@ export default function AuthPage() {
                   setError("");
                   setMode((current) => (current === "signup" ? "login" : "signup"));
                 }}
-                className="font-semibold text-[#5B16E1] hover:underline"
+                 className="font-semibold text-primary hover:underline"
               >
                 {mode === "signup" ? "Login" : "Sign up"}
               </button>
@@ -156,8 +212,11 @@ export default function AuthPage() {
 
             <button
               type="button"
+              disabled={loading || !isConfigured}
               onClick={handleGoogle}
-              className="mt-4 inline-flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+              className={`mt-4 inline-flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground hover:bg-accent ${
+                loading || !isConfigured ? "opacity-60" : ""
+              }`}
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
                 <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5c-.3 1.5-1.1 2.8-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.7z" />
@@ -165,12 +224,12 @@ export default function AuthPage() {
                 <path fill="#FBBC05" d="M5.4 14.4c-.2-.7-.4-1.4-.4-2.4s.1-1.7.4-2.4V6.5H1.4C.5 8.3 0 10.1 0 12s.5 3.7 1.4 5.5l4-3.1z" />
                 <path fill="#EA4335" d="M12 4.8c1.7 0 3.3.6 4.5 1.8l3.4-3.4C17.9 1.1 15.2 0 12 0 7.4 0 3.4 2.7 1.4 6.5l4 3.1C6.3 6.8 8.9 4.8 12 4.8z" />
               </svg>
-              Sign up with Google
+              Sign in with Google
             </button>
 
             <p className="mt-10 text-center text-xs text-gray-500">
               By creating an account, you agree to our{" "}
-              <a href="#terms" className="underline underline-offset-2 hover:text-[#5B16E1]">
+               <a href="#terms" className="underline underline-offset-2 hover:text-primary">
                 Terms of Use
               </a>
             </p>
@@ -178,17 +237,17 @@ export default function AuthPage() {
         </section>
 
         <aside className="hidden p-6 lg:flex lg:items-stretch lg:p-8">
-          <div className="flex w-full flex-col justify-between rounded-[28px] bg-[#2A0A8C] px-8 py-10 text-white shadow-xl">
+          <div className="flex w-full flex-col justify-between rounded-[28px] bg-blue-black px-8 py-10 text-white shadow-xl">
             <div>
               <h2 className="text-3xl font-bold leading-tight">Track activities with DailyLog</h2>
-              <p className="mt-4 max-w-sm text-sm leading-relaxed text-violet-100">
+              <p className="mt-4 max-w-sm text-sm leading-relaxed text-blue-200">
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
                 incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
                 exercitation.
               </p>
               <button
                 type="button"
-                className="mt-6 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#5B16E1] hover:bg-violet-50"
+                className="mt-6 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
               >
                 Learn More
               </button>
