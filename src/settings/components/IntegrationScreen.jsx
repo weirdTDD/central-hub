@@ -1,25 +1,26 @@
+import { Link } from "react-router-dom";
 import { Shield } from "lucide-react";
-import { useState } from "react";
 
-const INITIAL_PROVIDERS = [
+// The account providers this build does not have.
+//
+// They are listed so the user knows what does not exist yet. A provider that is
+// not configured must never look like a connected one, so none of these rows
+// carries a connected state and none of them offers a connect button.
+const UNAVAILABLE_PROVIDERS = [
   {
     id: "google",
     name: "Google Workspace",
-    connected: true,
-    detail: "Connected",
+    detail: "Account sign-in",
   },
   {
     id: "microsoft",
     name: "Microsoft Entra ID",
-    connected: false,
-    detail: "Not connected",
+    detail: "Account sign-in",
   },
   {
     id: "saml",
     name: "SAML 2.0",
-    connected: false,
     detail: "Custom SSO, service provider",
-    configureOnly: true,
   },
 ];
 
@@ -52,70 +53,65 @@ const ICONS = {
 };
 
 export default function IntegrationScreen() {
-  const [providers, setProviders] = useState(INITIAL_PROVIDERS);
-
-  const connect = (id) => {
-    setProviders((current) =>
-      current.map((provider) =>
-        provider.id === id
-          ? { ...provider, connected: true, detail: "Connected" }
-          : provider
-      )
-    );
-  };
-
   return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      <h2 className="text-base font-semibold">SSO Integrations</h2>
-      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-        Connect your organizational identity providers
+    <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <h2 className="text-base font-semibold text-foreground">Integrations</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        An integration is an independent, documented bridge between an outside
+        source of activity and Central Hub. It brings records in as observations,
+        which then become sessions and task attribution.
       </p>
 
-      <ul className="mt-5 space-y-3">
-        {providers.map((provider) => {
+      <h3 className="mt-6 text-sm font-semibold text-foreground">
+        Account and single sign-on
+      </h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Google, Microsoft and SAML are not configured in this build, so none of
+        them is connected. They are listed as coming soon.
+      </p>
+
+      <ul className="mt-4 space-y-3">
+        {UNAVAILABLE_PROVIDERS.map((provider) => {
           const Icon = ICONS[provider.id];
-          const connected = provider.connected;
-          const showConfigure = connected || provider.configureOnly;
           return (
             <li
               key={provider.id}
-              className={`flex items-center justify-between gap-4 rounded-xl border px-4 py-3 ${
-                connected
-                  ? "border-emerald-300 bg-emerald-50/60 dark:border-emerald-700/60 dark:bg-emerald-500/10"
-                  : "border-gray-200 bg-white dark:border-zinc-700 dark:bg-zinc-900"
-              }`}
+              className="flex items-center justify-between gap-4 rounded-xl border border-border bg-background px-4 py-3"
             >
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white dark:border-zinc-700 dark:bg-zinc-950">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card">
                   <Icon />
                 </span>
                 <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{provider.name}</p>
-                  <p className={`text-sm ${connected ? "text-emerald-600 dark:text-emerald-400" : "text-gray-500 dark:text-gray-400"}`}>
+                  <p className="text-sm font-semibold text-foreground">
+                    {provider.name}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
                     {provider.detail}
                   </p>
                 </div>
               </div>
-              {showConfigure ? (
-                <button
-                  type="button"
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-zinc-800"
-                >
-                  Configure
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => connect(provider.id)}
-                  className="rounded-lg bg-[#5B16E1] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#4a11c0]"
-                >
-                  Connect
-                </button>
-              )}
+              <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                Coming soon
+              </span>
             </li>
           );
         })}
       </ul>
+
+      <h3 className="mt-6 text-sm font-semibold text-foreground">
+        Activity data
+      </h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Activity files are imported on the Integrations page, where each adapter
+        states what it can access and what it writes.
+      </p>
+      <Link
+        to="/integrations"
+        className="mt-3 inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+      >
+        Open Integrations
+      </Link>
     </section>
   );
 }

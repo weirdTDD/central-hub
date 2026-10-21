@@ -1,58 +1,148 @@
-import { createContext, useContext, useMemo, useState } from "react";
-
-const AUTH_KEY = "dailylogs-auth";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  SUPABASE_NOT_CONFIGURED_MESSAGE,
+  isSupabaseConfigured,
+  supabase,
+} from "../lib/supabase";
 
 const AuthContext = createContext(null);
 
-function readStoredUser() {
-  try {
-    const raw = localStorage.getItem(AUTH_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function persistUser(user) {
-  if (user) localStorage.setItem(AUTH_KEY, JSON.stringify(user));
-  else localStorage.removeItem(AUTH_KEY);
-}
-
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(readStoredUser);
+  const [user, setUser] = useState(null);
+  // When Supabase is not configured there is no session to wait for, so the
+  // initial state is already "not loading" and no effect has to write to it.
+  const [loading, setLoading] = useState(isSupabaseConfigured);
 
-  const value = useMemo(() => {
-    const login = ({ fullName, email }) => {
-      const next = {
-        name: fullName?.trim() || email.split("@")[0],
-        email: email.trim().toLowerCase(),
-        avatar: `https://i.pravatar.cc/150?u=${encodeURIComponent(email.trim().toLowerCase())}`,
-        role: "Team Member",
-      };
-      persistUser(next);
-      setUser(next);
-      return next;
+  useEffect(() => {
+    if (!supabase) return undefined;
+
+    let mounted = true;
+
+    const init = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (!mounted) return;
+        if (error) {
+          console.error("Supabase session error:", error.message);
+        }
+        setUser(session?.user ?? null);
+      } catch (error) {
+        if (!mounted) return;
+        console.error("Supabase init error:", error.message);
+      } finally {
+        if (mounted) setLoading(false);
+      }
     };
 
-    const loginWithGoogle = () =>
-      login({
-        fullName: "Bright Kelly",
-        email: "bright.kelly@bst.com",
-      });
+    init();
 
-    const logout = () => {
-      persistUser(null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted) return;
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const requireSupabase = () => {
+    if (!supabase) throw new Error(SUPABASE_NOT_CONFIGURED_MESSAGE);
+    return supabase;
+  };
+
+  /**
+   * Registers a new account.
+   *
+   * Returns { session, user }. When the project requires email confirmation the
+   * response contains a user but NO session — the caller must not treat that as
+   * a completed sign-in.
+   */
+  const signUp = useCallback(async ({ email, password, fullName }) => {
+    const client = requireSupabase();
+    const { data, error } = await client.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName ?? "" } },
+    });
+    if (error) throw error;
+    return { session: data.session ?? null, user: data.user ?? null };
+  }, []);
+
+  const signIn = useCallback(async ({ email, password }) => {
+    const client = requireSupabase();
+    const { error } = await client.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+  }, []);
+
+  const signInWithGoogle = useCallback(async () => {
+    const client = requireSupabase();
+    const { error } = await client.auth.signInWithOAuth({
+      provider: "google",
+    });
+    if (error) throw error;
+  }, []);
+
+  /**
+   * Signs the user out.
+   *
+   * The local session is always torn down, even when the server call fails, so
+   * a network error can never leave the user signed in on a shared machine.
+   */
+  const signOut = useCallback(async () => {
+    if (!supabase) {
       setUser(null);
-    };
+      return;
+    }
 
-    return {
+    let failure = null;
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) failure = error;
+    } catch (err) {
+      failure = err;
+    }
+
+    if (failure) {
+      // Force the local session to be removed even if the global sign-out failed.
+      await supabase.auth.signOut({ scope: "local" }).catch(() => {});
+    }
+
+    setUser(null);
+
+    if (failure) throw failure;
+  }, []);
+
+  // The context value is memoized: a new object on every render would re-render
+  // every `useAuth()` consumer and invalidate the derived memos downstream.
+  const value = useMemo(
+    () => ({
       user,
       isAuthenticated: Boolean(user),
-      login,
-      loginWithGoogle,
-      logout,
-    };
-  }, [user]);
+      loading,
+      isConfigured: isSupabaseConfigured,
+      notConfiguredMessage: SUPABASE_NOT_CONFIGURED_MESSAGE,
+      signUp,
+      signIn,
+      signInWithGoogle,
+      signOut,
+    }),
+    [user, loading, signUp, signIn, signInWithGoogle, signOut]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

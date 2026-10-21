@@ -3,8 +3,10 @@ import { TbShare2 } from 'react-icons/tb';
 import Heatmap from '../heatmap/Heatmap';
 import DateRangePicker from '../components/DateRangePicker';
 import { isWithinInterval, parseISO } from 'date-fns';
-import { useState } from 'react';
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useLogs } from '../../dashboard/LogsContext';
+import { downloadCsv } from '../../dashboard/logUtils';
 import KpiSummary from './KpiSummary';
 import {
   Select,
@@ -16,77 +18,126 @@ import {
 import { ChartLineDots } from './TaskCompletionChart';
 import TaskStatusChart from './TaskStatusChart';
 import TopLoggedTasks from './TopLoggedTask';
+import PlannedVsActualPanel from '../../features/tracking/PlannedVsActualPanel';
 
-
-
-
+const START_OF_DAY = (date) => {
+  const next = new Date(date);
+  next.setHours(0, 0, 0, 0);
+  return next;
+};
 
 const ProductivityReport = () => {
-  const { logs } = useLogs();
+  const { logs, totalLogs, truncated } = useLogs();
+  const navigate = useNavigate();
 
-  const [dateRange, setDateRange] = useState({
-    from: new Date(2025, 0, 1),
-    to: new Date(2025, 11, 31),
-  });
+  // Default to a range that actually contains the recorded data, so the report
+  // does not silently hide real entries behind a hardcoded year.
+  const defaultRange = useMemo(() => {
+    const dates = logs
+      .map((log) => log.date)
+      .filter(Boolean)
+      .map((date) => parseISO(date))
+      .filter((date) => !Number.isNaN(date.getTime()));
 
-  const filteredLogs = logs.filter(log => {
-  const logDate = parseISO(log.date);
-  return dateRange?.from && dateRange?.to
-    ? isWithinInterval(logDate, {
-        start: dateRange.from,
-        end: dateRange.to,
-      })
-    : true;
-  });
-    const selectedYear = dateRange?.from
+    const earliest = dates.length ? new Date(Math.min(...dates)) : new Date();
+    const latest = dates.length ? new Date(Math.max(...dates)) : new Date();
+    const today = new Date();
+
+    const from = START_OF_DAY(earliest < today ? earliest : today);
+    const to = START_OF_DAY(latest > today ? latest : today);
+
+    return { from, to };
+  }, [logs]);
+
+  // `dateRange` stays null until the user picks a range, so the applied range
+  // always follows the loaded data instead of freezing at the first render
+  // (when the log list was still empty).
+  const [userRange, setUserRange] = useState(null);
+  const dateRange = userRange ?? defaultRange;
+
+  const filteredLogs = useMemo(
+    () =>
+      logs.filter((log) => {
+        if (!log.date) return false;
+        const logDate = parseISO(log.date);
+        if (Number.isNaN(logDate.getTime())) return false;
+        return dateRange?.from && dateRange?.to
+          ? isWithinInterval(logDate, {
+              start: dateRange.from,
+              end: dateRange.to,
+            })
+          : true;
+      }),
+    [logs, dateRange]
+  );
+
+  const selectedYear = dateRange?.from
     ? dateRange.from.getFullYear()
     : new Date().getFullYear();
 
+  // The heatmap renders one calendar per year that actually holds data. Rendering a
+  // single year would silently drop every log from the other years of the range,
+  // while the KPI cards, charts and CSV export would still include them.
+  const heatmapYears = useMemo(() => {
+    const years = new Set();
+    for (const log of filteredLogs) {
+      const year = Number(log.date?.slice(0, 4));
+      if (Number.isInteger(year) && year > 0) years.add(year);
+    }
+    if (years.size === 0) years.add(selectedYear);
+    return [...years].sort((a, b) => a - b);
+  }, [filteredLogs, selectedYear]);
 
   const handleDayClick = (dayData) => {
     console.log('Clicked day:', dayData);
   };
-  
+
+  const handleExport = () => {
+    downloadCsv(filteredLogs);
+  };
 
   return (
-    <div className="p-8 min-h-screen max-w-6xl mx-auto font-sans relative">
+    <div className="mx-auto max-w-6xl font-sans">
       
       <div className="mb-8 grid items-center gap-6 sm:grid-cols-1 md:grid-cols-2">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 py-3">Productivity Report</h1>
-          <p className="text-gray-500 font-medium mt-1">Generate, view, and export detailed team activity logs.</p>
+          <h1 className="py-3 text-3xl font-bold text-foreground">Productivity Report</h1>
+          <p className="mt-1 font-medium text-muted-foreground">View and export your recorded work activity.</p>
         </div>
         <div className='flex items-center md:justify-end gap-4 mb-5'>
-          <button className='text-lg text-nowrap rounded-lg font-semibold text-gray-400 px-3 py-2 border border-gray-200 flex items-center gap-2 hover:bg-gray-200 hover:shadow-xl'>
+          <button
+            type="button"
+            onClick={handleExport}
+            className="flex items-center gap-2 text-nowrap rounded-xl border border-border px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-accent"
+          >
             <TbShare2 className='w-6 h-6' strokeWidth={2} /> Export as CSV
           </button>
-          <button className='bg-violet-600 text-lg rounded-xl font-semibold text-white px-4 py-2 hover:bg-purple-800 hover:shadow-xl'>
-            Generate
+          <button
+            type="button"
+            onClick={() => navigate("/logs/new")}
+            className='bg-primary text-lg rounded-xl font-semibold text-primary-foreground px-4 py-2 hover:opacity-90'
+          >
+            New Log Entry
           </button>
         </div>
       </div>
-{/* Filter Bar (Unchanged) */}
+
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8 ">
-        <div className="grid sm:grid-cols-1 md:grid-cols-2 items-center gap-4 bg-gray-50  rounded-xl border border-gray-200">
-          {/* Date Range Input Mockup */}
+        <div className="grid items-center gap-4 rounded-2xl border border-border bg-card sm:grid-cols-1 md:grid-cols-2">
           <div className="flex items-center px-3 py-2">
-            <span className="text-sm font-bold text-gray-600 mr-2 ">Date Range</span>
+            <span className="mr-2 text-sm font-semibold text-muted-foreground">Date Range</span>
             <div  > 
-            
               <DateRangePicker
                 value={dateRange}
-                onChange={setDateRange}
+                onChange={setUserRange}
                 toDate={new Date()}
                 className = ""
-
               />
-
             </div>
           </div>
 
-          {/* Department Dropdown Mockup */}
-          <div className="flex items-center px-3 py-2    min-w-45 justify-end">
-            <span className="text-sm font-bold text-gray-600 mr-2">Department</span>
+          <div className="flex items-center gap-4    min-w-45 justify-end">
+            <span className="mr-2 text-sm font-semibold text-muted-foreground">Department</span>
             <div className="flex items-center gap-4 ">
               <span className="text-sm text-gray-600 p-1">
                 <Select>
@@ -94,7 +145,7 @@ const ProductivityReport = () => {
                     <SelectValue placeholder="All Departments" />
                   </SelectTrigger>
                   <SelectContent >
-                    <SelectItem value="Software Engineering<">Software Engineering</SelectItem>
+                    <SelectItem value="Software Engineering">Software Engineering</SelectItem>
                     <SelectItem value="Product Design">Product Design</SelectItem>
                     <SelectItem value="Marketing">Marketing</SelectItem>
                   </SelectContent>
@@ -103,35 +154,53 @@ const ProductivityReport = () => {
             </div>
           </div>
         </div>
-
-
-        
       </div>
-      {/* HEATMAP VISUALIZATION */}
-      <Heatmap
-        logs={filteredLogs}
-        year={selectedYear}
-        onDayClick={handleDayClick}
-        onDayHover={() => {}}
-      />
 
-      {/* KPI Cards */}
-      <KpiSummary logs={filteredLogs} /> 
+      {heatmapYears.map((year) => (
+        <div key={year} className="mb-6">
+          {heatmapYears.length > 1 ? (
+            <h2 className="mb-2 text-sm font-semibold text-muted-foreground">{year}</h2>
+          ) : null}
+          <Heatmap
+            logs={filteredLogs}
+            year={year}
+            onDayClick={handleDayClick}
+            onDayHover={() => {}}
+          />
+        </div>
+      ))}
+
+      {truncated ? (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+          {totalLogs} work logs are stored, but only the most recent {logs.length}{" "}
+          are loaded. Every number, chart and export on this page covers the loaded
+          subset only.
+        </div>
+      ) : null}
+
+      <KpiSummary logs={filteredLogs} />
+
+      {/* The plan against the recorded time, for the same range as the rest
+          of this report. The panel reads the recorded sessions and the tasks
+          itself — the work logs above are a different stream and are never
+          mixed into these totals (docs/DECISIONS.md D-007). */}
+      <div className="mt-6">
+        <PlannedVsActualPanel from={dateRange?.from} to={dateRange?.to} />
+      </div>
      <div className='mt-10'>
-       <ChartLineDots />
+       <ChartLineDots logs={filteredLogs} />
      </div>
 
      <div className='grid grid-cols-1 md:grid-cols-2 items-center gap-6 mt-10'>
       <div className=''>
-        <TaskStatusChart />
+        <TaskStatusChart logs={filteredLogs} />
       </div>
 
       <div className=''>
-        <TopLoggedTasks />
+        <TopLoggedTasks logs={filteredLogs} />
       </div>
      </div>
 
-     
     </div>
   );
 };

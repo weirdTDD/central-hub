@@ -1,16 +1,17 @@
-import { ChevronDown } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { CircleAlert, CircleCheck, Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../components/ui/select";
 import { applyTheme, readTheme, THEME_KEY } from "../theme";
-
-const INITIAL_PROFILE = {
-  fullName: "Kwakye Amoah",
-  jobTitle: "Project Manager",
-  displayName: "Kwakye Amoah",
-  role: "Project Manager",
-  email: "kwakyamoah@gmail.com",
-  phone: "+233 54 000 0000",
-  bio: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.",
-};
+import { initialsAvatar } from "../../lib/avatar";
+import { personName } from "../../dashboard/todayView";
+import { useAuth } from "../../auth/AuthContext";
+import { supabase } from "../../lib/supabase";
 
 const ROLES = [
   "Project Manager",
@@ -27,23 +28,299 @@ const THEMES = [
   { id: "system", label: "System" },
 ];
 
-function Field({ label, children }) {
+/**
+ * The fields that are stored on the account itself.
+ *
+ * The account row IS the profile: Supabase keeps `user_metadata` for exactly
+ * this, so the profile is saved against the signed-in user instead of a table
+ * that does not exist. The email address is not editable here — changing it
+ * needs a confirmation email, which Supabase handles on its own.
+ */
+const PROFILE_FIELDS = [
+  { key: "fullName", metadata: "full_name", label: "Full name", type: "text" },
+  { key: "jobTitle", metadata: "job_title", label: "Job title", type: "text" },
+  { key: "displayName", metadata: "display_name", label: "Display name", type: "text" },
+  { key: "phone", metadata: "phone", label: "Phone", type: "tel" },
+];
+
+/**
+ * Reads the profile out of an account.
+ *
+ * Nothing is invented: a field the account does not carry is simply empty, and
+ * the same function is used for the account on screen and for the account the
+ * server returns after a save, so the form always shows what is actually
+ * stored.
+ *
+ * @param {object|null|undefined} user a Supabase user object
+ * @returns {object} the profile fields
+ */
+function profileFromUser(user) {
+  return {
+    fullName: user?.user_metadata?.full_name ?? "",
+    jobTitle: user?.user_metadata?.job_title ?? "",
+    displayName: user?.user_metadata?.display_name ?? "",
+    role: user?.user_metadata?.role ?? "",
+    phone: user?.user_metadata?.phone ?? "",
+    bio: user?.user_metadata?.bio ?? "",
+  };
+}
+
+function Field({ id, label, children }) {
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">{label}</span>
+    <div>
+      <label
+        htmlFor={id}
+        className="mb-1.5 block text-xs font-medium text-muted-foreground"
+      >
+        {label}
+      </label>
       {children}
-    </label>
+    </div>
   );
 }
 
 const inputClass =
-  "w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:border-[#5B16E1] focus:ring-2 focus:ring-[#5B16E1]/20 dark:border-zinc-700 dark:bg-zinc-950 dark:text-gray-100";
+  "w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20";
+
+/**
+ * The editable form.
+ *
+ * It is mounted with a key derived from the ACCOUNT, so a different person
+ * signing in resets the form to that person's values, while a save of your own
+ * profile leaves the form mounted and the confirmation on screen. The draft is
+ * initialised from the saved profile and is never patched from an effect, so a
+ * background refresh cannot overwrite an edit in progress.
+ */
+function ProfileForm({ saved, name, email }) {
+  const [draft, setDraft] = useState(saved);
+  const [saving, setSaving] = useState(false);
+  const [savedAt, setSavedAt] = useState(null);
+  const [error, setError] = useState(null);
+
+  // The confirmation is a transient message, not a permanent state.
+  useEffect(() => {
+    if (!savedAt) return undefined;
+    const timer = setTimeout(() => setSavedAt(null), 3000);
+    return () => clearTimeout(timer);
+  }, [savedAt]);
+
+  const hasChanges = useMemo(
+    () => Object.keys(saved).some((key) => saved[key] !== draft[key]),
+    [saved, draft]
+  );
+
+  const update = (key) => (event) => {
+    setError(null);
+    setSavedAt(null);
+    setDraft((current) => ({ ...current, [key]: event.target.value }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!supabase) {
+      setError("Supabase is not configured, so the profile cannot be saved.");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    setSavedAt(null);
+
+    try {
+      const { data, error: updateError } = await supabase.auth.updateUser({
+        data: {
+          full_name: draft.fullName,
+          job_title: draft.jobTitle,
+          display_name: draft.displayName,
+          role: draft.role,
+          phone: draft.phone,
+          bio: draft.bio,
+        },
+      });
+
+      if (updateError) throw updateError;
+
+      // Adopt the account the server returned, so the form shows exactly what
+      // was stored rather than what was typed.
+      if (data?.user) setDraft(profileFromUser(data.user));
+
+      setSavedAt(new Date().toISOString());
+    } catch (err) {
+      setError(err?.message || "The profile could not be saved.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setDraft(saved);
+    setError(null);
+    setSavedAt(null);
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-2xl border border-border bg-card p-6 shadow-sm"
+    >
+      <div className="flex flex-wrap items-center gap-4">
+        <img
+          src={initialsAvatar(name)}
+          alt=""
+          className="h-16 w-16 rounded-full object-cover ring-2 ring-primary/20"
+        />
+        <div className="min-w-0">
+          <h2 className="truncate text-base font-semibold text-foreground">
+            {name}
+          </h2>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            {draft.jobTitle ? (
+              <p className="text-sm text-muted-foreground">{draft.jobTitle}</p>
+            ) : null}
+            {draft.role ? (
+              <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                {draft.role}
+              </span>
+            ) : null}
+            {draft.displayName && draft.displayName !== draft.fullName ? (
+              <span className="text-xs text-muted-foreground">
+                Shown as {draft.displayName}
+              </span>
+            ) : null}
+            {!draft.jobTitle && !draft.role ? (
+              <p className="text-sm text-muted-foreground">
+                No job title set yet.
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      {error ? (
+        <p
+          role="alert"
+          className="mt-4 flex items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+        >
+          <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>{error}</span>
+        </p>
+      ) : null}
+
+      {savedAt ? (
+        <p
+          role="status"
+          className="mt-4 flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2 text-sm text-foreground"
+        >
+          <CircleCheck className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+          <span>Your profile was saved to your account.</span>
+        </p>
+      ) : null}
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        {PROFILE_FIELDS.map((field) => (
+          <Field key={field.key} id={`profile-${field.key}`} label={field.label}>
+            <input
+              id={`profile-${field.key}`}
+              type={field.type}
+              className={inputClass}
+              value={draft[field.key]}
+              onChange={update(field.key)}
+            />
+          </Field>
+        ))}
+
+        <Field id="profile-email" label="Email">
+          <input
+            id="profile-email"
+            type="email"
+            className={`${inputClass} cursor-not-allowed opacity-70`}
+            value={email}
+            readOnly
+            aria-readonly="true"
+            aria-describedby="profile-email-hint"
+          />
+          <p id="profile-email-hint" className="mt-1.5 text-xs text-muted-foreground">
+            The email address is the sign-in for this account and is managed by
+            your provider.
+          </p>
+        </Field>
+
+        <div>
+          <span
+            id="profile-role-label"
+            className="mb-1.5 block text-xs font-medium text-muted-foreground"
+          >
+            Role
+          </span>
+          <Select
+            value={draft.role}
+            onValueChange={(role) => {
+              setError(null);
+              setSavedAt(null);
+              setDraft((current) => ({ ...current, role }));
+            }}
+          >
+            <SelectTrigger id="profile-role" aria-labelledby="profile-role-label">
+              <SelectValue placeholder="No role set" />
+            </SelectTrigger>
+            <SelectContent>
+              {ROLES.map((role) => (
+                <SelectItem key={role} value={role}>
+                  {role}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="lg:col-span-2">
+          <Field id="profile-bio" label="Bio">
+            <textarea
+              id="profile-bio"
+              rows={4}
+              className={`${inputClass} resize-none`}
+              value={draft.bio}
+              onChange={update("bio")}
+            />
+          </Field>
+        </div>
+      </div>
+
+      <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+        <button
+          type="button"
+          onClick={handleCancel}
+          disabled={!hasChanges || saving}
+          className="rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-60"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={saving || !hasChanges}
+          className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+        >
+          {saving ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              Saving...
+            </>
+          ) : (
+            "Save Changes"
+          )}
+        </button>
+      </div>
+    </form>
+  );
+}
 
 export default function ProfileScreen() {
-  const [profile, setProfile] = useState(INITIAL_PROFILE);
-  const [savedProfile, setSavedProfile] = useState(INITIAL_PROFILE);
-  const [saved, setSaved] = useState(false);
+  const { user } = useAuth();
   const [theme, setTheme] = useState(readTheme);
+
+  // The saved profile is whatever the account actually holds. Nothing here is
+  // invented: a field the account does not have is simply empty.
+  const saved = useMemo(() => profileFromUser(user), [user]);
 
   useEffect(() => {
     applyTheme(theme);
@@ -55,111 +332,37 @@ export default function ProfileScreen() {
     return () => media.removeEventListener("change", onChange);
   }, [theme]);
 
-  useEffect(() => {
-    if (!saved) return undefined;
-    const timer = setTimeout(() => setSaved(false), 1600);
-    return () => clearTimeout(timer);
-  }, [saved]);
+  const name = saved.fullName || personName(user) || user?.email || "Account";
+  const email = user?.email ?? "";
 
-  const update = (key) => (event) => {
-    setSaved(false);
-    setProfile((current) => ({ ...current, [key]: event.target.value }));
-  };
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    setSavedProfile(profile);
-    setSaved(true);
-  };
-
-  const handleCancel = () => {
-    setProfile(savedProfile);
-    setSaved(false);
-  };
+  // The form is keyed by the ACCOUNT, not by the profile values: a different
+  // person signing in resets the form, while a save of your own profile keeps
+  // it mounted so the confirmation stays on screen.
+  const formKey = user?.id ?? "anonymous";
 
   return (
     <div className="space-y-6">
-      <form
-        onSubmit={handleSubmit}
-        className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-      >
-        <div className="flex items-center gap-4">
-          <img
-            src="https://i.pravatar.cc/150?u=ransford"
-            alt=""
-            className="h-14 w-14 rounded-full object-cover"
-          />
-          <div>
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Ransford Bediako</h2>
-            <div className="mt-1 flex items-center gap-2">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Project Manager</p>
-              <span className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
-                Project Lead
-              </span>
-            </div>
-          </div>
-        </div>
+      <ProfileForm
+        key={formKey}
+        saved={saved}
+        name={name}
+        email={email}
+      />
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          <Field label="Full name">
-            <input className={inputClass} value={profile.fullName} onChange={update("fullName")} />
-          </Field>
-          <Field label="Job Title">
-            <input className={inputClass} value={profile.jobTitle} onChange={update("jobTitle")} />
-          </Field>
-          <Field label="Display name">
-            <input className={inputClass} value={profile.displayName} onChange={update("displayName")} />
-          </Field>
-          <Field label="Role">
-            <span className="relative block">
-              <select className={`${inputClass} appearance-none pr-9`} value={profile.role} onChange={update("role")}>
-                {ROLES.map((role) => (
-                  <option key={role} value={role}>
-                    {role}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            </span>
-          </Field>
-          <Field label="Email">
-            <input type="email" className={inputClass} value={profile.email} onChange={update("email")} />
-          </Field>
-          <Field label="Phone">
-            <input type="tel" className={inputClass} value={profile.phone} onChange={update("phone")} />
-          </Field>
-          <div className="lg:col-span-2">
-            <Field label="Bio">
-              <textarea rows={4} className={`${inputClass} resize-none`} value={profile.bio} onChange={update("bio")} />
-            </Field>
-          </div>
-        </div>
-
-        <div className="mt-6 flex justify-end gap-3">
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-zinc-800"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="rounded-lg bg-[#5B16E1] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4a11c0]"
-          >
-            {saved ? "Saved" : "Save Changes"}
-          </button>
-        </div>
-      </form>
-
-      <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h2 className="text-base font-semibold">Appearance</h2>
+      <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <h2 className="text-base font-semibold text-foreground">Appearance</h2>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-800 dark:text-gray-100">Theme</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Customize the look and feel of the application</p>
+            <p className="text-sm font-medium text-foreground">Theme</p>
+            <p className="text-sm text-muted-foreground">
+              Customize the look and feel of the application
+            </p>
           </div>
-          <div className="inline-flex rounded-xl bg-gray-100 p-1 dark:bg-zinc-800" role="radiogroup" aria-label="Theme">
+          <div
+            className="inline-flex rounded-xl bg-muted p-1"
+            role="radiogroup"
+            aria-label="Theme"
+          >
             {THEMES.map((option) => {
               const selected = theme === option.id;
               return (
@@ -171,8 +374,8 @@ export default function ProfileScreen() {
                   onClick={() => setTheme(option.id)}
                   className={`rounded-lg px-4 py-1.5 text-sm font-medium transition ${
                     selected
-                      ? "bg-white text-gray-900 shadow-sm dark:bg-zinc-700 dark:text-white"
-                      : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {option.label}
