@@ -1,320 +1,488 @@
-import { format, isWithinInterval, parseISO } from "date-fns";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { Bell } from "lucide-react";
+import { useAuth } from "../auth/AuthContext";
+import { systemTimeZone } from "../lib/dates";
+import { isSupabaseConfigured } from "../lib/supabase";
+import { listNotifications } from "../lib/notifications";
+import { insertTask, listTasks, updateTask } from "../lib/tasks";
+import { listRecentCorrections, listSessions } from "../lib/tracking";
+import { isValidStatusTransition } from "../features/tasks/taskUtils";
+import AppShell from "../components/AppShell";
+import Plan from "../components/Plan";
+import Queue from "../components/Queue";
 import {
-  ChevronLeft,
-  ChevronRight,
-  MoreVertical,
-  Pencil,
-  Search,
-} from "lucide-react";
-import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { TbShare2 } from "react-icons/tb";
-import DateRangePicker from "../report/components/DateRangePicker";
-import Sidebar from "../report/components/Sidebar";
-import { useLogs } from "./LogsContext";
-import { downloadCsv, formatDisplayDate } from "./logUtils";
+  durationStringToSeconds,
+  isParseableDuration,
+} from "./logUtils";
+import {
+  buildDayView,
+  differenceText,
+  durationText,
+  formatClock,
+  formatDayHeading,
+  greetingFor,
+  personName,
+  plannedTotalText,
+  primaryAction,
+  recordedTotalText,
+  todayKey,
+  weekWindow,
+  workQueue,
+} from "./todayView";
 
-const PAGE_SIZE = 8;
+const UNCONFIGURED = { status: "unconfigured", rows: [], truncated: false, error: "" };
+const LOADING = { status: "loading", rows: [], truncated: false, error: "" };
 
-function pageItems(current, total) {
-  if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1);
-
-  const pages = new Set([1, total, current - 1, current, current + 1].filter((page) => page >= 1 && page <= total));
-  const sorted = [...pages].sort((a, b) => a - b);
-  const result = [];
-
-  for (let index = 0; index < sorted.length; index += 1) {
-    const page = sorted[index];
-    const previous = sorted[index - 1];
-    if (previous && page - previous > 1) result.push("…");
-    result.push(page);
+function fromSettled(result) {
+  if (result.status === "fulfilled") {
+    const value = result.value ?? {};
+    return {
+      status: "ready",
+      rows: value.rows ?? [],
+      truncated: Boolean(value.truncated),
+      error: "",
+    };
   }
+  return {
+    status: "error",
+    rows: [],
+    truncated: false,
+    error: result.reason?.message || "Could not load this.",
+  };
+}
 
-  return result;
+function Block({ role = "status", title, detail, tone = "neutral" }) {
+  const toneClass =
+    tone === "error"
+      ? "border-destructive/40 bg-destructive/5"
+      : "border-border bg-card";
+  return (
+    <div role={role} className={`rounded-2xl border px-4 py-3 text-sm ${toneClass}`}>
+      <p className="font-semibold text-foreground">{title}</p>
+      {detail ? <p className="mt-1 text-muted-foreground">{detail}</p> : null}
+    </div>
+  );
+}
+
+function sectionState(parts) {
+  if (parts.some((part) => part.status === "unconfigured")) return "unconfigured";
+  if (parts.some((part) => part.status === "loading")) return "loading";
+  if (parts.some((part) => part.status === "error")) return "error";
+  return "ready";
+}
+
+function errorDetail(parts) {
+  return parts
+    .filter((part) => part.status === "error" && part.error)
+    .map((part) => part.error)
+    .join(" ");
 }
 
 export default function DashboardPage() {
-  const navigate = useNavigate();
-  const { logs } = useLogs();
-  const [query, setQuery] = useState("");
-  const [dense, setDense] = useState(false);
-  const [page, setPage] = useState(1);
-  const [selected, setSelected] = useState(() => new Set());
-  const [dateRange, setDateRange] = useState({ from: undefined, to: undefined });
+  const { user } = useAuth();
+  const timeZone = useMemo(() => systemTimeZone(), []);
+  const [dayKey, setDayKey] = useState(() => todayKey(systemTimeZone()));
+  const [reloadKey, setReloadKey] = useState(0);
+  const [tasks, setTasks] = useState(isSupabaseConfigured ? LOADING : UNCONFIGURED);
+  const [sessions, setSessions] = useState(isSupabaseConfigured ? LOADING : UNCONFIGURED);
+  const [corrections, setCorrections] = useState(isSupabaseConfigured ? LOADING : UNCONFIGURED);
+  const [notifications, setNotifications] = useState(isSupabaseConfigured ? LOADING : UNCONFIGURED);
+  const [title, setTitle] = useState("");
+  const [estimate, setEstimate] = useState("");
+  const [formError, setFormError] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [busyId, setBusyId] = useState(null);
 
-  const filteredLogs = useMemo(() => {
-    const needle = query.trim().toLowerCase();
+  useEffect(() => {
+    if (!isSupabaseConfigured) return undefined;
 
-    return logs.filter((log) => {
-      const matchesQuery =
-        !needle ||
-        log.task.toLowerCase().includes(needle) ||
-        (log.note ?? "").toLowerCase().includes(needle) ||
-        log.user.name.toLowerCase().includes(needle);
-
-      const matchesDate =
-        !dateRange?.from ||
-        !dateRange?.to ||
-        isWithinInterval(parseISO(log.date), {
-          start: dateRange.from,
-          end: dateRange.to,
-        });
-
-      return matchesQuery && matchesDate;
+    let active = true;
+    Promise.allSettled([
+      listTasks(),
+      listSessions(),
+      listRecentCorrections(),
+      listNotifications(),
+    ]).then(([taskResult, sessionResult, correctionResult, notificationResult]) => {
+      if (!active) return;
+      setTasks(fromSettled(taskResult));
+      setSessions(fromSettled(sessionResult));
+      setCorrections(fromSettled(correctionResult));
+      setNotifications(fromSettled(notificationResult));
     });
-  }, [logs, query, dateRange]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredLogs.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const pageLogs = filteredLogs.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-  const allPageSelected = pageLogs.length > 0 && pageLogs.every((log) => selected.has(log.id));
+    return () => {
+      active = false;
+    };
+  }, [reloadKey]);
 
-  const toggleAll = () => {
-    setSelected((current) => {
-      const next = new Set(current);
-      if (allPageSelected) {
-        pageLogs.forEach((log) => next.delete(log.id));
-      } else {
-        pageLogs.forEach((log) => next.add(log.id));
-      }
-      return next;
-    });
+  const week = weekWindow(dayKey);
+  const view = useMemo(
+    () =>
+      buildDayView({
+        dayKey,
+        timeZone,
+        tasks: tasks.status === "ready" ? tasks.rows : [],
+        sessions: sessions.status === "ready" ? sessions.rows : [],
+        corrections: corrections.status === "ready" ? corrections.rows : [],
+        notifications: notifications.status === "ready" ? notifications.rows : [],
+      }),
+    [dayKey, timeZone, tasks, sessions, corrections, notifications]
+  );
+
+  const queue = useMemo(
+    () => workQueue(tasks.status === "ready" ? tasks.rows : []).slice(0, 5),
+    [tasks]
+  );
+  const planState = sectionState([tasks]);
+  const journalState = sectionState([tasks, sessions, corrections]);
+  const summaryState = sectionState([tasks, sessions, corrections]);
+  const reminderState = sectionState([notifications]);
+  const marksKnown = tasks.status === "ready" && sessions.status === "ready" && corrections.status === "ready";
+  const name = personName(user);
+  const greeting = greetingFor(new Date(), timeZone);
+  const heading = name ? `${greeting}, ${name}` : greeting;
+
+  const addTask = async (event) => {
+    event.preventDefault();
+    setFormError("");
+    if (!title.trim()) {
+      setFormError("Title is required.");
+      return;
+    }
+    if (estimate.trim() && !isParseableDuration(estimate)) {
+      setFormError('Estimate must be a duration such as "30m" or "1h 15m".');
+      return;
+    }
+    setSaving(true);
+    try {
+      await insertTask({
+        title,
+        dueDate: dayKey,
+        estimatedSeconds: estimate.trim() ? durationStringToSeconds(estimate) : null,
+      });
+      setTitle("");
+      setEstimate("");
+      setReloadKey((value) => value + 1);
+    } catch (error) {
+      setFormError(error?.message || "Could not add this task.");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const toggleOne = (id) => {
-    setSelected((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const changeStatus = async (task) => {
+    const action = primaryAction(task.status);
+    if (!action || !isValidStatusTransition(task.status, action.status)) {
+      setActionError("That change is not allowed.");
+      return;
+    }
+    setActionError("");
+    setBusyId(task.id);
+    const completedAt =
+      action.status === "completed"
+        ? new Date().toISOString()
+        : action.status === "todo"
+          ? null
+          : undefined;
+    try {
+      await updateTask(task.id, {
+        status: action.status,
+        ...(completedAt !== undefined ? { completedAt } : {}),
+      });
+      setReloadKey((value) => value + 1);
+    } catch (error) {
+      setActionError(error?.message || "Could not update this task.");
+    } finally {
+      setBusyId(null);
+    }
   };
 
-  const handleExport = () => {
-    const rows =
-      selected.size > 0
-        ? filteredLogs.filter((log) => selected.has(log.id))
-        : filteredLogs;
-    downloadCsv(rows);
-  };
+  const truncated = [
+    tasks.truncated ? "tasks" : null,
+    sessions.truncated ? "sessions" : null,
+    corrections.truncated ? "corrections" : null,
+    notifications.truncated ? "notifications" : null,
+  ].filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-[#f6f7fb] text-gray-900 dark:bg-zinc-950 dark:text-gray-100">
-      <Sidebar currentPath="/dashboard" />
-
-      <main className="min-h-screen px-4 py-6 sm:px-8 md:ml-72 md:px-10">
-        <div className="mx-auto max-w-6xl">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <AppShell currentPath="/dashboard">
+        <div className="mx-auto flex max-w-5xl flex-col gap-6">
+          <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Manage and view your daily work logs
+              <h1 className="text-3xl font-bold tracking-tight">{heading}</h1>
+              <p className="mt-1 text-sm text-muted-foreground">{formatDayHeading(dayKey)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">Days follow {timeZone}.</p>
+            </div>
+            <Link
+              to="/logs"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Work logs
+            </Link>
+          </header>
+
+          <nav aria-label="Week" className="-mx-4 px-1 sm:mx-0 sm:px-0">
+            <div className="grid grid-cols-7">
+              {(marksKnown ? view.marks : week?.days ?? []).map((day) => {
+                const selected = day.key === dayKey;
+                const label = marksKnown ? day.label : null;
+                return (
+                  <button
+                    key={day.key}
+                    type="button"
+                    aria-pressed={selected}
+                    aria-label={`${day.weekday} ${day.dayNumber}${
+                      label ? `, ${label}` : marksKnown ? ", nothing due or recorded" : ""
+                    }`}
+                    onClick={() => setDayKey(day.key)}
+                    className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-0.5 py-1.5 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                      selected
+                        ? "bg-primary text-primary-foreground"
+                        : "text-foreground hover:bg-card"
+                    }`}
+                  >
+                    <span className="text-[10px] font-medium uppercase tracking-wide">{day.weekday}</span>
+                    <span className="text-sm font-semibold leading-none">{day.dayNumber}</span>
+                    <span className={`mt-1 text-[9px] leading-tight ${label ? "" : "invisible"}`} aria-hidden={label ? undefined : true}>
+                      {label ?? "—"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+
+          {truncated.length > 0 ? (
+            <div role="status" className="rounded-2xl border border-border bg-card px-4 py-3 text-sm">
+              <p className="font-semibold">Showing the most recent records</p>
+              <p className="mt-1 text-muted-foreground">
+                The loaded {truncated.join(", ")} are incomplete. Older records are not
+                included, and a session whose task was not loaded is shown as unattributed.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={handleExport}
-                className="inline-flex items-center gap-2 rounded-lg border border-[#5B16E1]/30 bg-white px-4 py-2 text-sm font-semibold text-[#5B16E1] hover:bg-violet-50 dark:border-violet-500/40 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-              >
-                <TbShare2 className="h-5 w-5" />
-                Export as CSV
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate("/logs/new")}
-                className="rounded-lg bg-[#5B16E1] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4a11c0]"
-              >
-                Generate
-              </button>
-            </div>
-          </div>
+          ) : null}
 
-          <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center">
-            <label className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                value={query}
-                onChange={(event) => {
-                  setQuery(event.target.value);
-                  setPage(1);
-                }}
-                placeholder="Search by task or description"
-                className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-[#5B16E1] focus:ring-2 focus:ring-[#5B16E1]/20 dark:border-zinc-700 dark:bg-zinc-900"
-              />
-            </label>
-            <DateRangePicker
-              value={dateRange}
-              onChange={(range) => {
-                setDateRange(range ?? { from: undefined, to: undefined });
-                setPage(1);
-              }}
-            />
-          </div>
+          <Reminder state={reminderState} error={errorDetail([notifications])} reminder={view.reminder} />
 
-          <section className="mt-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead className="border-b border-gray-100 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-gray-400">
-                  <tr>
-                    <th className="px-4 py-3">
+          <WeekSummary
+            state={summaryState}
+            error={errorDetail([tasks, sessions, corrections])}
+            totals={view.summary.totals}
+            startKey={week?.startKey}
+            endKey={week?.endKey}
+          />
+
+          <Queue
+            items={queue}
+            state={planState}
+            error={errorDetail([tasks])}
+            actionError={actionError}
+            busyId={busyId}
+            onAction={changeStatus}
+            headerTo="/tasks"
+            headerLabel="Tasks"
+          />
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <Plan
+              items={view.plan}
+              state={planState}
+              error={errorDetail([tasks])}
+              actionError={actionError}
+              busyId={busyId}
+              onAction={changeStatus}
+              headerTo="/tasks"
+              headerLabel="Tasks"
+              footer={
+              <form onSubmit={addTask} className="mt-5 border-t border-border pt-4">
+                <h3 className="text-sm font-semibold">Add to this day</h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Due {formatDayHeading(dayKey)}. No start time is set.
+                </p>
+                {formError ? (
+                  <p role="alert" className="mt-2 text-sm text-destructive">{formError}</p>
+                ) : null}
+                <div className="mt-3 grid gap-3">
+                  <div className="min-w-0">
+                    <label htmlFor="day-task-title" className="text-xs font-medium text-muted-foreground">
+                      Title
+                    </label>
+                    <input
+                      id="day-task-title"
+                      value={title}
+                      onChange={(event) => setTitle(event.target.value)}
+                      className="mt-1 block min-h-11 w-full min-w-0 rounded-xl border border-border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      placeholder="What is due?"
+                    />
+                  </div>
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
+                    <div className="min-w-0">
+                      <label htmlFor="day-task-estimate" className="text-xs font-medium text-muted-foreground">
+                        Estimate
+                      </label>
                       <input
-                        type="checkbox"
-                        checked={allPageSelected}
-                        onChange={toggleAll}
-                        aria-label="Select all logs on this page"
-                        className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                        id="day-task-estimate"
+                        value={estimate}
+                        onChange={(event) => setEstimate(event.target.value)}
+                        className="mt-1 block min-h-11 w-full min-w-0 rounded-xl border border-border bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        placeholder="30m"
                       />
-                    </th>
-                    <th className="px-4 py-3">Team Members</th>
-                    <th className="px-4 py-3">Task Worked On</th>
-                    <th className="px-4 py-3">Date</th>
-                    <th className="px-4 py-3">Time Spent</th>
-                    <th className="px-4 py-3">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pageLogs.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
-                        No work logs match your filters.
-                      </td>
-                    </tr>
-                  ) : (
-                    pageLogs.map((log) => {
-                      const checked = selected.has(log.id);
-                      return (
-                        <tr
-                          key={log.id}
-                          className="border-b border-gray-100 last:border-0 dark:border-zinc-800"
-                        >
-                          <td className={dense ? "px-4 py-2" : "px-4 py-4"}>
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleOne(log.id)}
-                              aria-label={`Select ${log.task}`}
-                              className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                            />
-                          </td>
-                          <td className={dense ? "px-4 py-2" : "px-4 py-4"}>
-                            <div className="flex items-center gap-3">
-                              <img
-                                src={log.user.avatar}
-                                alt=""
-                                className="h-9 w-9 rounded-full object-cover"
-                              />
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                {log.user.name}
-                              </span>
-                            </div>
-                          </td>
-                          <td className={`max-w-xs truncate text-gray-700 dark:text-gray-300 ${dense ? "px-4 py-2" : "px-4 py-4"}`}>
-                            {log.task}
-                          </td>
-                          <td className={`whitespace-nowrap text-gray-600 dark:text-gray-400 ${dense ? "px-4 py-2" : "px-4 py-4"}`}>
-                            {formatDisplayDate(log.date)}
-                          </td>
-                          <td className={`whitespace-nowrap text-gray-600 dark:text-gray-400 ${dense ? "px-4 py-2" : "px-4 py-4"}`}>
-                            {log.duration}
-                          </td>
-                          <td className={dense ? "px-4 py-2" : "px-4 py-4"}>
-                            <div className="flex items-center gap-2 text-gray-400">
-                              <Link
-                                to={`/logs/${log.id}/edit`}
-                                className="rounded-md p-1.5 hover:bg-gray-100 hover:text-[#5B16E1] dark:hover:bg-zinc-800"
-                                aria-label={`Edit ${log.task}`}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Link>
-                              <button
-                                type="button"
-                                className="rounded-md p-1.5 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-zinc-800"
-                                aria-label={`More actions for ${log.task}`}
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex flex-col gap-4 border-t border-gray-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-zinc-800">
-              <label className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={dense}
-                  onClick={() => setDense((value) => !value)}
-                  className={`relative h-6 w-11 rounded-full transition-colors ${
-                    dense ? "bg-[#5B16E1]" : "bg-gray-300 dark:bg-zinc-600"
-                  }`}
-                >
-                  <span
-                    className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                      dense ? "translate-x-5" : ""
-                    }`}
-                  />
-                </button>
-                Dense
-              </label>
-
-              <div className="flex flex-wrap items-center gap-1">
-                <button
-                  type="button"
-                  disabled={currentPage === 1}
-                  onClick={() => setPage((value) => Math.max(1, value - 1))}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-40 dark:hover:bg-zinc-800"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Back
-                </button>
-                {pageItems(currentPage, totalPages).map((item, index) =>
-                  item === "…" ? (
-                    <span key={`ellipsis-${index}`} className="px-2 text-sm text-gray-400">
-                      …
-                    </span>
-                  ) : (
+                    </div>
                     <button
-                      key={item}
-                      type="button"
-                      onClick={() => setPage(item)}
-                      className={`min-w-8 rounded-lg px-2 py-1.5 text-sm font-medium ${
-                        item === currentPage
-                          ? "bg-[#5B16E1] text-white"
-                          : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-800"
-                      }`}
+                      type="submit"
+                      disabled={saving || !isSupabaseConfigured}
+                      className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
                     >
-                      {item}
+                      {saving ? "Adding…" : "Add"}
                     </button>
-                  )
-                )}
-                <button
-                  type="button"
-                  disabled={currentPage === totalPages}
-                  onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-40 dark:hover:bg-zinc-800"
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </section>
+                  </div>
+                </div>
+              </form>
+              }
+            />
 
-          {dateRange?.from && dateRange?.to ? (
-            <p className="mt-3 text-xs text-gray-500">
-              Showing logs from {format(dateRange.from, "MMM d, yyyy")} to{" "}
-              {format(dateRange.to, "MMM d, yyyy")}
-            </p>
+            <section aria-labelledby="journal-heading" className="rounded-3xl border border-border bg-card p-4 sm:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 id="journal-heading" className="text-lg font-semibold">Journal</h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Recorded sessions that start this day.
+                  </p>
+                </div>
+                <Link
+                  to="/tracking"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center text-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  Tracking
+                </Link>
+              </div>
+              <div className="mt-4">
+                {journalState === "unconfigured" ? (
+                  <Block title="Not connected" detail="Configure Supabase to load recorded time." />
+                ) : null}
+                {journalState === "loading" ? (
+                  <Block title="Loading…" detail="Loading sessions for this day." />
+                ) : null}
+                {journalState === "error" ? (
+                  <Block
+                    role="alert"
+                    tone="error"
+                    title="Could not load the journal"
+                    detail={errorDetail([tasks, sessions, corrections])}
+                  />
+                ) : null}
+                {journalState === "ready" && view.journal.length === 0 ? (
+                  <Block title="No time recorded" detail="No session starts on this day." />
+                ) : null}
+                {journalState === "ready" && view.journal.length > 0 ? (
+                  <ol className="space-y-3">
+                    {view.journal.map((entry) => {
+                      const clock = formatClock(entry.startedAt, timeZone);
+                      return (
+                        <li key={entry.id} className="rounded-2xl border border-border bg-background px-3 py-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-xs font-semibold text-primary">
+                                {clock ?? "No start time"}
+                              </p>
+                              <h3 className="mt-1 text-sm font-semibold">
+                                {entry.unattributed ? "Unattributed" : entry.taskTitle}
+                              </h3>
+                            </div>
+                            <p className="text-sm text-muted-foreground">{durationText(entry.durationSeconds)}</p>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                ) : null}
+              </div>
+            </section>
+          </div>
+        </div>
+    </AppShell>
+  );
+}
+
+function Reminder({ state, error, reminder }) {
+  return (
+    <section aria-labelledby="reminder-heading" className="rounded-3xl border border-primary/20 bg-primary/10 p-4 sm:p-5">
+      <div className="flex items-start gap-3">
+        <Bell className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+        <div className="min-w-0 flex-1">
+          <h2 id="reminder-heading" className="text-sm font-semibold">Reminder</h2>
+          {state === "unconfigured" ? (
+            <p className="mt-1 text-sm text-muted-foreground">Not connected. Configure Supabase to load reminders.</p>
+          ) : null}
+          {state === "loading" ? <p className="mt-1 text-sm text-muted-foreground">Loading reminders…</p> : null}
+          {state === "error" ? (
+            <p role="alert" className="mt-1 text-sm text-destructive">{error || "Could not load reminders."}</p>
+          ) : null}
+          {state === "ready" && reminder ? (
+            <>
+              <p className="mt-1 font-semibold">{reminder.title || "Untitled reminder"}</p>
+              {reminder.body ? <p className="mt-1 text-sm text-muted-foreground">{reminder.body}</p> : null}
+              <p className="mt-1 text-xs text-muted-foreground">Status: {reminder.status}</p>
+            </>
+          ) : null}
+          {state === "ready" && !reminder ? (
+            <p className="mt-1 text-sm text-muted-foreground">A reminder has not been set.</p>
+          ) : null}
+          {state === "ready" || state === "unconfigured" ? (
+            <Link
+              to="/notifications"
+              className="mt-3 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {state === "ready" && reminder
+                ? "Open notifications"
+                : state === "ready"
+                  ? "Set a reminder"
+                  : "Notifications"}
+            </Link>
           ) : null}
         </div>
-      </main>
-    </div>
+      </div>
+    </section>
+  );
+}
+
+function WeekSummary({ state, error, totals, startKey, endKey }) {
+  const range =
+    startKey && endKey
+      ? `${formatDayHeading(startKey)} – ${formatDayHeading(endKey)}`
+      : "";
+  return (
+    <section aria-labelledby="week-heading" className="rounded-3xl border border-border bg-card p-4 sm:p-5">
+      <h2 id="week-heading" className="text-lg font-semibold">This week</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {range ? `${range}. ` : ""}
+        Planned time is the estimate of open tasks due this week. Recorded time is sessions that start this week.
+      </p>
+      {state === "unconfigured" ? (
+        <p className="mt-3 text-sm text-muted-foreground">Not connected. Configure Supabase to compare the week.</p>
+      ) : null}
+      {state === "loading" ? <p className="mt-3 text-sm text-muted-foreground">Loading the week…</p> : null}
+      {state === "error" ? (
+        <p role="alert" className="mt-3 text-sm text-destructive">{error || "Could not compare this week."}</p>
+      ) : null}
+      {state === "ready" ? (
+        <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl bg-muted px-3 py-3">
+            <dt className="text-xs font-medium text-muted-foreground">Planned</dt>
+            <dd className="mt-1 text-lg font-semibold">{plannedTotalText(totals)}</dd>
+          </div>
+          <div className="rounded-2xl bg-progress/10 px-3 py-3">
+            <dt className="text-xs font-medium text-muted-foreground">Recorded</dt>
+            <dd className="mt-1 text-lg font-semibold">{recordedTotalText(totals)}</dd>
+          </div>
+          <div className="rounded-2xl bg-muted px-3 py-3">
+            <dt className="text-xs font-medium text-muted-foreground">Difference</dt>
+            <dd className="mt-1 text-lg font-semibold">{differenceText(totals)}</dd>
+          </div>
+        </dl>
+      ) : null}
+    </section>
   );
 }

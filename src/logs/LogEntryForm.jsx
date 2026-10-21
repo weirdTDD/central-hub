@@ -1,7 +1,8 @@
-import { CalendarDays, Clock3 } from "lucide-react";
+import { Clock3 } from "lucide-react";
+import { DateField } from "../components/ui/date-field";
 
 const inputClass =
-  "w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:border-[#5B16E1] focus:ring-2 focus:ring-[#5B16E1]/20 dark:border-zinc-700 dark:bg-zinc-950 dark:text-gray-100";
+  "w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-zinc-950 dark:text-gray-100";
 
 function Field({ label, children }) {
   return (
@@ -44,29 +45,27 @@ export default function LogEntryForm({
       )}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Date">
-          <span className="relative block">
-            <input
-              type="date"
-              className={`${inputClass} pr-10`}
-              value={values.date}
-              onChange={update("date")}
-              required
-            />
-            <CalendarDays className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          </span>
-        </Field>
+        <div>
+          <span className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">Date</span>
+          <DateField
+            value={values.date}
+            onChange={(date) => update("date")({ target: { value: date } })}
+          />
+        </div>
         <Field label="Time Spent">
           <span className="relative block">
             <input
               className={`${inputClass} pr-10`}
               value={values.timeSpent}
               onChange={update("timeSpent")}
-              placeholder="e.g. 4h 30m"
-              required
+              placeholder="e.g. 4h 30m (optional)"
             />
             <Clock3 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           </span>
+          <p className="mt-1 text-xs text-gray-500">
+            Leave empty if the time was not recorded — an empty value stays
+            &quot;not recorded&quot;, never zero.
+          </p>
         </Field>
       </div>
 

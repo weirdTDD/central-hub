@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLogs } from "../dashboard/LogsContext";
+import { isParseableDuration } from "../dashboard/logUtils";
+import { localDayKey } from "../lib/dates";
 import LogEntryForm from "./LogEntryForm";
 import LogEntryLayout from "./LogEntryLayout";
 
-const today = () => new Date().toISOString().slice(0, 10);
+// The user's LOCAL day — the same day key the rest of the app files logs under.
+const today = () => localDayKey(new Date());
 
 export default function NewLogEntryPage() {
   const navigate = useNavigate();
@@ -14,14 +17,33 @@ export default function NewLogEntryPage() {
     task: "",
     date: today(),
     timeSpent: "",
-    note: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    note: "",
   });
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!values.task.trim() || !values.date || !values.timeSpent.trim()) return;
-    addLog(values);
-    navigate("/dashboard");
+    setError("");
+    if (!values.task.trim() || !values.date) {
+      setError("Task and date are required.");
+      return;
+    }
+    // A duration is optional: an empty field means "not recorded" (missing data,
+    // never zero). A non-empty field must be a duration we understand.
+    if (values.timeSpent.trim() && !isParseableDuration(values.timeSpent)) {
+      setError('Time spent must be a duration such as "4h 30m", "90m" or "1m 30s".');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await addLog(values);
+      navigate("/logs");
+    } catch (err) {
+      setError(err?.message || "Could not save this log entry.");
+      setSaving(false);
+    }
   };
 
   return (
@@ -36,19 +58,26 @@ export default function NewLogEntryPage() {
       <form onSubmit={handleSubmit} className="mt-8 space-y-8">
         <LogEntryForm values={values} onChange={setValues} showUserName />
 
+        {error ? (
+          <p role="alert" className="text-sm text-red-600">
+            {error}
+          </p>
+        ) : null}
+
         <div className="flex justify-end gap-3">
           <button
             type="button"
-            onClick={() => navigate("/dashboard")}
-            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-zinc-800"
+            onClick={() => navigate("/logs")}
+            className="rounded-lg border border-border bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-zinc-800"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="rounded-lg bg-[#5B16E1] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4a11c0]"
+            disabled={saving}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
           >
-            Save Entry
+            {saving ? "Saving..." : "Save Entry"}
           </button>
         </div>
       </form>
