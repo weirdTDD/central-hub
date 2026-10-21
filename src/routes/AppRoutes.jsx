@@ -8,8 +8,17 @@ import SettingsPage from "../settings/SettingsPage";
 import ProfileScreen from "../settings/components/ProfileScreen";
 import NotificationScreen from "../settings/components/NotificationScreen";
 import IntegrationScreen from "../settings/components/IntegrationScreen";
+import LogsPage from "../logs/LogsPage";
 import NewLogEntryPage from "../logs/NewLogEntryPage";
 import EditLogEntryPage from "../logs/EditLogEntryPage";
+import TasksPage from "../features/tasks/TasksPage";
+import { TasksProvider } from "../features/tasks/TasksContext";
+import IntegrationsPage from "../features/integrations/IntegrationsPage";
+import { IntegrationsProvider } from "../features/integrations/IntegrationsContext";
+import TrackingPage from "../features/tracking/TrackingPage";
+import { TrackingProvider } from "../features/tracking/TrackingContext";
+import NotificationsPage from "../features/notifications/NotificationsPage";
+import { NotificationsProvider } from "../features/notifications/NotificationsContext";
 
 function HomeRedirect() {
   const { isAuthenticated } = useAuth();
@@ -30,8 +39,64 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+         <Route
+           path="/tasks"
+           element={
+             <ProtectedRoute>
+               {/* The tasks provider lives on the route that needs it: the task
+                   data (and its realtime channel) is not loaded on other pages. */}
+               <TasksProvider>
+                 <TasksPage />
+               </TasksProvider>
+             </ProtectedRoute>
+           }
+         />
+         <Route
+           path="/integrations"
+           element={
+             <ProtectedRoute>
+               {/* The integrations provider lives on the route that needs it: the
+                   connection data (and its realtime channel) is not loaded on other pages. */}
+               <IntegrationsProvider>
+                 <IntegrationsPage />
+               </IntegrationsProvider>
+             </ProtectedRoute>
+           }
+         />
+         <Route
+           path="/tracking"
+           element={
+             <ProtectedRoute>
+               {/* The tracking provider lives on the route that needs it: the
+                   session data (and its realtime channels) is not loaded on other pages. */}
+               <TrackingProvider>
+                 <TrackingPage />
+               </TrackingProvider>
+             </ProtectedRoute>
+           }
+         />
+         <Route
+           path="/notifications"
+           element={
+             <ProtectedRoute>
+               {/* The notifications provider lives on the route that needs it: the
+                   notification data (and its realtime channels) is not loaded on other pages. */}
+               <NotificationsProvider>
+                 <NotificationsPage />
+               </NotificationsProvider>
+             </ProtectedRoute>
+           }
+         />
         <Route
-          path="/logs/new"
+          path="/logs"
+          element={
+            <ProtectedRoute>
+              <LogsPage />
+            </ProtectedRoute>
+          }
+        />
+         <Route
+           path="/logs/new"
           element={
             <ProtectedRoute>
               <NewLogEntryPage />
