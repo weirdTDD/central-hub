@@ -20,7 +20,7 @@
 -- ORDER MATTERS
 --   Phase 4 refuses to run while public.tasks is missing, and Phase 5 refuses
 --   to run while public.observations is missing. The order below is
---   2 -> 3 -> 4 -> 5 -> 6 -> 7 -> coding activity -> learning activity
+--   2 -> 3 -> 4 -> 5 -> 6 -> 7 -> coding activity -> learning activity -> grok chat
 --   and must not be changed.
 --
 -- HOW TO USE

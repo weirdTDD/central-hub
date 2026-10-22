@@ -67,6 +67,7 @@ export default function IntegrationScreen() {
 
   return (
     <div className="space-y-6">
+    <GrokCard />
     <CodingTrackerCard />
     <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
       <h2 className="text-base font-semibold text-foreground">Connectors</h2>
