@@ -13,6 +13,7 @@ import {
 } from "../../../extensions/learning-tracker/lib/learningTime.js";
 import { isSupabaseConfigured } from "../../lib/supabase";
 import { listLearningObservations } from "../../lib/tracking";
+import { MeterRows } from "../progress/Bars.jsx";
 import { localDayRange } from "../coding/range.js";
 
 export default function LearningDayCard({ dayKey, timeZone }) {
@@ -92,16 +93,7 @@ export default function LearningDayCard({ dayKey, timeZone }) {
         {viewState === "ready" && total != null ? (
           <>
             <p className="text-lg font-semibold">{durationText(total)}</p>
-            {sites.length > 0 ? (
-              <ul className="mt-3 space-y-1 text-sm">
-                {sites.map((site) => (
-                  <li key={site.key} className="flex items-center justify-between gap-3">
-                    <span>{site.key}</span>
-                    <span className="text-muted-foreground">{durationText(site.activeSeconds)}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+            {sites.length > 0 ? <MeterRows rows={sites} /> : null}
           </>
         ) : null}
         {truncated ? (

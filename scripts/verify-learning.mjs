@@ -38,6 +38,7 @@ import {
   toObservationRow,
 } from "../extensions/learning-tracker/lib/transport.js";
 import { learningTrackerAdapter } from "../src/features/integrations/adapters/learningTracker.js";
+import { peakScale, sharePercent } from "../src/features/progress/scale.js";
 import { getAdapter } from "../src/features/integrations/contract.js";
 
 let passed = 0;
@@ -445,6 +446,15 @@ check("the learning adapter is registered and refuses a URL", () => {
       ),
     /must not include a URL/
   );
+});
+
+check("a progress bar compares known time and leaves missing time missing", () => {
+  assertEqual(sharePercent(30, 60), 50, "half");
+  assertEqual(sharePercent(null, 60), null, "missing part");
+  assertEqual(sharePercent(30, null), null, "missing whole");
+  assertEqual(sharePercent(30, 0), null, "no whole");
+  assertEqual(peakScale([null, 10, 40]).join(","), ",25,100", "peak");
+  assertEqual(peakScale([null, null]).join(","), ",", "no peak");
 });
 
 check("the migration allows coding and learning and does not store a URL", () => {
