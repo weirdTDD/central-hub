@@ -1,0 +1,69 @@
+{
+  "name": "central-hub-coding-tracker",
+  "displayName": "Central Hub Coding Tracker",
+  "description": "Records active coding time from Cursor and VS Code into Central Hub.",
+  "version": "0.1.0",
+  "publisher": "central-hub",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "vscode": "^1.88.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "centralHub.signIn",
+        "title": "Central Hub: Sign In"
+      },
+      {
+        "command": "centralHub.signOut",
+        "title": "Central Hub: Sign Out"
+      },
+      {
+        "command": "centralHub.pause",
+        "title": "Central Hub: Pause Tracking"
+      },
+      {
+        "command": "centralHub.resume",
+        "title": "Central Hub: Resume Tracking"
+      },
+      {
+        "command": "centralHub.status",
+        "title": "Central Hub: Show Tracking Status"
+      }
+    ],
+    "configuration": {
+      "title": "Central Hub",
+      "properties": {
+        "centralHub.supabaseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Supabase project URL (the same value as VITE_SUPABASE_URL). The anon key is public; the password is never stored."
+        },
+        "centralHub.supabaseAnonKey": {
+          "type": "string",
+          "default": "",
+          "description": "Supabase anon key (the same value as VITE_SUPABASE_ANON_KEY). This is the public API key, not the service role key."
+        },
+        "centralHub.heartbeatSeconds": {
+          "type": "number",
+          "default": 120,
+          "minimum": 15,
+          "maximum": 300,
+          "description": "How many active seconds one stored heartbeat covers."
+        },
+        "centralHub.idleSeconds": {
+          "type": "number",
+          "default": 120,
+          "minimum": 30,
+          "maximum": 1800,
+          "description": "Stop counting when the editor has been quiet for this many seconds."
+        }
+      }
+    }
+  }
+}
