@@ -1,7 +1,19 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// `import.meta.env` is injected by Vite. It does not exist in plain Node (the
+// verification scripts) or in Deno (the Edge Function), so the environment is
+// read defensively: the module must LOAD everywhere, and a project without
+// Supabase must degrade to "not configured" rather than to a crash at import
+// time. In the browser Vite's values win; outside it, `process.env` is used, so
+// the same module can be pointed at a local database by a test harness.
+const viteEnv = (typeof import.meta !== "undefined" && import.meta.env) || {};
+// `globalThis.process` rather than `process`: the browser has no `process`, and
+// a bare reference to it is a `no-undef` error even behind a `typeof` guard.
+const nodeEnv =
+  (typeof globalThis !== "undefined" && globalThis.process?.env) || {};
+const env = { ...nodeEnv, ...viteEnv };
+const supabaseUrl = env.VITE_SUPABASE_URL;
+const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY;
 
 /**
  * True when both Supabase env vars are present.
