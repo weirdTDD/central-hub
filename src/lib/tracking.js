@@ -255,6 +255,36 @@ export async function updateSessionAttribution(id, values = {}) {
 }
 
 /**
+ * Finds the session that was built from an observation.
+ *
+ * WHY this exists: a classification proposal is about an OBSERVATION, but
+ * attribution lives on the SESSION. The session that contains the observation
+ * is the one that has to be attributed, so the two are joined here rather than
+ * in the UI.
+ *
+ * `observation_ids` is a `uuid[]`, so the join is a server-side `@>` and not a
+ * scan of the caller's sessions.
+ *
+ * @param {string} observationId
+ * @returns {Promise<object|null>} the session, or null when the observation
+ *   belongs to no session
+ */
+export async function findSessionByObservationId(observationId) {
+  if (typeof observationId !== "string" || observationId.trim() === "") {
+    throw new Error("Finding a session needs an observation id.");
+  }
+
+  const { data, error } = await supabase
+    .from(SESSIONS_TABLE)
+    .select(SESSION_COLUMNS)
+    .contains("observation_ids", [observationId])
+    .limit(1);
+
+  if (error) throw error;
+  return data?.[0] ?? null;
+}
+
+/**
  * Deletes a session. Its corrections are removed with it (ON DELETE CASCADE).
  *
  * WHY the RETURNING clause: a delete that matches no row is NOT an error in

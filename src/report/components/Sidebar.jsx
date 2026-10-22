@@ -3,6 +3,7 @@ import {
   Bell,
   BarChart3,
   Clock,
+  MessageSquare,
   LayoutDashboard,
   ListTodo,
   LogOut,
@@ -35,6 +36,7 @@ const navigation = [
   { name: "Tracking", href: "/tracking", icon: Clock },
   { name: "Notifications", href: "/notifications", icon: Bell },
   { name: "Integrations", href: "/integrations", icon: Plug },
+  { name: "Ask", href: "/ask", icon: MessageSquare },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
@@ -56,19 +58,22 @@ export default function AppSidebar({ currentPath = "/reports" }) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigation.map(({ name: label, href, icon: Icon }) => (
-                <SidebarMenuItem key={label}>
-                  <SidebarMenuButton
-                    render={<Link to={href} />}
-                    isActive={currentPath === href}
-                    tooltip={label}
-                    onClick={() => setOpenMobile(false)}
-                  >
-                    <Icon />
-                    <span>{label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navigation.map(({ name: label, href, icon }) => {
+                const Icon = icon;
+                return (
+                  <SidebarMenuItem key={label}>
+                    <SidebarMenuButton
+                      render={<Link to={href} />}
+                      isActive={currentPath === href}
+                      tooltip={label}
+                      onClick={() => setOpenMobile(false)}
+                    >
+                      <Icon />
+                      <span>{label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { Shield } from "lucide-react";
+import { Code2, FileJson, Globe, Shield } from "lucide-react";
+import { listAdapters } from "../../features/integrations/contract.js";
 
 // The account providers this build does not have.
 //
@@ -52,15 +53,54 @@ const ICONS = {
   saml: () => <Shield className="h-5 w-5 text-gray-500" />,
 };
 
+const CONNECTOR_ICONS = {
+  local_activity_file: FileJson,
+  vscode: Code2,
+  browser: Globe,
+};
+
 export default function IntegrationScreen() {
+  const available = listAdapters().filter((adapter) => adapter.implemented);
+
   return (
     <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-      <h2 className="text-base font-semibold text-foreground">Integrations</h2>
+      <h2 className="text-base font-semibold text-foreground">Connectors</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        An integration is an independent, documented bridge between an outside
+        A connector is an independent, documented bridge between an outside
         source of activity and Central Hub. It brings records in as observations,
         which then become sessions and task attribution.
       </p>
+
+      <h3 className="mt-6 text-sm font-semibold text-foreground">Available</h3>
+      <ul className="mt-3 space-y-3">
+        {available.map((adapter) => {
+          const Icon = CONNECTOR_ICONS[adapter.id] ?? FileJson;
+          return (
+            <li
+              key={adapter.id}
+              className="flex items-center justify-between gap-4 rounded-xl border border-border bg-background px-4 py-3"
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground">
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground">
+                    {adapter.label}
+                  </p>
+                  <p className="text-sm text-muted-foreground">{adapter.summary}</p>
+                </div>
+              </div>
+              <Link
+                to="/integrations"
+                className="inline-flex shrink-0 items-center rounded-xl bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+              >
+                Open
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
 
       <h3 className="mt-6 text-sm font-semibold text-foreground">
         Account and single sign-on
@@ -99,19 +139,6 @@ export default function IntegrationScreen() {
         })}
       </ul>
 
-      <h3 className="mt-6 text-sm font-semibold text-foreground">
-        Activity data
-      </h3>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Activity files are imported on the Integrations page, where each adapter
-        states what it can access and what it writes.
-      </p>
-      <Link
-        to="/integrations"
-        className="mt-3 inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-      >
-        Open Integrations
-      </Link>
     </section>
   );
 }

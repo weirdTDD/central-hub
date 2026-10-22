@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "verify": "node scripts/verify-ai.mjs && node scripts/verify-contracts.mjs && node scripts/verify-integrations.mjs && node scripts/verify-notifications.mjs && node scripts/verify-planned-actual.mjs && node scripts/verify-today-view.mjs && node scripts/verify-tracking.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -17,14 +18,17 @@
     "@radix-ui/react-popover": "^1.1.15",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
+    "@shadcn/react": "^0.3.1",
     "@supabase/supabase-js": "^2.118.0",
     "@tailwindcss/vite": "^4.1.18",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cn": "^0.5.0",
     "date-fns": "^4.1.0",
     "echarts": "^6.0.0",
     "echarts-for-react": "^3.0.6",
     "lucide-react": "^0.561.0",
+    "radix-ui": "^1.8.1",
     "react": "^19.2.3",
     "react-day-picker": "^9.12.0",
     "react-dom": "^19.2.3",

@@ -77,6 +77,11 @@ export async function runAdapterSync({
     if (!adapter || typeof adapter.parse !== "function" || typeof adapter.toObservations !== "function") {
       throw new Error("An adapter must provide parse() and toObservations().");
     }
+    if (adapter.implemented === false) {
+      throw new Error(
+        `${adapter.label || adapter.id} is not available in this build, so it cannot import anything.`
+      );
+    }
 
     // (a) Resolve the connection: the row the caller brought, the one this user
     // already has for the provider, or a new one. There is exactly one connection

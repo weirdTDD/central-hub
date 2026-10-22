@@ -316,6 +316,65 @@ Because the schema is split across five versioned migrations, applying it by han
 
 **NOT verified:** the script was not run against the live project — there is no `service_role` key, database password or management token in this environment, so it still has to be applied from the Supabase SQL Editor.
 
+### Phase 7 — AI assistance and evidence-based reviews (2026-08-21)
+
+Phase 7 was started. The live schema is now applied, so the spec's gate ("add optional AI capabilities only after the underlying data is reliable") is open.
+
+**Decisions taken (with the user):**
+- Grok is used to **classify ambiguous activity** into tasks with confidence levels. This is the spec's "Classifying ambiguous activity with confidence levels" capability, so it lives in the AI layer rather than in the integration adapter contract.
+- The data that may be sent to xAI is **aggregates + task titles + task notes**. Window titles are **not** included by default.
+- xAI is called through a **Supabase Edge Function**, so the API key never enters the JS bundle.
+
+**What was built:**
+
+- **`src/features/ai/contract.js`** — the capabilities (`day_summary`, `classify_activity`, `priorities`), the run and proposal states, the confidence rules and `validateAiResult()`. A model's answer is UNTRUSTED input: a malformed answer, a missing field or a confidence above 1 is refused rather than shown.
+- **`src/features/ai/evidence.js`** — the data-minimisation layer, and the single definition of what may leave the device. It builds the evidence package (aggregates, task titles, task notes) and **withholds window titles unless the user opted in**, and never includes the email address or the display name. What it withholds is returned alongside what it sends, so the UI can disclose it. The package is bounded (notes truncated, task and activity lists capped) and carries a `digest` that identifies exactly what was sent.
+- **`src/features/ai/localProvider.js`** — the on-device provider. It answers every capability with plain rules and no network, which is how the spec's "the app MUST fully work with AI disabled or unconfigured" is kept. It matches activity to tasks by shared words and says WHICH words matched, so a proposal can be argued with.
+- **`src/features/ai/xaiProvider.js` + `provider.js`** — the xAI client and the registry. The registry falls back to the on-device provider when the selected one is unavailable, so the app never depends on a model.
+- **`supabase/functions/ai-analytics/index.ts`** — the Edge Function. It holds `XAI_API_KEY`, authenticates the caller, and **rebuilds the evidence server-side from the caller's own rows**; the client sends record IDS, not content, so it cannot ask for somebody else's records nor smuggle extra data into the request. It writes the `ai_runs` row itself, so the trace is complete even if the client disappears.
+- **`supabase/migrations/20261020130000_ai_phase7.sql`** — `ai_runs` (the traceability record: capability, provider, model, input digest, answer), `ai_classification_proposals` (a proposal is `pending` until the user decides) and `ai_preferences` (provider choice + the window-title opt-in, default off). RLS on all three, `anon` granted nothing, check constraints on the capability, the run state, the proposal state and the confidence range.
+- **`src/lib/ai.js`** — the bounded, owner-scoped data access. **`src/lib/tracking.js`** gained `findSessionByObservationId()`.
+- **UI** — `src/features/ai/InsightsPanel.jsx` on the reports page: the analysis is only ever run when the user asks, the panel states which provider answered, and a classification is listed as a **proposal**. `src/features/ai/ClassificationReview.jsx` is the review step: accepting attributes the session to the task and records HOW it was attributed (`rule` for the on-device provider, `inferred` for a model), so it is shown as a suggestion rather than a confirmed fact; rejecting changes nothing but the proposal's own state.
+
+**Two defects found and fixed while building:**
+- The Phase 7 policy-drop loop used `pg_policy.policyname` / `schemaname` / `tablename`, which do not exist — the real columns are `polname` and `polrelid`. The migration aborted; the error was caught by the Docker validation and the loop now matches the pattern the working migrations use.
+- `src/lib/supabase.js` read `import.meta.env` unguarded, so importing it outside Vite (the Node verification scripts) threw at module load. It is now read defensively, so the module loads in Node, Deno and Vite.
+
+**A calibration change:** `MIN_ACCEPTABLE_CONFIDENCE` was 0.6 and is now **0.5**, matching `ATTRIBUTION_SUGGESTION_THRESHOLD` in `src/features/tracking/sessionUtils.js`, so a suggestion is surfaced at the same confidence in both places. At 0.6 the on-device classifier almost never fired.
+
+**Verified:** `npm run verify` → **239 assertions, 0 failed** across all seven verification scripts (the new `scripts/verify-ai.mjs` adds 29, and a `verify` script was added to `package.json` so they run with one command). The Phase 7 migration was applied against **PostgreSQL 18 in Docker** with the Supabase roles emulated: all 15 tables exist, RLS is enabled on 15 of 15, the `supabase_realtime` publication holds all 15, the whole chain is idempotent, an invalid capability and a confidence above 1 are both refused by the CHECK constraints, and `anon` is refused on `ai_runs`. `npm run build` → succeeds (4287 modules). `npm run lint` → 5 errors: the 3 pre-existing ones, plus 2 in `src/components/ui/sidebar.jsx` and `src/hooks/use-mobile.js` from a concurrent session's new files. Every file in this change set is lint-clean.
+**NOT verified:** the Edge Function was **not deployed** and was **not called** — it needs `supabase secrets set XAI_API_KEY=…` and `supabase functions deploy ai-analytics`, neither of which can be done from here. The live project also does not yet have the Phase 7 tables, so the panel currently runs the on-device provider only.
+
+### The "[object Object]" uuid bug (2026-08-21)
+
+Pressing **Suggest priorities** failed with:
+
+```
+invalid input syntax for type uuid: "[object Object]"
+```
+
+**Cause.** `insertAiRun()` returned the whole inserted **row**, but the caller passed it on as if it were the run's **id**. `completeAiRun()` then ran `.eq("id", rowObject)`, PostgREST stringified the object into the query as `[object Object]`, and Postgres rejected it as a uuid. The integrations code already had the right shape (`startSyncRun()` returns a row and the caller uses `run.id`); the AI code did not.
+
+It was not visible in the code review because the shape is type-plausible in JavaScript: a row object *looks* like a value that could be an id, and nothing rejects it until the database does.
+
+**Fix.**
+- `insertAiRun()` now returns the **id** (`data.id`), not the row.
+- `assertUuidId()` was added to `src/lib/ai.js` and is applied at every id boundary — `completeAiRun()`, `decideClassificationProposal()` and the `observation_id` of a proposal. It turns the confusing database error into a message that names the mistake: *"The id of the AI run to complete must be a uuid string, not an object."*
+- `src/lib/ai.js` now imports `"./supabase.js"` with its extension, so the module loads in Node and the guard can be asserted directly.
+
+**Verified end to end, against a real PostgREST and a real Postgres.** A harness was written (`scripts/verify-ai-live.sh` + `scripts/verify-ai-live.mjs`): it starts PostgREST 12.2.3 and PostgreSQL 18 in Docker, applies `supabase/apply-all.sql`, mints a real HS256 JWT, and runs the **actual** functions that failed. It asserts five things, and all five pass:
+- a run is created and its id is a uuid **string**;
+- the run can be completed — the exact query that failed before;
+- the completed run is readable by its owner;
+- **the old shape still fails exactly as it did** — passing the row produces `invalid input syntax for type uuid: "[object Object]"`, which is the reported error reproduced against a real database;
+- the id check refuses a row before the database ever sees it.
+
+Two harness bugs were found and fixed on the way, both worth knowing about: the Supabase client appends `/rest/v1` to the project URL (correct for Supabase's gateway, wrong for a bare PostgREST), so the harness needs a gateway that strips the prefix; and PostgREST's `auth.uid()` must read `request.jwt.claims`, not `request.jwt.claim.sub`, or every RLS policy silently evaluates against NULL.
+
+**Also fixed:** `src/lib/supabase.js` now reads its environment defensively — Vite's `import.meta.env` first, `globalThis.process.env` as the fallback — so the same module can be pointed at a local database by a test harness. The fallback uses `globalThis.process` because a bare `process` is a `no-undef` error even behind a `typeof` guard.
+
+**Verified:** `npm run verify` → **241 assertions, 0 failed**. `bash scripts/verify-ai-live.sh` → **5 passed, 0 failed** against real PostgREST + Postgres. `npm run build` → succeeds (4287 modules). `npm run lint` → 5 errors: the 3 pre-existing ones plus 2 in `src/components/ui/sidebar.jsx` and `src/hooks/use-mobile.js` from a concurrent session's new files. Every file in this change set is lint-clean.
+
 ## Open blockers
 
 - **Migrations must be applied to the live project.** No admin credentials are available in this environment: no `service_role` / `sb_secret` key, no database password, no Supabase management access token, and no SQL-execution RPC is exposed. Applying them needs either the service-role key or a manual paste into the Supabase SQL Editor:
