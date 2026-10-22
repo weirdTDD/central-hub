@@ -11,7 +11,7 @@ import {
 // --- 1. Utility: Process Real Data into Heatmap Structure ---
 // This function remains the core logic to convert the flat log array into 
 // a calendar grid structure that React can easily render.
-const processWorkLogs = (logs,year) => {
+const processWorkLogs = (logs, year, activityByDate = {}) => {
   // 1. Map logs to dates and aggregate total time
   const logsByDate = logs.reduce((acc, log) => {
     if (!log.date) return acc;
@@ -43,10 +43,13 @@ const processWorkLogs = (logs,year) => {
       const dateStr = `${year}-${String(mIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
       const dayLogs = logsByDate[dateStr];
       const hasRealData = !!dayLogs && dayLogs.length > 0;
+      const tracked = activityByDate[dateStr] ?? null;
+      const codingSeconds = positiveSeconds(tracked?.coding);
+      const learningSeconds = positiveSeconds(tracked?.learning);
 
       // Only entries with a recorded duration contribute. A missing duration
       // is missing, not zero. The total is summed from the canonical seconds.
-      const totalSeconds = hasRealData
+      const logSeconds = hasRealData
         ? dayLogs.reduce(
             (sum, item) => sum + (durationSecondsOf(item) ?? 0),
             0
@@ -55,22 +58,30 @@ const processWorkLogs = (logs,year) => {
 
       // A day can hold log entries without any recorded duration. That is
       // "data present, time unknown" — it must not be painted as activity.
+      // Coding and learning seconds are their own records and do paint the day.
       const hasRecordedDurationDay = hasRealData && dayLogs.some(hasRecordedDuration);
+      const hasTracked = codingSeconds != null || learningSeconds != null;
+      const paintSeconds =
+        (hasRecordedDurationDay ? logSeconds : 0) +
+        (codingSeconds ?? 0) +
+        (learningSeconds ?? 0);
 
       let level = 0;
-      if (hasRecordedDurationDay) {
-        // Intensity calculation logic (thresholds in seconds)
-        if (totalSeconds > 5 * 3600) level = 4;
-        else if (totalSeconds > 3 * 3600) level = 3;
-        else if (totalSeconds > 3600) level = 2;
+      if (hasRecordedDurationDay || hasTracked) {
+        if (paintSeconds > 5 * 3600) level = 4;
+        else if (paintSeconds > 3 * 3600) level = 3;
+        else if (paintSeconds > 3600) level = 2;
         else level = 1;
       }
 
       const dayData = {
         level,
-        hasData: hasRealData,
-        hasRecordedDuration: hasRecordedDurationDay,
-        date: dateStr, // Every cell has a date for the hover tooltip
+        hasData: hasRealData || hasTracked,
+        hasRecordedDuration: hasRecordedDurationDay || hasTracked,
+        codingSeconds,
+        learningSeconds,
+        logSeconds: hasRecordedDurationDay ? logSeconds : null,
+        date: dateStr,
         logs: dayLogs || []
       };
 
@@ -104,7 +115,7 @@ const TooltipCard = ({ data, position }) => {
   const displayDate = new Date(data.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 
   // Tooltip for days with no activity
-  if (!data.hasData || data.logs.length === 0) {
+  if (!data.hasData) {
       return (
           <div 
               className="pointer-events-none fixed z-50 rounded-xl border border-border bg-popover p-2 text-xs text-muted-foreground shadow-md"
@@ -119,15 +130,36 @@ const TooltipCard = ({ data, position }) => {
       );
   }
 
-  // Tooltip for days WITH activity
-  const primaryLog = data.logs[0]; 
+  const trackedLines = [
+    data.codingSeconds != null ? `Coding ${formatDurationFromSeconds(data.codingSeconds)}` : null,
+    data.learningSeconds != null ? `Learning ${formatDurationFromSeconds(data.learningSeconds)}` : null,
+  ].filter(Boolean);
+
+  if (data.logs.length === 0) {
+    return (
+      <div
+        className="pointer-events-none fixed z-50 w-56 rounded-2xl border border-border bg-popover p-3 text-popover-foreground shadow-xl"
+        style={{
+          left: position.x,
+          top: position.y,
+          transform: 'translate(-10%, -110%)'
+        }}
+      >
+        <p className="text-xs font-medium text-muted-foreground">{displayDate}</p>
+        <ul className="mt-2 space-y-1 text-sm">
+          {trackedLines.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  // Tooltip for days WITH a work log. Coding and learning stay labeled apart from it.
+  const primaryLog = data.logs[0];
   const extraCount = data.logs.length - 1;
-  const totalDuration = data.logs.reduce(
-    (sum, log) => sum + (durationSecondsOf(log) ?? 0),
-    0
-  );
-  const totalDurationString = data.hasRecordedDuration
-    ? formatDurationFromSeconds(totalDuration)
+  const totalDurationString = data.logSeconds != null
+    ? formatDurationFromSeconds(data.logSeconds)
     : "Not recorded";
 
 
@@ -165,6 +197,14 @@ const TooltipCard = ({ data, position }) => {
         </div>
       )}
 
+      {trackedLines.length > 0 ? (
+        <ul className="mb-3 space-y-1 text-xs text-muted-foreground">
+          {trackedLines.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      ) : null}
+
       <div className="flex items-center justify-between pt-2 border-t border-border">
         <div className="flex gap-2">
            <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
@@ -178,7 +218,7 @@ const TooltipCard = ({ data, position }) => {
 
 
 // --- 3. The Dedicated Heatmap Component ---
-const Heatmap = ({ logs, year, onDayClick, onDayHover }) => {
+const Heatmap = ({ logs, year, activityByDate = {}, onDayClick, onDayHover }) => {
   
   // Tooltip control
   const [hoveredData, setHoveredData] = useState(null);
@@ -187,7 +227,10 @@ const Heatmap = ({ logs, year, onDayClick, onDayHover }) => {
   const scrollContainerRef = useRef(null);
 
   // Re-process the logs whenever the 'logs' prop changes (e.g., from DateRangePicker)
-  const calendarData = useMemo(() => processWorkLogs(logs, year), [logs, year]);
+  const calendarData = useMemo(
+    () => processWorkLogs(logs, year, activityByDate),
+    [logs, year, activityByDate]
+  );
 
   const scrollLeft = () => scrollContainerRef.current?.scrollBy({ left: -300, behavior: 'smooth' });
   const scrollRight = () => scrollContainerRef.current?.scrollBy({ left: 300, behavior: 'smooth' });
@@ -291,7 +334,8 @@ const Heatmap = ({ logs, year, onDayClick, onDayHover }) => {
                         key={`${mIndex}-${wIndex}-${dIndex}`}
                         onMouseEnter={(e) => handleMouseEnter(dayData, e)}
                         onMouseLeave={handleMouseLeave}
-                        onClick={() => handleDayClick(dayData)} // Triggers DayDetailDrawer
+                        onClick={() => handleDayClick(dayData)}
+                        title={dayData.date ? dayTitle(dayData) : undefined}
                         className={`w-3 h-3 rounded-[2px] ${getColorClass(dayData)} ${dayData.date ? 'hover:opacity-80 cursor-pointer' : ''} transition`}
                       ></div>
                     ))}
@@ -305,5 +349,21 @@ const Heatmap = ({ logs, year, onDayClick, onDayHover }) => {
     </>
   );
 };
+
+function dayTitle(dayData) {
+  if (!dayData?.date) return undefined;
+  const parts = [dayData.date];
+  if (dayData.logSeconds != null) parts.push(`work log ${formatDurationFromSeconds(dayData.logSeconds)}`);
+  if (dayData.codingSeconds != null) parts.push(`coding ${formatDurationFromSeconds(dayData.codingSeconds)}`);
+  if (dayData.learningSeconds != null) parts.push(`learning ${formatDurationFromSeconds(dayData.learningSeconds)}`);
+  if (parts.length === 1 && dayData.hasData) parts.push("log entries, duration not recorded");
+  return parts.join(", ");
+}
+
+function positiveSeconds(value) {
+  const seconds = Number(value);
+  if (!Number.isFinite(seconds) || seconds <= 0) return null;
+  return seconds;
+}
 
 export default Heatmap;

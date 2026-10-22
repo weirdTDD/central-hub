@@ -3,10 +3,16 @@ import { TbShare2 } from 'react-icons/tb';
 import Heatmap from '../heatmap/Heatmap';
 import DateRangePicker from '../components/DateRangePicker';
 import { isWithinInterval, parseISO } from 'date-fns';
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLogs } from '../../dashboard/LogsContext';
 import { downloadCsv } from '../../dashboard/logUtils';
+import { localDayKey, systemTimeZone } from '../../lib/dates';
+import { isSupabaseConfigured } from '../../lib/supabase';
+import { listCodingObservations, listLearningObservations } from '../../lib/tracking';
+import { coveredSeconds as codingCoveredSeconds, heartbeatsFromRows as codingHeartbeatsFromRows } from '../../../extensions/coding-tracker/lib/codingTime.js';
+import { coveredSeconds as learningCoveredSeconds, heartbeatsFromRows as learningHeartbeatsFromRows } from '../../../extensions/learning-tracker/lib/learningTime.js';
+import { reportRangeBounds } from '../../features/coding/range.js';
 import KpiSummary from './KpiSummary';
 import {
   Select,
@@ -79,6 +85,8 @@ const ProductivityReport = () => {
     ? dateRange.from.getFullYear()
     : new Date().getFullYear();
 
+  const activity = useTrackedDays(dateRange?.from, dateRange?.to);
+
   // The heatmap renders one calendar per year that actually holds data. Rendering a
   // single year would silently drop every log from the other years of the range,
   // while the KPI cards, charts and CSV export would still include them.
@@ -88,9 +96,13 @@ const ProductivityReport = () => {
       const year = Number(log.date?.slice(0, 4));
       if (Number.isInteger(year) && year > 0) years.add(year);
     }
+    for (const day of Object.keys(activity.byDate)) {
+      const year = Number(day.slice(0, 4));
+      if (Number.isInteger(year) && year > 0) years.add(year);
+    }
     if (years.size === 0) years.add(selectedYear);
     return [...years].sort((a, b) => a - b);
-  }, [filteredLogs, selectedYear]);
+  }, [filteredLogs, activity.byDate, selectedYear]);
 
   const handleDayClick = (dayData) => {
     console.log('Clicked day:', dayData);
@@ -106,7 +118,7 @@ const ProductivityReport = () => {
       <div className="mb-8 grid items-center gap-6 sm:grid-cols-1 md:grid-cols-2">
         <div>
           <h1 className="py-3 text-3xl font-bold text-foreground">Productivity Report</h1>
-          <p className="mt-1 font-medium text-muted-foreground">View and export your recorded work activity.</p>
+          <p className="mt-1 font-medium text-muted-foreground">View and export your recorded work activity. The calendar also includes coding and learning time.</p>
         </div>
         <div className='flex items-center md:justify-end gap-4 mb-5'>
           <button
@@ -168,11 +180,21 @@ const ProductivityReport = () => {
           <Heatmap
             logs={filteredLogs}
             year={year}
+            activityByDate={activity.byDate}
             onDayClick={handleDayClick}
             onDayHover={() => {}}
           />
         </div>
       ))}
+
+      {activity.error ? (
+        <p role="alert" className="mb-6 text-sm text-destructive">{activity.error}</p>
+      ) : null}
+      {activity.truncated ? (
+        <p className="mb-6 text-sm text-muted-foreground">
+          This range has more coding or learning heartbeats than were loaded, so the calendar uses the loaded ones only.
+        </p>
+      ) : null}
 
       {truncated ? (
         <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
@@ -234,3 +256,71 @@ const ProductivityReport = () => {
 };
 
 export default ProductivityReport;
+
+function useTrackedDays(from, to) {
+  const bounds = useMemo(() => reportRangeBounds(from, to), [from, to]);
+  const timeZone = useMemo(() => systemTimeZone(), []);
+  const requestKey = `${bounds.from ?? ""}|${bounds.to ?? ""}|${timeZone}`;
+  const [seenKey, setSeenKey] = useState(requestKey);
+  const [byDate, setByDate] = useState({});
+  const [truncated, setTruncated] = useState(false);
+  const [error, setError] = useState("");
+
+  if (seenKey !== requestKey) {
+    setSeenKey(requestKey);
+    setByDate({});
+    setTruncated(false);
+    setError("");
+  }
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return undefined;
+    let active = true;
+    Promise.all([
+      listCodingObservations({ from: bounds.from, to: bounds.to, limit: 1000 }),
+      listLearningObservations({ from: bounds.from, to: bounds.to, limit: 1000 }),
+    ])
+      .then(([coding, learning]) => {
+        if (!active) return;
+        setByDate(
+          secondsByDay(
+            codingHeartbeatsFromRows(coding.rows),
+            learningHeartbeatsFromRows(learning.rows),
+            timeZone
+          )
+        );
+        setTruncated(coding.truncated || learning.truncated);
+      })
+      .catch((caught) => {
+        if (!active) return;
+        setByDate({});
+        setError(caught?.message || "Could not load coding and learning time for the calendar.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [bounds.from, bounds.to, requestKey, timeZone]);
+
+  return { byDate, truncated, error };
+}
+
+function secondsByDay(codingBeats, learningBeats, timeZone) {
+  const days = {};
+  const place = (beats, key, covered) => {
+    const groups = new Map();
+    for (const beat of beats) {
+      const day = localDayKey(beat.occurredAt, timeZone);
+      if (!day) continue;
+      if (!groups.has(day)) groups.set(day, []);
+      groups.get(day).push(beat);
+    }
+    for (const [day, list] of groups) {
+      const seconds = covered(list);
+      if (seconds == null || seconds <= 0) continue;
+      days[day] = { coding: null, learning: null, ...days[day], [key]: seconds };
+    }
+  };
+  place(codingBeats, "coding", codingCoveredSeconds);
+  place(learningBeats, "learning", learningCoveredSeconds);
+  return days;
+}
