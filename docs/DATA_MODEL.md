@@ -552,7 +552,7 @@ Migration `supabase/migrations/20261022140000_coding_activity.sql` adds nullable
 
 | Column | Meaning |
 |--------|---------|
-| `activity_kind` | `'coding'`, and after the learning migration also `'learning'`, or NULL. NULL is every observation that is neither. |
+| `activity_kind` | `'coding'` or NULL. NULL is every non-coding observation. |
 | `editor` | `'cursor'` or `'vscode'`, or NULL. |
 | `project_name` | Workspace folder name. Not a path. |
 | `language` | Editor language id. |
@@ -562,24 +562,6 @@ Migration `supabase/migrations/20261022140000_coding_activity.sql` adds nullable
 - **Sessions:** coding time is **not** copied into `public.sessions`. The timeline is derived by `foldHeartbeats`. Session totals and coding totals stay separate (D-012).
 - **Delete:** deleting the connection cascades to heartbeats that reference it. Deleting one local day deletes the coding observations in that range and leaves other observations and sessions alone.
 - **Missing:** a day with no heartbeats is "nothing recorded", not zero, until the UI is showing a measured total.
-
-### Learning heartbeats (observations columns, 2026-10-22)
-
-Migration `supabase/migrations/20261022150000_learning_activity.sql` widens `activity_kind` and adds nullable columns. Apply it after the coding migration. The coding migration will not narrow `activity_kind` back to coding-only once `learning` is in the check.
-
-| Column | Meaning |
-|--------|---------|
-| `activity_kind` | `'learning'` for this collector. `'coding'` stays allowed. NULL is every other observation. |
-| `site_host` | Allowlist host, such as `freecodecamp.org`. Not a URL, path, or query. |
-| `page_title` | Page title when it is safe to keep. A URL is not stored here. |
-| `course_label` | Course name when the page shape is known (freeCodeCamp). NULL otherwise. |
-| `lesson_label` | Lesson or page name. Not a URL path. |
-
-- **What a row is:** one heartbeat of active browser time on an allowlisted site. `occurred_at` is the start, `duration_seconds` is the measured span, `source` is `collector`, `application` is the site label, `window_title` stays NULL, and `integration_id` points at the `learning_tracker` connection when the extension sent it. Coding columns (`editor`, `project_name`, `language`, `file_name`) stay NULL.
-- **Allowlist:** `integrations.config.sites` on the `learning_tracker` row. An explicit empty array tracks nothing. A missing `sites` key means the default: freeCodeCamp curriculum (`freecodecamp.org`, path prefix `/learn`). The address is matched in memory and is not a column.
-- **Sessions:** learning time is **not** copied into `public.sessions` and is **not** added to coding totals (D-013). The timeline is derived by `foldHeartbeats` in `extensions/learning-tracker/lib/learningTime.js`.
-- **Delete:** deleting the connection cascades to heartbeats that reference it. Deleting one local day deletes the learning observations in that range and leaves coding observations, other observations, and sessions alone.
-- **Missing:** a day with no learning heartbeats is "nothing recorded", not zero.
 
 ## Relationships / ownership rules
 

@@ -231,30 +231,6 @@ increment when those tables and their UI exist.
 
 **Date:** 2026-10-22
 
-## D-013 — Learning time is heartbeats on the same observations, for an allowlist of sites
-
-**Context:** Central Hub needs the time the owner spends learning in the browser, on sites he chooses (freeCodeCamp, and others he adds). PR 1 already stores coding time as observations (`activity_kind = coding`) and derives the timeline in the app. A second table, or copying learning time into `sessions`, would split the model or double-count an hour that is also logged by hand.
-
-**Options considered:**
-1. A new `learning_sessions` table and a separate timeline.
-2. Reuse coding columns (`file_name`, `project_name`, `window_title`) for the site, course, and page title.
-3. Add `activity_kind = 'learning'` and dedicated columns (`site_host`, `page_title`, `course_label`, `lesson_label`) on `observations`. The browser extension writes those rows. The app derives the timeline. Nothing is copied into `sessions`.
-
-**Choice:** Option 3.
-
-**Consequences:**
-- The extension is Manifest V3 and has no build step. Chrome and Edge 121+ load `background.service_worker`. Firefox 121+ loads the same file as an event page via `background.scripts`. The APIs are callback-style so both runtimes work. Permissions are `tabs`, `idle`, `storage`, and `alarms`. There is no host permission and no `<all_urls>`.
-- Time counts only while the window is focused, `chrome.idle` reports `active`, the active tab matches the allowlist, and the extension is not paused. The stored span is the time between those samples. Idle time is not bridged. Leaving or blurring can keep a gap of at most one heartbeat (60 seconds). A longer gap is missing, not invented.
-- The URL is used in memory to match the allowlist and is never queued or sent. A page outside the list produces a leave event with no address. A page title that is itself a URL, or that carries a token-like query, is dropped.
-- The default allowlist is freeCodeCamp's curriculum only (`freecodecamp.org`, path prefix `/learn`). An explicit empty list means track nothing. A missing `sites` key means the owner has not saved a list yet, so the default applies. Suggestions (MDN, javascript.info, and others) are not tracked until they are added. The list lives in `integrations.config.sites` for provider `learning_tracker`. The app and the extension options edit the same row; the last successful save wins. A dirty local edit in the extension wins over the server copy until that edit is written.
-- freeCodeCamp course and lesson names are read from `/learn/{course}/{block}/{challenge}`. Other sites store the site and a sanitized title, and leave the course empty.
-- Each heartbeat id is derived from the connection, site, course, lesson, page title, start, and duration. A retry does not create a second row. Offline heartbeats stay in extension storage (limit 2000, oldest dropped) until they send.
-- The extension signs in as the user (email and password once; refresh token in `chrome.storage.local`, the same accepted risk as D-008). The password is not stored. The anon key is the public project key.
-- Learning totals are labeled as learning time. They are not added to coding totals, session totals, or work logs. A day with no heartbeats is "nothing recorded", not zero.
-- The migration is `supabase/migrations/20261022150000_learning_activity.sql`. The coding migration's activity-kind check is re-apply-safe: it does not narrow the check back to coding-only once `learning` is present. The learning migration is not applied to the live project from this environment.
-
-**Date:** 2026-10-22
-
 ## D-011 — Event triggers: a task completion, read from the task table
 
 **Context:** D-010 built the clock half of the workflow foundation: "time-based and event-based triggers" is what the spec asks for, and the event half was left unimplemented on purpose (the engine refused it with a reason). An event trigger needs a way to notice that something happened, a way to know it has already been handled, and a way to guarantee it is not handled twice.
