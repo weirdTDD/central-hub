@@ -12,6 +12,7 @@ import {
 } from "../../../extensions/learning-tracker/lib/learningTime.js";
 import { isSupabaseConfigured } from "../../lib/supabase";
 import { listLearningObservations } from "../../lib/tracking";
+import { ShareBars } from "../progress/Bars.jsx";
 import { reportRangeBounds } from "../coding/range.js";
 
 export default function LearningReportPanel({ from, to }) {
@@ -90,24 +91,10 @@ export default function LearningReportPanel({ from, to }) {
       {state === "ready" && total != null ? (
         <>
           <p className="mt-4 text-2xl font-semibold">{durationText(total)}</p>
-          <h3 className="mt-4 text-sm font-semibold">Sites</h3>
-          <ul className="mt-2 space-y-2 text-sm">
-            {sites.map((site) => (
-              <li key={site.key} className="flex items-center justify-between gap-3 rounded-xl bg-muted px-3 py-2">
-                <span className="font-medium">{site.key}</span>
-                <span className="text-muted-foreground">{durationText(site.activeSeconds)}</span>
-              </li>
-            ))}
-          </ul>
-          <h3 className="mt-4 text-sm font-semibold">Courses</h3>
-          <ul className="mt-2 space-y-2 text-sm">
-            {courses.map((course) => (
-              <li key={course.key} className="flex items-center justify-between gap-3 rounded-xl bg-muted px-3 py-2">
-                <span className="font-medium">{course.key}</span>
-                <span className="text-muted-foreground">{durationText(course.activeSeconds)}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            <ShareBars title="Sites" rows={sites} />
+            <ShareBars title="Courses" rows={courses} />
+          </div>
         </>
       ) : null}
       {truncated ? (

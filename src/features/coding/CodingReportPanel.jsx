@@ -14,6 +14,7 @@ import {
 } from "../../../extensions/coding-tracker/lib/codingTime.js";
 import { isSupabaseConfigured } from "../../lib/supabase";
 import { listCodingObservations } from "../../lib/tracking";
+import { ShareBars } from "../progress/Bars.jsx";
 import { reportRangeBounds } from "./range.js";
 
 export default function CodingReportPanel({ from, to }) {
@@ -106,14 +107,9 @@ export default function CodingReportPanel({ from, to }) {
               Projects overlap in time. The total counts each minute once, so it is smaller than the sum of the projects.
             </p>
           ) : null}
-          <ul className="mt-4 space-y-2 text-sm">
-            {projects.map((project) => (
-              <li key={project.key} className="flex items-center justify-between gap-3 rounded-xl bg-muted px-3 py-2">
-                <span className="font-medium">{project.key}</span>
-                <span className="text-muted-foreground">{durationText(project.activeSeconds)}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-4">
+            <ShareBars title="Projects" rows={projects} />
+          </div>
         </>
       ) : null}
       {truncated ? (
