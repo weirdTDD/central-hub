@@ -18,6 +18,7 @@ import { IntegrationsProvider } from "../features/integrations/IntegrationsConte
 import TrackingPage from "../features/tracking/TrackingPage";
 import { TrackingProvider } from "../features/tracking/TrackingContext";
 import NotificationsPage from "../features/notifications/NotificationsPage";
+import AskPage from "../features/ai/AskPage";
 import { NotificationsProvider } from "../features/notifications/NotificationsContext";
 
 function HomeRedirect() {
@@ -116,6 +117,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <ReportPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/ask"
+          element={
+            <ProtectedRoute>
+              <AskPage />
             </ProtectedRoute>
           }
         />
