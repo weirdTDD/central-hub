@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Central Hub Learning Tracker</title>
+    <link rel="stylesheet" href="ui.css" />
+  </head>
+  <body>
+    <main class="options stack">
+      <header>
+        <h1>Central Hub learning tracker</h1>
+        <p class="muted">
+          Active time is recorded only on the sites below, and only while this window is focused and you are active.
+          Addresses of other sites are not stored. The same list can be edited in Central Hub on the Learning page.
+        </p>
+      </header>
+
+      <section class="stack" aria-labelledby="sign-in-heading">
+        <h2 id="sign-in-heading">Sign in</h2>
+        <p id="session" class="muted">Loading…</p>
+        <div>
+          <label for="url">Supabase URL</label>
+          <input id="url" type="url" autocomplete="off" placeholder="https://your-project.supabase.co" />
+        </div>
+        <div>
+          <label for="anon">Anon key</label>
+          <input id="anon" type="password" autocomplete="off" placeholder="Same value as VITE_SUPABASE_ANON_KEY" />
+        </div>
+        <div>
+          <label for="email">Email</label>
+          <input id="email" type="email" autocomplete="username" />
+        </div>
+        <div>
+          <label for="password">Password</label>
+          <input id="password" type="password" autocomplete="current-password" />
+          <p class="muted">Used once to sign in. It is not stored.</p>
+        </div>
+        <div class="row">
+          <button id="sign-in" class="primary" type="button">Sign in</button>
+          <button id="sign-out" type="button">Sign out</button>
+        </div>
+      </section>
+
+      <section class="stack" aria-labelledby="sites-heading">
+        <h2 id="sites-heading">Tracked sites</h2>
+        <p class="muted">
+          A host matches that host and its www name. Add <code>*.example.com</code> to include subdomains.
+          A path such as <code>freecodecamp.org/learn</code> limits tracking to that path. Query strings are not kept.
+        </p>
+        <div>
+          <label for="label">Name</label>
+          <input id="label" type="text" placeholder="freeCodeCamp" />
+        </div>
+        <div>
+          <label for="pattern">Site</label>
+          <input id="pattern" type="text" placeholder="freecodecamp.org/learn" />
+        </div>
+        <div class="row">
+          <button id="add" class="primary" type="button">Add site</button>
+        </div>
+        <div id="suggestions" class="row"></div>
+        <div id="sites"></div>
+      </section>
+
+      <p id="message" class="error" hidden></p>
+    </main>
+    <script src="options.js"></script>
+  </body>
+</html>

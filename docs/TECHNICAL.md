@@ -185,6 +185,7 @@ pnpm build
 pnpm lint
 
 node scripts/verify-tracking.mjs    # time-tracking domain rules
+node scripts/verify-learning.mjs    # learning allowlist, idle time, queue, and writes
 node scripts/verify-planned-actual.mjs   # planned vs actual: estimates, recorded time, unattributed time
 node scripts/verify-contracts.mjs   # app vocabularies vs the SQL constraints
 node scripts/verify-integrations.mjs   # integration contract, adapter parsing and dedup rules
