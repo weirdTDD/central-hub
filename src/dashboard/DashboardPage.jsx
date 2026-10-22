@@ -8,8 +8,8 @@ import { listNotifications } from "../lib/notifications";
 import { insertTask, listTasks, updateTask } from "../lib/tasks";
 import { listRecentCorrections, listSessions } from "../lib/tracking";
 import { isValidStatusTransition } from "../features/tasks/taskUtils";
-import CodingDayCard from "../features/coding/CodingDayCard";
 import AppShell from "../components/AppShell";
+import HomeBoard from "./HomeBoard";
 import Plan from "../components/Plan";
 import Queue from "../components/Queue";
 import {
@@ -22,8 +22,6 @@ import {
   durationText,
   formatClock,
   formatDayHeading,
-  greetingFor,
-  personName,
   plannedTotalText,
   primaryAction,
   recordedTotalText,
@@ -140,10 +138,7 @@ export default function DashboardPage() {
   const journalState = sectionState([tasks, sessions, corrections]);
   const summaryState = sectionState([tasks, sessions, corrections]);
   const reminderState = sectionState([notifications]);
-  const marksKnown = tasks.status === "ready" && sessions.status === "ready" && corrections.status === "ready";
-  const name = personName(user);
-  const greeting = greetingFor(new Date(), timeZone);
-  const heading = name ? `${greeting}, ${name}` : greeting;
+  const today = useMemo(() => todayKey(timeZone), [timeZone]);
 
   const addTask = async (event) => {
     event.preventDefault();
@@ -209,51 +204,18 @@ export default function DashboardPage() {
 
   return (
     <AppShell currentPath="/dashboard">
-        <div className="mx-auto flex max-w-5xl flex-col gap-6">
-          <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">{heading}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">{formatDayHeading(dayKey)}</p>
-              <p className="mt-1 text-xs text-muted-foreground">Days follow {timeZone}.</p>
-            </div>
-            <Link
-              to="/logs"
-              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              Work logs
-            </Link>
-          </header>
-
-          <nav aria-label="Week" className="-mx-4 px-1 sm:mx-0 sm:px-0">
-            <div className="grid grid-cols-7">
-              {(marksKnown ? view.marks : week?.days ?? []).map((day) => {
-                const selected = day.key === dayKey;
-                const label = marksKnown ? day.label : null;
-                return (
-                  <button
-                    key={day.key}
-                    type="button"
-                    aria-pressed={selected}
-                    aria-label={`${day.weekday} ${day.dayNumber}${
-                      label ? `, ${label}` : marksKnown ? ", nothing due or recorded" : ""
-                    }`}
-                    onClick={() => setDayKey(day.key)}
-                    className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-0.5 py-1.5 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                      selected
-                        ? "bg-primary text-primary-foreground"
-                        : "text-foreground hover:bg-card"
-                    }`}
-                  >
-                    <span className="text-[10px] font-medium uppercase tracking-wide">{day.weekday}</span>
-                    <span className="text-sm font-semibold leading-none">{day.dayNumber}</span>
-                    <span className={`mt-1 text-[9px] leading-tight ${label ? "" : "invisible"}`} aria-hidden={label ? undefined : true}>
-                      {label ?? "—"}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </nav>
+        <div className="mx-auto flex max-w-6xl flex-col gap-6">
+          <HomeBoard
+            user={user}
+            dayKey={dayKey}
+            today={today}
+            timeZone={timeZone}
+            days={week?.days ?? []}
+            onSelectDay={setDayKey}
+            plan={planState === "ready" ? view.plan : []}
+            planState={planState}
+            sessionDayKeys={(view.marks ?? []).filter((day) => day.hasSession).map((day) => day.key)}
+          />
 
           {truncated.length > 0 ? (
             <div role="status" className="rounded-2xl border border-border bg-card px-4 py-3 text-sm">
@@ -274,8 +236,6 @@ export default function DashboardPage() {
             startKey={week?.startKey}
             endKey={week?.endKey}
           />
-
-          <CodingDayCard dayKey={dayKey} timeZone={timeZone} />
 
           <Queue
             items={queue}
