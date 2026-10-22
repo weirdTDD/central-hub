@@ -19,6 +19,8 @@ import { ChartLineDots } from './TaskCompletionChart';
 import TaskStatusChart from './TaskStatusChart';
 import TopLoggedTasks from './TopLoggedTask';
 import PlannedVsActualPanel from '../../features/tracking/PlannedVsActualPanel';
+import InsightsPanel from '../../features/ai/InsightsPanel';
+import AskPanel from '../../features/ai/AskPanel';
 
 const START_OF_DAY = (date) => {
   const next = new Date(date);
@@ -180,12 +182,28 @@ const ProductivityReport = () => {
 
       <KpiSummary logs={filteredLogs} />
 
+      {/* The analysis panel. It is run by the user, never by a background
+          refresh, and it states which provider answered: the on-device
+          provider by default, and only the provider the user selected
+          otherwise. */}
+      <div className="mt-6">
+        <InsightsPanel
+          logs={filteredLogs}
+          from={dateRange?.from?.toISOString() ?? null}
+          to={dateRange?.to?.toISOString() ?? null}
+        />
+      </div>
+
       {/* The plan against the recorded time, for the same range as the rest
           of this report. The panel reads the recorded sessions and the tasks
           itself — the work logs above are a different stream and are never
           mixed into these totals (docs/DECISIONS.md D-007). */}
       <div className="mt-6">
         <PlannedVsActualPanel from={dateRange?.from} to={dateRange?.to} />
+      </div>
+
+      <div className="mt-6">
+        <AskPanel from={dateRange?.from} to={dateRange?.to} />
       </div>
      <div className='mt-10'>
        <ChartLineDots logs={filteredLogs} />
