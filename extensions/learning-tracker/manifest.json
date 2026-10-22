@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "Central Hub Learning Tracker",
+  "version": "0.1.0",
+  "description": "Records active time on the learning sites you choose and sends it to Central Hub.",
+  "permissions": ["tabs", "idle", "storage", "alarms"],
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"],
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Central Hub Learning",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "learning-tracker@central-hub.local",
+      "strict_min_version": "121.0"
+    }
+  }
+}
