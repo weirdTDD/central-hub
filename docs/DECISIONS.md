@@ -210,6 +210,27 @@ increment when those tables and their UI exist.
 
 **Date:** 2026-10-20
 
+## D-012 — Coding time is heartbeats on observations, not rows in sessions
+
+**Context:** Central Hub needs automatic coding time from Cursor and VS Code: active time, idle detection, project, language, file activity, and which editor was in use. Supabase is already the store (observations, sessions, integrations, RLS). The sessions table is the recorded-time stream used by planned-versus-actual. A person can also log that same hour by hand.
+
+**Options considered:**
+1. A new `coding_sessions` table, written by the extension, shown on its own page.
+2. Write derived sessions into `public.sessions` with `source = collector` so the existing journal and planned-versus-actual pick them up.
+3. Store heartbeats as `observations` (`source = collector`, `activity_kind = coding`) and derive the timeline in the app. Do not copy them into `sessions`.
+
+**Choice:** Option 3.
+
+**Consequences:**
+- The extension (one VS Code extension; Cursor runs it too) detects the editor from `vscode.env.appName` (`Cursor` → cursor, anything else → vscode). It records the span between activities inside an idle window (default 120 seconds). Idle time, unfocused time, and a sleep gap are not counted. A single activity with no following activity has no measured span and is not stored.
+- Each heartbeat is an observation with a client id derived from the connection, editor, project, file, start, and duration. A retry does not create a second row. Full paths and window titles are not stored; the file and project columns are names only.
+- `activity_kind` is `'coding'` or NULL. Later sources (browser, chat) can add a value with a migration. The check does not list kinds that do not exist yet.
+- The Coding page, the dashboard card, and the report panel sum heartbeats with the same overlap rule: overlapping time is counted once. Those totals are labeled as coding time and are not added to work logs or to session totals.
+- The extension signs in as the user (email and password once; refresh token in the editor's secret storage). It upserts an `integrations` row with provider `coding_tracker`. Disconnect deletes the heartbeats linked to that row. Offline heartbeats stay in the editor until they send.
+- The migration is `supabase/migrations/20261022140000_coding_activity.sql`. It is not applied to the live project from this environment.
+
+**Date:** 2026-10-22
+
 ## D-011 — Event triggers: a task completion, read from the task table
 
 **Context:** D-010 built the clock half of the workflow foundation: "time-based and event-based triggers" is what the spec asks for, and the event half was left unimplemented on purpose (the engine refused it with a reason). An event trigger needs a way to notice that something happened, a way to know it has already been handled, and a way to guarantee it is not handled twice.

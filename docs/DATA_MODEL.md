@@ -546,6 +546,23 @@ drop table if exists public.approvals, public.notifications,
 - **workflows / workflow_runs / notifications / notification_preferences / approvals** — implemented above (Phase 6, verified locally, not yet live): the schedule, the execution history, the delivery records, the preferences and the approval requests.
 - **event triggers** — implemented above (Phase 6C): one event type, `task_completed`, read from the `tasks` table. A task that reached `completed` without a `completed_at` timestamp produces no event — there is nothing to point at.
 
+### Coding heartbeats (observations columns, 2026-10-22)
+
+Migration `supabase/migrations/20261022140000_coding_activity.sql` adds nullable columns to `public.observations`:
+
+| Column | Meaning |
+|--------|---------|
+| `activity_kind` | `'coding'` or NULL. NULL is every non-coding observation. |
+| `editor` | `'cursor'` or `'vscode'`, or NULL. |
+| `project_name` | Workspace folder name. Not a path. |
+| `language` | Editor language id. |
+| `file_name` | File name. Not a path. |
+
+- **What a row is:** one heartbeat of active editor time. `occurred_at` is the start, `duration_seconds` is the measured span, `source` is `collector`, `integration_id` points at the `coding_tracker` connection when the extension sent it.
+- **Sessions:** coding time is **not** copied into `public.sessions`. The timeline is derived by `foldHeartbeats`. Session totals and coding totals stay separate (D-012).
+- **Delete:** deleting the connection cascades to heartbeats that reference it. Deleting one local day deletes the coding observations in that range and leaves other observations and sessions alone.
+- **Missing:** a day with no heartbeats is "nothing recorded", not zero, until the UI is showing a measured total.
+
 ## Relationships / ownership rules
 
 - All records carry user_id; RLS enforces user A cannot read/modify user B's records.
