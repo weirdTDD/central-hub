@@ -6,7 +6,7 @@
 // the editor's global state and are sent later. Sending them again is safe:
 // each heartbeat has a deterministic id.
 
-import vscode from "vscode";
+import * as vscode from "vscode";
 import {
   DEFAULT_HEARTBEAT_SECONDS,
   DEFAULT_IDLE_SECONDS,
