@@ -7,6 +7,7 @@
 //
 // Exit code 0 = every assertion passed, 1 = at least one failed.
 
+import { activeDayKeys, streakInWeek } from "../src/dashboard/homeBoard.js";
 import {
   PLAN_ITEM_KEYS,
   addDays,
@@ -430,6 +431,25 @@ check("the reminder is the newest unacknowledged in-app notification", () => {
     null,
     "an acknowledged notification is not an open reminder"
   );
+});
+
+check("a week streak counts recorded days back from today and skips a gap", () => {
+  const days = ["2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22", "2026-10-23", "2026-10-24", "2026-10-25"].map(
+    (key) => ({ key })
+  );
+  const active = new Set(["2026-10-19", "2026-10-20", "2026-10-21"]);
+  assertEqual(streakInWeek(days, active, "2026-10-21"), 3, "today included");
+  assertEqual(streakInWeek(days, active, "2026-10-22"), 3, "today empty still counts yesterday");
+  assertEqual(streakInWeek(days, new Set(["2026-10-19"]), "2026-10-21"), 0, "a gap breaks the run");
+  const keys = activeDayKeys({
+    learning: [{ occurredAt: "2026-10-21T15:00:00.000Z", durationSeconds: 60 }],
+    coding: [{ occurredAt: "2026-10-21T16:00:00.000Z", durationSeconds: null }],
+    sessionDayKeys: ["2026-10-20"],
+    timeZone: "UTC",
+  });
+  assert(keys.has("2026-10-21"), "learning with a duration counts");
+  assert(keys.has("2026-10-20"), "a session day counts");
+  assertEqual(keys.size, 2, "a missing coding duration does not add a day");
 });
 
 console.log(`\n${passed} passed, ${failures.length} failed`);

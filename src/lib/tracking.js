@@ -76,12 +76,18 @@ export async function insertObservations(observations = []) {
     // activity. Other inserts leave them off, so a database that has not applied
     // the coding migration still accepts manual and imported observations.
     const activityKind = observation.activityKind ?? observation.activity_kind ?? null;
-    if (activityKind) {
-      row.activity_kind = activityKind;
+    if (activityKind) row.activity_kind = activityKind;
+    if (activityKind === "coding") {
       row.editor = observation.editor ?? null;
       row.project_name = observation.projectName ?? observation.project_name ?? null;
       row.language = observation.language ?? null;
       row.file_name = observation.fileName ?? observation.file_name ?? null;
+    }
+    if (activityKind === "learning") {
+      row.site_host = observation.siteHost ?? observation.site_host ?? null;
+      row.page_title = observation.pageTitle ?? observation.page_title ?? null;
+      row.course_label = observation.courseLabel ?? observation.course_label ?? null;
+      row.lesson_label = observation.lessonLabel ?? observation.lesson_label ?? null;
     }
     return row;
   });
@@ -175,6 +181,64 @@ export async function deleteCodingObservations({ from, to }) {
     .from(OBSERVATIONS_TABLE)
     .delete()
     .eq("activity_kind", "coding")
+    .gte("occurred_at", from)
+    .lt("occurred_at", to)
+    .select("id");
+
+  if (error) throw error;
+  return { deleted: data?.length ?? 0 };
+}
+
+const LEARNING_OBSERVATION_COLUMNS =
+  "id, source, occurred_at, ingested_at, duration_seconds, application, is_idle, activity_kind, site_host, page_title, course_label, lesson_label, integration_id";
+
+/**
+ * Lists learning heartbeats, oldest occurrence first.
+ *
+ * Kept apart from coding heartbeats and from manual sessions.
+ *
+ * @param {object} [opts]
+ * @param {number} [opts.limit]
+ * @param {string} [opts.from]
+ * @param {string} [opts.to]
+ * @returns {Promise<{rows: Array, total: number|null, truncated: boolean}>}
+ */
+export async function listLearningObservations({ limit = 1000, from, to } = {}) {
+  let query = supabase
+    .from(OBSERVATIONS_TABLE)
+    .select(LEARNING_OBSERVATION_COLUMNS, { count: "exact" })
+    .eq("activity_kind", "learning")
+    .order("occurred_at", { ascending: true })
+    .limit(limit);
+
+  if (from) query = query.gte("occurred_at", from);
+  if (to) query = query.lt("occurred_at", to);
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  const rows = data ?? [];
+  return {
+    rows,
+    total: count ?? null,
+    truncated: count !== null && count > rows.length,
+  };
+}
+
+/**
+ * Deletes learning heartbeats in a range. Coding and manual rows stay.
+ *
+ * @param {object} range
+ * @returns {Promise<{deleted: number}>}
+ */
+export async function deleteLearningObservations({ from, to }) {
+  if (!from || !to) {
+    throw new Error("Deleting learning activity needs a start and an end.");
+  }
+  const { data, error } = await supabase
+    .from(OBSERVATIONS_TABLE)
+    .delete()
+    .eq("activity_kind", "learning")
     .gte("occurred_at", from)
     .lt("occurred_at", to)
     .select("id");
