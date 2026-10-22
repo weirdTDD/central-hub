@@ -14,6 +14,7 @@ import {
 } from "../../../extensions/coding-tracker/lib/codingTime.js";
 import { isSupabaseConfigured } from "../../lib/supabase";
 import { listCodingObservations } from "../../lib/tracking";
+import { MeterRows } from "../progress/Bars.jsx";
 import { localDayRange } from "./range.js";
 
 export default function CodingDayCard({ dayKey, timeZone }) {
@@ -97,16 +98,7 @@ export default function CodingDayCard({ dayKey, timeZone }) {
             <p className="mt-1 text-sm text-muted-foreground">
               {editors.map((row) => `${row.key} ${durationText(row.activeSeconds)}`).join(" · ")}
             </p>
-            {projects.length > 0 ? (
-              <ul className="mt-3 space-y-1 text-sm">
-                {projects.map((project) => (
-                  <li key={project.key} className="flex items-center justify-between gap-3">
-                    <span>{project.key}</span>
-                    <span className="text-muted-foreground">{durationText(project.activeSeconds)}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
+            {projects.length > 0 ? <MeterRows rows={projects} /> : null}
           </>
         ) : null}
         {truncated ? (
