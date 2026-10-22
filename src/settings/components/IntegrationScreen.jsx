@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Code2, FileJson, Globe, Shield } from "lucide-react";
 import { listAdapters } from "../../features/integrations/contract.js";
+import CodingTrackerCard from "./CodingTrackerCard.jsx";
 
 // The account providers this build does not have.
 //
@@ -60,9 +61,13 @@ const CONNECTOR_ICONS = {
 };
 
 export default function IntegrationScreen() {
-  const available = listAdapters().filter((adapter) => adapter.implemented);
+  const available = listAdapters().filter(
+    (adapter) => adapter.implemented && adapter.id !== "coding_tracker"
+  );
 
   return (
+    <div className="space-y-6">
+    <CodingTrackerCard />
     <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
       <h2 className="text-base font-semibold text-foreground">Connectors</h2>
       <p className="mt-1 text-sm text-muted-foreground">
@@ -140,5 +145,6 @@ export default function IntegrationScreen() {
       </ul>
 
     </section>
+    </div>
   );
 }

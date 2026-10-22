@@ -247,6 +247,11 @@ order:
    `workflows`, `workflow_runs`, `notifications`, `notification_preferences` and
    `approvals`. It has no dependency on the earlier migrations, but it must be applied
    before the `/notifications` page is used.
+6. `supabase/migrations/20261022140000_coding_activity.sql` — adds coding columns
+   (`activity_kind`, `editor`, `project_name`, `language`, `file_name`) to
+   `observations`. **Requires step 3.** The `/coding` page, the dashboard Coding
+   card, and the report's coding panel read these columns. Apply it before using
+   the Cursor / VS Code extension.
 
 Apply them with the Supabase SQL Editor (paste the file, run) or `supabase db push`.
 Afterwards, tell PostgREST to pick up the new schema:

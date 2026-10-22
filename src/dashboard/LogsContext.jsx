@@ -224,6 +224,7 @@ export function LogsProvider({ children }) {
   return <LogsContext.Provider value={value}>{children}</LogsContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useLogs() {
   const context = useContext(LogsContext);
   if (!context) {

@@ -10,6 +10,7 @@
 // empty ladder.
 
 import { useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   CircleAlert,
   FileUp,
@@ -312,7 +313,22 @@ function AdapterCard({
       ) : null}
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
-        {adapter.collection === "local" ? (
+        {adapter.collection === "extension" ? (
+          <>
+            <Link
+              to="/settings/integrations"
+              className="inline-flex min-h-11 items-center rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+            >
+              Setup and status
+            </Link>
+            <Link
+              to="/coding"
+              className="inline-flex min-h-11 items-center rounded-lg border border-border bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-zinc-800"
+            >
+              Coding timeline
+            </Link>
+          </>
+        ) : adapter.collection === "local" ? (
           <button
             type="button"
             disabled={busy || syncing}
