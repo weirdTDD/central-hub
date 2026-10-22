@@ -8,6 +8,8 @@ import { listNotifications } from "../lib/notifications";
 import { insertTask, listTasks, updateTask } from "../lib/tasks";
 import { listRecentCorrections, listSessions } from "../lib/tracking";
 import { isValidStatusTransition } from "../features/tasks/taskUtils";
+import CodingDayCard from "../features/coding/CodingDayCard";
+import LearningDayCard from "../features/learning/LearningDayCard";
 import AppShell from "../components/AppShell";
 import HomeBoard from "./HomeBoard";
 import Plan from "../components/Plan";
@@ -236,6 +238,9 @@ export default function DashboardPage() {
             startKey={week?.startKey}
             endKey={week?.endKey}
           />
+
+          <CodingDayCard dayKey={dayKey} timeZone={timeZone} />
+          <LearningDayCard dayKey={dayKey} timeZone={timeZone} />
 
           <Queue
             items={queue}

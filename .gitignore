@@ -34,3 +34,6 @@ yarn.lock
 .env
 .env.*
 !.env.example
+
+# Supabase CLI local link and version cache. Not project source.
+supabase/.temp/

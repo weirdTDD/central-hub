@@ -122,6 +122,9 @@ function generateClientId() {
 const CODING_OBSERVATION_COLUMNS =
   "id, source, occurred_at, ingested_at, duration_seconds, application, is_idle, activity_kind, editor, project_name, language, file_name, integration_id";
 
+const LEARNING_OBSERVATION_COLUMNS =
+  "id, source, occurred_at, ingested_at, duration_seconds, application, is_idle, activity_kind, site_host, page_title, course_label, lesson_label, integration_id";
+
 /**
  * Lists coding heartbeats, oldest occurrence first.
  *
@@ -229,6 +232,71 @@ export async function listLearningObservations({ limit = 1000, from, to } = {}) 
  * Deletes learning heartbeats in a range. Coding and manual rows stay.
  *
  * @param {object} range
+ * @returns {Promise<{deleted: number}>}
+ */
+export async function deleteLearningObservations({ from, to }) {
+  if (!from || !to) {
+    throw new Error("Deleting learning activity needs a start and an end.");
+  }
+  const { data, error } = await supabase
+    .from(OBSERVATIONS_TABLE)
+    .delete()
+    .eq("activity_kind", "learning")
+    .gte("occurred_at", from)
+    .lt("occurred_at", to)
+    .select("id");
+
+  if (error) throw error;
+  return { deleted: data?.length ?? 0 };
+}
+
+/**
+ * Lists learning heartbeats, oldest occurrence first.
+ *
+ * The learning timeline folds these into sessions. They are not coding
+ * heartbeats and they are not the sessions table.
+ *
+ * @param {object} [opts]
+ * @param {number} [opts.limit]
+ * @param {string} [opts.from] ISO timestamp, inclusive
+ * @param {string} [opts.to] ISO timestamp, exclusive
+ * @returns {Promise<{rows: Array, total: number|null, truncated: boolean}>}
+ */
+export async function listLearningObservations({
+  limit = 1000,
+  from,
+  to,
+} = {}) {
+  let query = supabase
+    .from(OBSERVATIONS_TABLE)
+    .select(LEARNING_OBSERVATION_COLUMNS, { count: "exact" })
+    .eq("activity_kind", "learning")
+    .order("occurred_at", { ascending: true })
+    .limit(limit);
+
+  if (from) query = query.gte("occurred_at", from);
+  if (to) query = query.lt("occurred_at", to);
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  const rows = data ?? [];
+  return {
+    rows,
+    total: count ?? null,
+    truncated: count !== null && count > rows.length,
+  };
+}
+
+/**
+ * Deletes the signed-in user's learning heartbeats in a time range.
+ *
+ * The delete does not touch coding heartbeats or manual sessions. A delete
+ * that matches nothing returns deleted: 0.
+ *
+ * @param {object} range
+ * @param {string} range.from inclusive ISO timestamp
+ * @param {string} range.to exclusive ISO timestamp
  * @returns {Promise<{deleted: number}>}
  */
 export async function deleteLearningObservations({ from, to }) {

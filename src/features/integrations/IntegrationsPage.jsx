@@ -322,10 +322,10 @@ function AdapterCard({
               Setup and status
             </Link>
             <Link
-              to="/coding"
+              to={adapter.timelinePath || "/coding"}
               className="inline-flex min-h-11 items-center rounded-lg border border-border bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-zinc-800"
             >
-              Coding timeline
+              {adapter.timelineLabel ? `${adapter.timelineLabel} timeline` : "Coding timeline"}
             </Link>
           </>
         ) : adapter.collection === "local" ? (

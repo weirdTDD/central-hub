@@ -20,6 +20,7 @@ import TaskStatusChart from './TaskStatusChart';
 import TopLoggedTasks from './TopLoggedTask';
 import PlannedVsActualPanel from '../../features/tracking/PlannedVsActualPanel';
 import CodingReportPanel from '../../features/coding/CodingReportPanel';
+import LearningReportPanel from '../../features/learning/LearningReportPanel';
 import InsightsPanel from '../../features/ai/InsightsPanel';
 import AskPanel from '../../features/ai/AskPanel';
 
@@ -205,6 +206,10 @@ const ProductivityReport = () => {
 
       <div className="mt-6">
         <CodingReportPanel from={dateRange?.from} to={dateRange?.to} />
+      </div>
+
+      <div className="mt-6">
+        <LearningReportPanel from={dateRange?.from} to={dateRange?.to} />
       </div>
 
       <div className="mt-6">
