@@ -321,14 +321,12 @@ function AdapterCard({
             >
               Setup and status
             </Link>
-            {adapter.timelinePath ? (
-              <Link
-                to={adapter.timelinePath}
-                className="inline-flex min-h-11 items-center rounded-lg border border-border bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-zinc-800"
-              >
-                {adapter.timelineLabel || "Timeline"}
-              </Link>
-            ) : null}
+            <Link
+              to="/coding"
+              className="inline-flex min-h-11 items-center rounded-lg border border-border bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-zinc-800"
+            >
+              Coding timeline
+            </Link>
           </>
         ) : adapter.collection === "local" ? (
           <button

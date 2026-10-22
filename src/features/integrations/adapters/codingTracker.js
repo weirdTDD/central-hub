@@ -71,8 +71,6 @@ export const codingTrackerAdapter = {
     "Records active coding time from the Central Hub extension in Cursor and VS Code.",
   implemented: true,
   collection: "extension",
-  timelinePath: "/coding",
-  timelineLabel: "Coding timeline",
   removalPolicy:
     "Disconnecting deletes the heartbeats this extension sent. Nothing is deleted inside Cursor or VS Code.",
   documentation: {

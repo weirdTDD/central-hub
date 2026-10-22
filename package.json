@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "verify": "node scripts/verify-coding.mjs && node scripts/verify-learning.mjs && node scripts/verify-grok.mjs && node scripts/verify-ai.mjs && node scripts/verify-contracts.mjs && node scripts/verify-integrations.mjs && node scripts/verify-notifications.mjs && node scripts/verify-planned-actual.mjs && node scripts/verify-today-view.mjs && node scripts/verify-tracking.mjs"
+    "verify": "node scripts/verify-coding.mjs && node scripts/verify-ai.mjs && node scripts/verify-contracts.mjs && node scripts/verify-integrations.mjs && node scripts/verify-notifications.mjs && node scripts/verify-planned-actual.mjs && node scripts/verify-today-view.mjs && node scripts/verify-tracking.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

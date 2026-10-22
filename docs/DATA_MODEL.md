@@ -552,7 +552,7 @@ Migration `supabase/migrations/20261022140000_coding_activity.sql` adds nullable
 
 | Column | Meaning |
 |--------|---------|
-| `activity_kind` | `'coding'`, and after the learning migration also `'learning'`, or NULL. NULL is every observation that is neither. |
+| `activity_kind` | `'coding'` or NULL. NULL is every non-coding observation. |
 | `editor` | `'cursor'` or `'vscode'`, or NULL. |
 | `project_name` | Workspace folder name. Not a path. |
 | `language` | Editor language id. |
@@ -562,34 +562,6 @@ Migration `supabase/migrations/20261022140000_coding_activity.sql` adds nullable
 - **Sessions:** coding time is **not** copied into `public.sessions`. The timeline is derived by `foldHeartbeats`. Session totals and coding totals stay separate (D-012).
 - **Delete:** deleting the connection cascades to heartbeats that reference it. Deleting one local day deletes the coding observations in that range and leaves other observations and sessions alone.
 - **Missing:** a day with no heartbeats is "nothing recorded", not zero, until the UI is showing a measured total.
-
-### Learning heartbeats (observations columns, 2026-10-22)
-
-Migration `supabase/migrations/20261022150000_learning_activity.sql` widens `activity_kind` and adds nullable columns. Apply it after the coding migration. The coding migration will not narrow `activity_kind` back to coding-only once `learning` is in the check.
-
-| Column | Meaning |
-|--------|---------|
-| `activity_kind` | `'learning'` for this collector. `'coding'` stays allowed. NULL is every other observation. |
-| `site_host` | Allowlist host, such as `freecodecamp.org`. Not a URL, path, or query. |
-| `page_title` | Page title when it is safe to keep. A URL is not stored here. |
-| `course_label` | Course name when the page shape is known (freeCodeCamp). NULL otherwise. |
-| `lesson_label` | Lesson or page name. Not a URL path. |
-
-- **What a row is:** one heartbeat of active browser time on an allowlisted site. `occurred_at` is the start, `duration_seconds` is the measured span, `source` is `collector`, `application` is the site label, `window_title` stays NULL, and `integration_id` points at the `learning_tracker` connection when the extension sent it. Coding columns (`editor`, `project_name`, `language`, `file_name`) stay NULL.
-- **Allowlist:** `integrations.config.sites` on the `learning_tracker` row. An explicit empty array tracks nothing. A missing `sites` key means the default: freeCodeCamp curriculum (`freecodecamp.org`, path prefix `/learn`). The address is matched in memory and is not a column.
-- **Sessions:** learning time is **not** copied into `public.sessions` and is **not** added to coding totals (D-013). The timeline is derived by `foldHeartbeats` in `extensions/learning-tracker/lib/learningTime.js`.
-- **Delete:** deleting the connection cascades to heartbeats that reference it. Deleting one local day deletes the learning observations in that range and leaves coding observations, other observations, and sessions alone.
-- **Missing:** a day with no learning heartbeats is "nothing recorded", not zero.
-
-### Grok chats and task reminders (2026-10-22)
-
-Migration `supabase/migrations/20261022160000_grok_chat_alerts.sql`. Requires `public.tasks`. `ai_preferences.grok_model` is added only when that table already exists.
-
-- **grok_conversations** — one chat. `title`, optional `model`, `user_id` default `auth.uid()`. Delete cascades to messages.
-- **grok_messages** — a turn: `user`, `assistant`, or `tool`. A tool turn keeps `tool_call_id`. The message's owner must own the conversation (trigger, security invoker, so RLS applies).
-- **task_alerts** — a reminder for one task (`task_id` on delete cascade). `due_at` is the next occurrence. `repeat` is `none`, `daily`, `weekly`, or `weekdays`. `status` is `scheduled`, `paused`, or `fired`. `last_fired_at` is the occurrence already delivered, so a second open does not deliver it again. `created_by` is `user` or `grok`. The task must belong to the same user.
-- **Delivery:** an inbox row in `public.notifications` with `kind = task_alert` and `channel = in_app`. The id is derived from the alert and the occurrence. Browser notifications are this device showing that row; they are not a database channel.
-- **RLS:** select, insert, update, and delete for `authenticated` where `user_id = auth.uid()`. `anon` has no grants.
 
 ## Relationships / ownership rules
 
