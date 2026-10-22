@@ -16,6 +16,7 @@ import { TasksProvider } from "../features/tasks/TasksContext";
 import IntegrationsPage from "../features/integrations/IntegrationsPage";
 import { IntegrationsProvider } from "../features/integrations/IntegrationsContext";
 import TrackingPage from "../features/tracking/TrackingPage";
+import CodingPage from "../features/coding/CodingPage";
 import { TrackingProvider } from "../features/tracking/TrackingContext";
 import NotificationsPage from "../features/notifications/NotificationsPage";
 import AskPage from "../features/ai/AskPage";
@@ -73,6 +74,14 @@ function AppRoutes() {
                <TrackingProvider>
                  <TrackingPage />
                </TrackingProvider>
+             </ProtectedRoute>
+           }
+         />
+         <Route
+           path="/coding"
+           element={
+             <ProtectedRoute>
+               <CodingPage />
              </ProtectedRoute>
            }
          />

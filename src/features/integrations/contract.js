@@ -15,6 +15,7 @@
 import { localActivityFileAdapter } from "./adapters/localActivityFile.js";
 import { vscodeHistoryAdapter } from "./adapters/vscodeHistory.js";
 import { browserHistoryAdapter } from "./adapters/browserHistory.js";
+import { codingTrackerAdapter } from "./adapters/codingTracker.js";
 
 /**
  * The states an integration can be in. The UI shows these verbatim, so they are
@@ -122,7 +123,12 @@ export const DOCUMENTATION_FIELDS = [
  */
 
 /** The registered adapters. Adding an adapter means adding it here. */
-const ADAPTERS = [localActivityFileAdapter, vscodeHistoryAdapter, browserHistoryAdapter];
+const ADAPTERS = [
+  codingTrackerAdapter,
+  localActivityFileAdapter,
+  vscodeHistoryAdapter,
+  browserHistoryAdapter,
+];
 
 /**
  * Every registered adapter.
