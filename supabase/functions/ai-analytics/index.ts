@@ -22,7 +22,7 @@
 //      requires.
 //
 // Configure it with:
-//   supabase secrets set XAI_API_KEY=sk-...
+//   supabase secrets set XAI_API_KEY=<your-xai-key>
 //
 // It is OPTIONAL: the app works with this function absent, using the on-device
 // provider.
