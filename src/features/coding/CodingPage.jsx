@@ -25,6 +25,7 @@ import { localDayKey, systemTimeZone } from "../../lib/dates";
 import { getIntegrationByProvider } from "../../lib/integrations";
 import { isSupabaseConfigured } from "../../lib/supabase";
 import { deleteCodingObservations, listCodingObservations } from "../../lib/tracking";
+import { ShareBars, WeekChart } from "../progress/Bars.jsx";
 import { localDayRange } from "./range.js";
 
 const CODING_PROVIDER = "coding_tracker";
@@ -156,14 +157,14 @@ export default function CodingPage() {
     [heartbeats]
   );
 
-  const recordedDays = useMemo(() => {
-    const days = new Set();
-    for (const beat of weekHeartbeats) {
-      const key = localDayKey(beat.occurredAt, timeZone);
-      if (key) days.add(key);
-    }
-    return days;
-  }, [weekHeartbeats, timeZone]);
+  const weekDays = useMemo(() => {
+    return (week?.days ?? []).map((day) => ({
+      ...day,
+      seconds: coveredSeconds(
+        weekHeartbeats.filter((beat) => localDayKey(beat.occurredAt, timeZone) === day.key)
+      ),
+    }));
+  }, [week, weekHeartbeats, timeZone]);
 
   const removeDay = async () => {
     const range = localDayRange(dayKey, timeZone);
@@ -193,7 +194,7 @@ export default function CodingPage() {
 
   return (
     <AppShell currentPath="/coding">
-      <div className="mx-auto flex max-w-lg flex-col gap-6">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6">
         <header>
           <p className="text-sm text-muted-foreground">{headingDate}</p>
           <h1 className="mt-1 text-4xl font-bold tracking-tight">Coding</h1>
@@ -202,35 +203,7 @@ export default function CodingPage() {
           </p>
         </header>
 
-        <nav aria-label="Week" className="-mx-4 px-1 sm:mx-0 sm:px-0">
-          <div className="grid grid-cols-7">
-            {(week?.days ?? []).map((day) => {
-              const selected = day.key === dayKey;
-              const recorded = recordedDays.has(day.key);
-              return (
-                <button
-                  key={day.key}
-                  type="button"
-                  aria-pressed={selected}
-                  aria-label={`${day.weekday} ${day.dayNumber}${recorded ? ", coding recorded" : ""}`}
-                  onClick={() => setDayKey(day.key)}
-                  className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-0.5 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                    selected ? "text-primary" : "text-muted-foreground"
-                  }`}
-                >
-                  <span className="text-[11px] font-medium">{day.weekday}</span>
-                  <span className={`text-sm font-semibold ${selected ? "text-primary" : "text-foreground"}`}>
-                    {day.dayNumber}
-                  </span>
-                  <span
-                    className={`mt-0.5 h-1.5 w-1.5 rounded-full ${recorded ? "bg-progress" : "bg-transparent"}`}
-                    aria-hidden="true"
-                  />
-                </button>
-              );
-            })}
-          </div>
-        </nav>
+        <WeekChart days={weekDays} selectedKey={dayKey} onSelect={setDayKey} recordedWord="coding" />
 
         <section aria-label="Coding totals" className="grid gap-3 sm:grid-cols-2">
           <Total
@@ -272,10 +245,10 @@ export default function CodingPage() {
         ) : null}
 
         {byEditor.length > 0 || byProject.length > 0 ? (
-          <section aria-label="By editor and project" className="grid gap-3">
-            <Breakdown title="Editors" rows={byEditor} labelOf={(row) => editorLabel(row.key)} />
-            <Breakdown title="Projects" rows={byProject} labelOf={(row) => row.key} />
-          </section>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <ShareBars title="Editors" rows={byEditor} labelOf={(row) => editorLabel(row.key)} />
+            <ShareBars title="Projects" rows={byProject} />
+          </div>
         ) : null}
 
         <section aria-label="Coding timeline">
@@ -369,23 +342,6 @@ function Total({ label, state, error, seconds, empty }) {
       <p className="mt-1 text-lg font-semibold">{value}</p>
       {state === "error" && error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
     </div>
-  );
-}
-
-function Breakdown({ title, rows, labelOf }) {
-  if (rows.length === 0) return null;
-  return (
-    <section className="rounded-2xl border border-border bg-card px-4 py-3">
-      <h2 className="text-sm font-semibold">{title}</h2>
-      <ul className="mt-2 space-y-1 text-sm">
-        {rows.map((row) => (
-          <li key={row.key} className="flex items-center justify-between gap-3">
-            <span>{labelOf(row)}</span>
-            <span className="text-muted-foreground">{durationText(row.activeSeconds)}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
   );
 }
 

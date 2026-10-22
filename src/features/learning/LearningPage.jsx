@@ -25,6 +25,7 @@ import { localDayKey, systemTimeZone } from "../../lib/dates";
 import { getIntegrationByProvider } from "../../lib/integrations";
 import { isSupabaseConfigured } from "../../lib/supabase";
 import { deleteLearningObservations, listLearningObservations } from "../../lib/tracking";
+import { ShareBars, WeekChart } from "../progress/Bars.jsx";
 import { localDayRange } from "../coding/range.js";
 import TrackedSitesPanel from "./TrackedSitesPanel.jsx";
 
@@ -164,14 +165,20 @@ export default function LearningPage() {
     }));
   }, [week, weekHeartbeats, timeZone]);
 
-  const recordedDays = useMemo(() => {
-    const days = new Set();
-    for (const beat of weekHeartbeats) {
-      const key = localDayKey(beat.occurredAt, timeZone);
-      if (key) days.add(key);
-    }
-    return days;
-  }, [weekHeartbeats, timeZone]);
+  const [focusKey, setFocusKey] = useState(null);
+  const [focusDay, setFocusDay] = useState(dayKey);
+  if (focusDay !== dayKey) {
+    setFocusDay(dayKey);
+    setFocusKey(null);
+  }
+
+  const latest = useMemo(() => {
+    const ordered = [...sessions].sort((a, b) => String(b.endedAt ?? "").localeCompare(String(a.endedAt ?? "")));
+    return ordered[0] ?? null;
+  }, [sessions]);
+  const visibleSessions = focusKey
+    ? sessions.filter((session) => courseKey(session) === focusKey || siteKey(session) === focusKey)
+    : sessions;
 
   const removeDay = async () => {
     const range = localDayRange(dayKey, timeZone);
@@ -199,67 +206,26 @@ export default function LearningPage() {
   const headingDate = formatDayHeading(dayKey);
   const heading = dayKey === today ? "Today" : headingDate.split(",")[0] || headingDate;
 
+  const chooseFocus = (key) => setFocusKey((current) => (current === key ? null : key));
+
   return (
     <AppShell currentPath="/learning">
-      <div className="mx-auto flex max-w-lg flex-col gap-6">
-        <header>
-          <p className="text-sm text-muted-foreground">{headingDate}</p>
-          <h1 className="mt-1 text-4xl font-bold tracking-tight">Learning</h1>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Active time on the sites you track. Times follow {timeZone}. This is separate from coding time, manual sessions, and work logs.
-          </p>
+      <div className="mx-auto flex max-w-6xl flex-col gap-6">
+        <header className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm text-muted-foreground">{headingDate}</p>
+            <h1 className="mt-1 text-4xl font-bold tracking-tight">Learning</h1>
+            <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+              Active time on the sites you track. Times follow {timeZone}. This is separate from coding time, manual sessions, and work logs.
+            </p>
+          </div>
+          <section aria-label="Learning totals" className="grid w-full gap-3 sm:w-auto sm:grid-cols-2">
+            <Total label={heading} state={shownDayState} error={shownDayError} seconds={dayTotal} empty="No learning activity recorded" />
+            <Total label="This week" state={weekState} error={weekError} seconds={weekTotal} empty="No learning activity recorded" />
+          </section>
         </header>
 
-        <nav aria-label="Week" className="-mx-4 px-1 sm:mx-0 sm:px-0">
-          <div className="grid grid-cols-7">
-            {(week?.days ?? []).map((day) => {
-              const selected = day.key === dayKey;
-              const recorded = recordedDays.has(day.key);
-              return (
-                <button
-                  key={day.key}
-                  type="button"
-                  aria-pressed={selected}
-                  aria-label={`${day.weekday} ${day.dayNumber}${recorded ? ", learning recorded" : ""}`}
-                  onClick={() => setDayKey(day.key)}
-                  className={`flex min-h-11 flex-col items-center justify-center rounded-2xl px-0.5 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                    selected ? "text-primary" : "text-muted-foreground"
-                  }`}
-                >
-                  <span className="text-[11px] font-medium">{day.weekday}</span>
-                  <span className={`text-sm font-semibold ${selected ? "text-primary" : "text-foreground"}`}>
-                    {day.dayNumber}
-                  </span>
-                  <span
-                    className={`mt-0.5 h-1.5 w-1.5 rounded-full ${recorded ? "bg-progress" : "bg-transparent"}`}
-                    aria-hidden="true"
-                  />
-                </button>
-              );
-            })}
-          </div>
-        </nav>
-
-        <section aria-label="Learning totals" className="grid gap-3 sm:grid-cols-2">
-          <Total label={heading} state={shownDayState} error={shownDayError} seconds={dayTotal} empty="No learning activity recorded" />
-          <Total label="This week" state={weekState} error={weekError} seconds={weekTotal} empty="No learning activity recorded" />
-        </section>
-
-        {weekState === "ready" ? (
-          <section aria-label="This week by day" className="rounded-2xl border border-border bg-card px-4 py-3">
-            <h2 className="text-sm font-semibold">This week</h2>
-            <ul className="mt-2 space-y-1 text-sm">
-              {weekDays.map((day) => (
-                <li key={day.key} className="flex items-center justify-between gap-3">
-                  <span>{day.weekday}</span>
-                  <span className="text-muted-foreground">
-                    {day.seconds == null ? "Nothing recorded" : durationText(day.seconds)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
+        <WeekChart days={weekDays} selectedKey={dayKey} onSelect={setDayKey} recordedWord="learning" />
 
         <ConnectionNote connection={connection} error={connectionError} configured={isSupabaseConfigured} />
 
@@ -283,76 +249,124 @@ export default function LearningPage() {
           </div>
         ) : null}
 
-        {bySite.length > 0 || byCourse.length > 0 ? (
-          <section aria-label="By site and course" className="grid gap-3">
-            <Breakdown title="Sites" rows={bySite} />
-            <Breakdown title="Courses" rows={byCourse} />
-          </section>
-        ) : null}
-
-        <section aria-label="Learning timeline">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold">Timeline</h2>
-            {shownDayState === "ready" && heartbeats.length > 0 ? (
-              <button
-                type="button"
-                onClick={removeDay}
-                disabled={deleting}
-                className="inline-flex min-h-11 items-center rounded-xl border border-border px-3 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
-              >
-                {deleting ? "Deleting…" : "Delete this day"}
-              </button>
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+          <div className="grid gap-4">
+            {byCourse.length > 0 ? (
+              <ShareBars
+                title="Courses"
+                rows={byCourse}
+                selectedKey={focusKey}
+                onSelect={chooseFocus}
+              />
+            ) : shownDayState === "loading" ? null : (
+              <p className="rounded-3xl border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
+                Courses show up here after a tracked site records time. The bar is how long you spent, not how much of a course is finished.
+              </p>
+            )}
+            {bySite.length > 0 ? (
+              <ShareBars title="Sites" rows={bySite} selectedKey={focusKey} onSelect={chooseFocus} />
             ) : null}
           </div>
-          {actionError ? (
-            <p role="alert" className="mt-2 text-sm text-destructive">{actionError}</p>
-          ) : null}
-          {shownDayState === "loading" ? <p className="mt-3 text-sm text-muted-foreground">Loading…</p> : null}
-          {shownDayState === "ready" && sessions.length === 0 ? (
-            <p className="mt-3 rounded-2xl bg-muted px-4 py-6 text-sm text-muted-foreground">
-              No learning activity recorded on this day.
-            </p>
-          ) : null}
-          {sessions.length > 0 ? (
-            <ol className="relative mt-4 space-y-3 border-l border-border pl-5">
-              {sessions.map((session) => (
-                <li key={session.id} className="relative">
-                  <span
-                    className="absolute top-5 -left-[26px] h-3 w-3 rounded-full border-2 border-progress bg-background"
-                    aria-hidden="true"
-                  />
-                  <article className="rounded-2xl bg-muted px-4 py-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <h3 className="text-sm font-semibold">
-                        {session.courseLabel || session.siteLabel || session.siteHost || "Unknown site"}
-                      </h3>
-                      <p className="shrink-0 text-sm font-medium">
-                        {formatClock(session.startedAt, timeZone) ?? "No start time"}
-                      </p>
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {session.courseLabel ? `${session.siteLabel || session.siteHost} · ` : ""}
-                      {durationText(session.durationSeconds)}
-                      {session.endedAt ? ` · until ${formatClock(session.endedAt, timeZone) ?? "an unknown time"}` : ""}
-                    </p>
-                    {session.lessons?.length > 0 ? (
-                      <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                        {session.lessons.slice(0, 8).map((lesson) => (
-                          <li key={`${lesson.lessonLabel ?? "none"}-${lesson.pageTitle ?? "none"}`}>
-                            {lesson.lessonLabel || lesson.pageTitle || "Page"}
-                            {" · "}
-                            {durationText(lesson.durationSeconds)}
-                          </li>
-                        ))}
-                        {session.lessons.length > 8 ? <li>and {session.lessons.length - 8} more lessons</li> : null}
-                      </ul>
-                    ) : null}
-                  </article>
-                </li>
-              ))}
-            </ol>
-          ) : null}
-        </section>
+
+          <section aria-label="Learning timeline" className="grid gap-4">
+            {latest && shownDayState === "ready" ? (
+              <article className="rounded-3xl bg-primary px-5 py-5 text-primary-foreground">
+                <p className="text-xs font-medium uppercase tracking-wide text-primary-foreground/80">Pick up where you left off</p>
+                <h2 className="mt-2 text-xl font-semibold">
+                  {latest.courseLabel || latest.siteLabel || latest.siteHost || "Learning"}
+                </h2>
+                <p className="mt-1 text-sm text-primary-foreground/90">
+                  {latest.lessons?.[0]?.lessonLabel || latest.lessons?.[0]?.pageTitle || latest.siteLabel || "Session"}
+                  {" · "}
+                  {durationText(latest.durationSeconds)}
+                </p>
+                <p className="mt-1 text-xs text-primary-foreground/75">
+                  {formatClock(latest.startedAt, timeZone) ?? "No start time"}
+                  {latest.endedAt ? ` – ${formatClock(latest.endedAt, timeZone) ?? ""}` : ""}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setFocusKey(focusKey ? null : courseKey(latest) || siteKey(latest))}
+                  className="mt-4 inline-flex min-h-11 items-center rounded-full bg-primary-foreground px-4 text-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {focusKey ? "Show every course" : "Focus this course"}
+                </button>
+              </article>
+            ) : null}
+
+            <div className="rounded-3xl border border-border bg-card p-4 sm:p-5">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-lg font-semibold">Timeline</h2>
+                {shownDayState === "ready" && heartbeats.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={removeDay}
+                    disabled={deleting}
+                    className="inline-flex min-h-11 items-center rounded-xl border border-border px-3 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+                  >
+                    {deleting ? "Deleting…" : "Delete this day"}
+                  </button>
+                ) : null}
+              </div>
+              {focusKey ? (
+                <p className="mt-2 text-xs text-muted-foreground">Showing {focusKey}. Choose it again to see the whole day.</p>
+              ) : null}
+              {actionError ? (
+                <p role="alert" className="mt-2 text-sm text-destructive">{actionError}</p>
+              ) : null}
+              {shownDayState === "loading" ? <p className="mt-3 text-sm text-muted-foreground">Loading…</p> : null}
+              {shownDayState === "ready" && visibleSessions.length === 0 ? (
+                <p className="mt-3 rounded-2xl bg-muted px-4 py-6 text-sm text-muted-foreground">
+                  {sessions.length === 0 ? "No learning activity recorded on this day." : "Nothing in this course on this day."}
+                </p>
+              ) : null}
+              {visibleSessions.length > 0 ? (
+                <ol className="relative mt-4 space-y-3 border-l border-border pl-5">
+                  {visibleSessions.map((session) => {
+                    const current = session.id === latest?.id;
+                    return (
+                      <li key={session.id} className="relative">
+                        <span
+                          className={`absolute top-5 -left-[26px] h-3 w-3 rounded-full border-2 bg-background ${current ? "border-primary" : "border-progress"}`}
+                          aria-hidden="true"
+                        />
+                        <article className={`rounded-2xl px-4 py-3 ${current ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                          <div className="flex items-start justify-between gap-3">
+                            <h3 className="text-sm font-semibold">
+                              {session.courseLabel || session.siteLabel || session.siteHost || "Unknown site"}
+                            </h3>
+                            <p className="shrink-0 text-sm font-medium">
+                              {formatClock(session.startedAt, timeZone) ?? "No start time"}
+                            </p>
+                          </div>
+                          <p className={`mt-1 text-xs ${current ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+                            {session.courseLabel ? `${session.siteLabel || session.siteHost} · ` : ""}
+                            {durationText(session.durationSeconds)}
+                            {session.endedAt ? ` · until ${formatClock(session.endedAt, timeZone) ?? "an unknown time"}` : ""}
+                          </p>
+                          {session.lessons?.length > 0 ? (
+                            <ul className={`mt-3 space-y-2 text-xs ${current ? "text-primary-foreground/85" : "text-muted-foreground"}`}>
+                              {session.lessons.slice(0, 8).map((lesson) => (
+                                <li key={`${lesson.lessonLabel ?? "none"}-${lesson.pageTitle ?? "none"}`}>
+                                  <span className="mb-1 flex items-center justify-between gap-3">
+                                    <span className="min-w-0 truncate">{lesson.lessonLabel || lesson.pageTitle || "Page"}</span>
+                                    <span className="shrink-0">{durationText(lesson.durationSeconds)}</span>
+                                  </span>
+                                  <LessonMeter lesson={lesson} sessionSeconds={session.durationSeconds} inverted={current} />
+                                </li>
+                              ))}
+                              {session.lessons.length > 8 ? <li>and {session.lessons.length - 8} more lessons</li> : null}
+                            </ul>
+                          ) : null}
+                        </article>
+                      </li>
+                    );
+                  })}
+                </ol>
+              ) : null}
+            </div>
+          </section>
+        </div>
 
         <TrackedSitesPanel connection={connection} onChanged={() => setReloadKey((value) => value + 1)} />
 
@@ -385,20 +399,27 @@ function Total({ label, state, error, seconds, empty }) {
   );
 }
 
-function Breakdown({ title, rows }) {
-  if (rows.length === 0) return null;
+function courseKey(session) {
+  if (session?.courseLabel) return `${session.siteLabel || session.siteHost} · ${session.courseLabel}`;
+  return session?.siteLabel || session?.siteHost || "Unknown site";
+}
+
+function siteKey(session) {
+  return session?.siteLabel || session?.siteHost || "Unknown site";
+}
+
+function LessonMeter({ lesson, sessionSeconds, inverted }) {
+  const width = lesson.durationSeconds != null && sessionSeconds
+    ? Math.max(4, Math.min(100, Math.round((lesson.durationSeconds / sessionSeconds) * 100)))
+    : null;
+  if (width == null) return null;
   return (
-    <section className="rounded-2xl border border-border bg-card px-4 py-3">
-      <h2 className="text-sm font-semibold">{title}</h2>
-      <ul className="mt-2 space-y-1 text-sm">
-        {rows.map((row) => (
-          <li key={row.key} className="flex items-center justify-between gap-3">
-            <span>{row.key}</span>
-            <span className="text-muted-foreground">{durationText(row.activeSeconds)}</span>
-          </li>
-        ))}
-      </ul>
-    </section>
+    <span className={`block h-1.5 overflow-hidden rounded-full ${inverted ? "bg-primary-foreground/25" : "bg-background"}`} aria-hidden="true">
+      <span
+        className={`block h-full rounded-full ${inverted ? "bg-primary-foreground" : "bg-progress"}`}
+        style={{ width: `${width}%` }}
+      />
+    </span>
   );
 }
 
