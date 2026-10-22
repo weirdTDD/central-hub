@@ -51,10 +51,26 @@ alter table public.observations add column if not exists project_name text;
 alter table public.observations add column if not exists language text;
 alter table public.observations add column if not exists file_name text;
 
-alter table public.observations drop constraint if exists observations_activity_kind_valid;
-alter table public.observations
-  add constraint observations_activity_kind_valid
-  check (activity_kind is null or activity_kind in ('coding'));
+-- Re-applying this file must not remove kinds added by a later migration.
+-- PostgreSQL stores IN (...) as ANY (ARRAY[...]), so this looks for the word
+-- "learning" in the constraint definition rather than the original SQL text.
+do $$
+declare
+  definition text;
+begin
+  select pg_get_constraintdef(oid) into definition
+  from pg_constraint
+  where conname = 'observations_activity_kind_valid'
+    and conrelid = 'public.observations'::regclass;
+
+  if definition is null or position('learning' in definition) = 0 then
+    alter table public.observations drop constraint if exists observations_activity_kind_valid;
+    alter table public.observations
+      add constraint observations_activity_kind_valid
+      check (activity_kind is null or activity_kind in ('coding'));
+  end if;
+end
+$$;
 
 alter table public.observations drop constraint if exists observations_editor_valid;
 alter table public.observations

@@ -72,16 +72,22 @@ export async function insertObservations(observations = []) {
       // means "not produced by an integration" for the manual and collector paths.
       integration_id: observation.integrationId ?? observation.integration_id ?? null,
     };
-    // Coding columns are sent only when the caller is actually recording coding
-    // activity. Other inserts leave them off, so a database that has not applied
-    // the coding migration still accepts manual and imported observations.
+    // Coding and learning columns are sent only for that activity. Other
+    // inserts leave them off, so a database that has not applied the matching
+    // migration still accepts manual and imported observations.
     const activityKind = observation.activityKind ?? observation.activity_kind ?? null;
-    if (activityKind) {
-      row.activity_kind = activityKind;
+    if (activityKind) row.activity_kind = activityKind;
+    if (activityKind === "coding") {
       row.editor = observation.editor ?? null;
       row.project_name = observation.projectName ?? observation.project_name ?? null;
       row.language = observation.language ?? null;
       row.file_name = observation.fileName ?? observation.file_name ?? null;
+    }
+    if (activityKind === "learning") {
+      row.site_host = observation.siteHost ?? observation.site_host ?? null;
+      row.page_title = observation.pageTitle ?? observation.page_title ?? null;
+      row.course_label = observation.courseLabel ?? observation.course_label ?? null;
+      row.lesson_label = observation.lessonLabel ?? observation.lesson_label ?? null;
     }
     return row;
   });
@@ -175,6 +181,75 @@ export async function deleteCodingObservations({ from, to }) {
     .from(OBSERVATIONS_TABLE)
     .delete()
     .eq("activity_kind", "coding")
+    .gte("occurred_at", from)
+    .lt("occurred_at", to)
+    .select("id");
+
+  if (error) throw error;
+  return { deleted: data?.length ?? 0 };
+}
+
+const LEARNING_OBSERVATION_COLUMNS =
+  "id, source, occurred_at, ingested_at, duration_seconds, application, is_idle, activity_kind, site_host, page_title, course_label, lesson_label, integration_id";
+
+/**
+ * Lists learning heartbeats, oldest occurrence first.
+ *
+ * The learning page folds these into sessions. They are not the sessions
+ * table and they are not coding heartbeats: the same hour can also be coded
+ * or logged by hand, and this read keeps those streams apart.
+ *
+ * @param {object} [opts]
+ * @param {number} [opts.limit]
+ * @param {string} [opts.from] ISO timestamp, inclusive
+ * @param {string} [opts.to] ISO timestamp, exclusive
+ * @returns {Promise<{rows: Array, total: number|null, truncated: boolean}>}
+ */
+export async function listLearningObservations({
+  limit = 1000,
+  from,
+  to,
+} = {}) {
+  let query = supabase
+    .from(OBSERVATIONS_TABLE)
+    .select(LEARNING_OBSERVATION_COLUMNS, { count: "exact" })
+    .eq("activity_kind", "learning")
+    .order("occurred_at", { ascending: true })
+    .limit(limit);
+
+  if (from) query = query.gte("occurred_at", from);
+  if (to) query = query.lt("occurred_at", to);
+
+  const { data, error, count } = await query;
+  if (error) throw error;
+
+  const rows = data ?? [];
+  return {
+    rows,
+    total: count ?? null,
+    truncated: count !== null && count > rows.length,
+  };
+}
+
+/**
+ * Deletes the signed-in user's learning heartbeats in a time range.
+ *
+ * Coding heartbeats, manual observations, and work sessions are left alone.
+ * A delete that matches nothing returns deleted: 0.
+ *
+ * @param {object} range
+ * @param {string} range.from inclusive ISO timestamp
+ * @param {string} range.to exclusive ISO timestamp
+ * @returns {Promise<{deleted: number}>}
+ */
+export async function deleteLearningObservations({ from, to }) {
+  if (!from || !to) {
+    throw new Error("Deleting learning activity needs a start and an end.");
+  }
+  const { data, error } = await supabase
+    .from(OBSERVATIONS_TABLE)
+    .delete()
+    .eq("activity_kind", "learning")
     .gte("occurred_at", from)
     .lt("occurred_at", to)
     .select("id");

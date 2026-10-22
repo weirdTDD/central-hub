@@ -7,6 +7,14 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 export default defineConfig([
   globalIgnores(['dist']),
   {
+    files: ['extensions/learning-tracker/**/*.js'],
+    languageOptions: {
+      globals: {
+        chrome: 'readonly',
+      },
+    },
+  },
+  {
     files: ['**/*.{js,jsx}'],
     extends: [
       js.configs.recommended,

@@ -1,0 +1,120 @@
+// Learning time for the report's date range.
+//
+// Shown beside coding time, and not added to it or to planned-versus-actual.
+
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { durationText } from "../../dashboard/todayView";
+import {
+  coveredSeconds,
+  groupedCoveredSeconds,
+  heartbeatsFromRows,
+} from "../../../extensions/learning-tracker/lib/learningTime.js";
+import { isSupabaseConfigured } from "../../lib/supabase";
+import { listLearningObservations } from "../../lib/tracking";
+import { reportRangeBounds } from "../coding/range.js";
+
+export default function LearningReportPanel({ from, to }) {
+  const bounds = useMemo(() => reportRangeBounds(from, to), [from, to]);
+  const requestKey = `${bounds.from ?? ""}|${bounds.to ?? ""}`;
+  const [seenKey, setSeenKey] = useState(requestKey);
+  const [state, setState] = useState(isSupabaseConfigured ? "loading" : "unconfigured");
+  const [heartbeats, setHeartbeats] = useState([]);
+  const [truncated, setTruncated] = useState(false);
+  const [error, setError] = useState("");
+
+  if (seenKey !== requestKey) {
+    setSeenKey(requestKey);
+    setState(isSupabaseConfigured ? "loading" : "unconfigured");
+    setHeartbeats([]);
+    setTruncated(false);
+    setError("");
+  }
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return undefined;
+    let active = true;
+    listLearningObservations({ from: bounds.from, to: bounds.to, limit: 1000 })
+      .then((result) => {
+        if (!active) return;
+        setHeartbeats(heartbeatsFromRows(result.rows));
+        setTruncated(result.truncated);
+        setState("ready");
+      })
+      .catch((caught) => {
+        if (!active) return;
+        setHeartbeats([]);
+        setState("error");
+        setError(caught?.message || "Could not load learning activity.");
+      });
+    return () => {
+      active = false;
+    };
+  }, [bounds.from, bounds.to, requestKey]);
+
+  const total = coveredSeconds(heartbeats);
+  const sites = groupedCoveredSeconds(heartbeats, (beat) => beat.siteLabel || beat.siteHost || "Unknown site").sort(
+    (a, b) => (b.activeSeconds ?? -1) - (a.activeSeconds ?? -1)
+  );
+  const courses = groupedCoveredSeconds(heartbeats, (beat) =>
+    beat.courseLabel ? `${beat.siteLabel || beat.siteHost} · ${beat.courseLabel}` : beat.siteLabel || beat.siteHost || "Unknown site"
+  ).sort((a, b) => (b.activeSeconds ?? -1) - (a.activeSeconds ?? -1));
+
+  return (
+    <section aria-labelledby="learning-report-heading" className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 id="learning-report-heading" className="text-lg font-semibold">Learning time</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Active time on tracked learning sites in this range. It is not added to coding time, work logs, or planned versus actual.
+          </p>
+        </div>
+        <Link
+          to="/learning"
+          className="inline-flex min-h-11 items-center text-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          Open timeline
+        </Link>
+      </div>
+
+      {state === "unconfigured" ? (
+        <p className="mt-4 text-sm text-muted-foreground">Not connected. Configure Supabase to load learning activity.</p>
+      ) : null}
+      {state === "loading" ? <p className="mt-4 text-sm text-muted-foreground">Loading learning activity…</p> : null}
+      {state === "error" ? (
+        <p role="alert" className="mt-4 text-sm text-destructive">{error}</p>
+      ) : null}
+      {state === "ready" && total == null ? (
+        <p className="mt-4 text-sm text-muted-foreground">No learning activity recorded in this range.</p>
+      ) : null}
+      {state === "ready" && total != null ? (
+        <>
+          <p className="mt-4 text-2xl font-semibold">{durationText(total)}</p>
+          <h3 className="mt-4 text-sm font-semibold">Sites</h3>
+          <ul className="mt-2 space-y-2 text-sm">
+            {sites.map((site) => (
+              <li key={site.key} className="flex items-center justify-between gap-3 rounded-xl bg-muted px-3 py-2">
+                <span className="font-medium">{site.key}</span>
+                <span className="text-muted-foreground">{durationText(site.activeSeconds)}</span>
+              </li>
+            ))}
+          </ul>
+          <h3 className="mt-4 text-sm font-semibold">Courses</h3>
+          <ul className="mt-2 space-y-2 text-sm">
+            {courses.map((course) => (
+              <li key={course.key} className="flex items-center justify-between gap-3 rounded-xl bg-muted px-3 py-2">
+                <span className="font-medium">{course.key}</span>
+                <span className="text-muted-foreground">{durationText(course.activeSeconds)}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+      {truncated ? (
+        <p role="status" className="mt-3 text-sm text-muted-foreground">
+          This range has more heartbeats than were loaded, so the total covers the loaded ones only.
+        </p>
+      ) : null}
+    </section>
+  );
+}

@@ -185,6 +185,7 @@ pnpm build
 pnpm lint
 
 node scripts/verify-tracking.mjs    # time-tracking domain rules
+node scripts/verify-learning.mjs    # learning allowlist, idle time, queue, and writes
 node scripts/verify-planned-actual.mjs   # planned vs actual: estimates, recorded time, unattributed time
 node scripts/verify-contracts.mjs   # app vocabularies vs the SQL constraints
 node scripts/verify-integrations.mjs   # integration contract, adapter parsing and dedup rules
@@ -252,6 +253,12 @@ order:
    `observations`. **Requires step 3.** The `/coding` page, the dashboard Coding
    card, and the report's coding panel read these columns. Apply it before using
    the Cursor / VS Code extension.
+7. `supabase/migrations/20261022150000_learning_activity.sql` — allows
+   `activity_kind = 'learning'` and adds `site_host`, `page_title`,
+   `course_label`, and `lesson_label`. **Requires step 3.** Apply it after step 6
+   when that migration is already in the chain. The `/learning` page, the
+   dashboard Learning card, and the report's learning panel read these columns.
+   Apply it before using the browser extension.
 
 Apply them with the Supabase SQL Editor (paste the file, run) or `supabase db push`.
 Afterwards, tell PostgREST to pick up the new schema:

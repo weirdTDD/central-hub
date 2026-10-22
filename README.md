@@ -104,13 +104,67 @@ The extension works offline: heartbeats queue on the computer and send when it c
 
 If the tracker has never signed in, the settings card says **Not connected**. It does not show a connected state on its own.
 
+## Learning time (browser)
+
+A browser extension records **active** time on learning sites you choose. The default, until you save your own list, is freeCodeCamp's curriculum (`freecodecamp.org/learn`). Time counts only while the browser window is focused and you are active. Idle time, time in another window, and every site that is not on the list are not counted. The address and the query string are not stored. On freeCodeCamp the course and the lesson are read from the page path. On other sites the page title is kept when it is not itself a URL.
+
+Heartbeats are observations on your account (`activity_kind = learning`). The Learning page groups them into sessions by site and course. They are **not** added to coding time, manual sessions, or work logs.
+
+### 1. Database
+
+In the Supabase SQL editor, run `supabase/migrations/20261022150000_learning_activity.sql` after the coding migration (`20261022140000_coding_activity.sql`). Then reload the API schema:
+
+```sql
+NOTIFY pgrst, 'reload schema';
+```
+
+### 2. Load the extension
+
+The extension has no npm dependencies. Chrome and Edge use a service worker. Firefox 121 or newer uses the same file as an event page.
+
+Chrome or Edge:
+
+1. Open `chrome://extensions` or `edge://extensions`.
+2. Turn on **Developer mode**.
+3. Choose **Load unpacked** and select the `extensions/learning-tracker` folder.
+
+Firefox:
+
+1. Open `about:debugging#/runtime/this-firefox`.
+2. Choose **Load Temporary Add-on** and select `extensions/learning-tracker/manifest.json`.
+3. A temporary add-on is removed when Firefox quits. Load it again after a restart.
+
+### 3. Connect it
+
+1. Open the extension's options page (**Sites and sign-in** in the toolbar popup).
+2. Enter the same Supabase URL and anon key as in `.env`. The anon key is the public project key, not the service-role key.
+3. Enter the email and password of your Central Hub account. The password is used once and is not stored. A refresh token is kept in the extension's storage.
+4. The popup shows the site it is tracking, or **Not on a tracked site**. **Pause** stops the clock. **Sign out** stops sending; heartbeats still queued in the browser stay there until you sign in again.
+
+The extension works offline: heartbeats queue on the computer and send when it can reach Supabase. Sending the same heartbeat again does not create a duplicate.
+
+### 4. Choose sites and see the time
+
+| Place | What you get |
+|-------|----------------|
+| `/learning` | The day's sessions by site and course, the day's and week's totals, each day of the week, and the tracked-sites list. Delete removes that day's heartbeats. |
+| `/dashboard` | A Learning card for the selected day. It is not mixed into coding time or the recorded-session total. |
+| `/reports` | Learning time for the report range, by site and course. |
+| `/settings/integrations` | Connected, syncing, or error, the last time heartbeats were sent, the tracked sites, and these setup steps. |
+| `/integrations` | The same connection, and Disconnect (that deletes the heartbeats this connection stored). |
+
+Add a site as a host (`javascript.info`), a host and path (`freecodecamp.org/learn`), or subdomains (`*.example.com`). `www` is included with the host. Query strings are not part of a pattern. The extension options page edits the same list. The last save wins.
+
+If the tracker has never signed in, the settings card says **Not connected**. Saving a site list creates the connection row; the extension still has to sign in before heartbeats are sent.
+
 ## Main routes
 
 | Path | Description |
 |------|-------------|
 | `/login` | Sign in |
-| `/dashboard` | The day: plan, journal, and coding time |
+| `/dashboard` | The day: plan, journal, coding time, and learning time |
 | `/coding` | Coding timeline |
+| `/learning` | Learning time on the sites you track |
 | `/tracking` | Recorded sessions |
 | `/logs` | Work logs |
 | `/logs/new` | Create a log entry |
@@ -122,7 +176,7 @@ If the tracker has never signed in, the settings card says **Not connected**. It
 | `/ask` | Questions over your records |
 | `/settings` | Profile |
 | `/settings/notifications` | Notification prefs |
-| `/settings/integrations` | Connectors, including the coding tracker |
+| `/settings/integrations` | Connectors, including the coding and learning trackers |
 
 ## Project layout
 
@@ -136,7 +190,8 @@ src/
   settings/      Profile, notifications, integrations
   routes/        App routing
 extensions/coding-tracker/   Cursor and VS Code extension
-supabase/migrations/         Database migrations, including coding activity
+extensions/learning-tracker/ Browser extension for allowlisted learning sites
+supabase/migrations/         Database migrations, including coding and learning activity
 ```
 
 ## Docs

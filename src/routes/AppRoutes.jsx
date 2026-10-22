@@ -17,6 +17,7 @@ import IntegrationsPage from "../features/integrations/IntegrationsPage";
 import { IntegrationsProvider } from "../features/integrations/IntegrationsContext";
 import TrackingPage from "../features/tracking/TrackingPage";
 import CodingPage from "../features/coding/CodingPage";
+import LearningPage from "../features/learning/LearningPage";
 import { TrackingProvider } from "../features/tracking/TrackingContext";
 import NotificationsPage from "../features/notifications/NotificationsPage";
 import AskPage from "../features/ai/AskPage";
@@ -82,6 +83,14 @@ function AppRoutes() {
            element={
              <ProtectedRoute>
                <CodingPage />
+             </ProtectedRoute>
+           }
+         />
+         <Route
+           path="/learning"
+           element={
+             <ProtectedRoute>
+               <LearningPage />
              </ProtectedRoute>
            }
          />
