@@ -187,6 +187,61 @@ export function IntegrationsProvider({ children }) {
   }, []);
 
   /**
+   * Syncs a connector that reads this computer.
+   *
+   * The dev server collects the records. This function never receives a path:
+   * it names the connector, and the server decides which folder it may read.
+   *
+   * @param {import("./contract.js").IntegrationAdapter} adapter
+   */
+  const syncLocal = useCallback(async (adapter) => {
+    setActionError(null);
+    setSyncing(true);
+    setSyncProgress("reading");
+
+    let result;
+    try {
+      const response = await fetch("/api/connectors/collect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider: adapter.id }),
+      });
+      const body = await response.json().catch(() => null);
+      if (!response.ok || !body?.ok) {
+        throw new Error(
+          body?.error ||
+            "This computer could not be read. Start the app with pnpm dev and try the sync again."
+        );
+      }
+
+      result = await runAdapterSync({
+        adapter,
+        text: JSON.stringify(body.payload),
+        provider: adapter.id,
+        label: adapter.label,
+        onProgress: (phase) => setSyncProgress(phase),
+      });
+    } catch (err) {
+      const message = err?.message || "The connector could not sync.";
+      setActionError(message);
+      result = {
+        status: "error",
+        integration: null,
+        recordsSeen: 0,
+        recordsWritten: 0,
+        recordsSkipped: 0,
+        error: message,
+      };
+    } finally {
+      setSyncing(false);
+      setSyncProgress(null);
+      setReloadToken((token) => token + 1);
+    }
+
+    return result;
+  }, []);
+
+  /**
    * Removes a connection. The database removes the observations that connection
    * imported along with it.
    *
@@ -222,6 +277,7 @@ export function IntegrationsProvider({ children }) {
       syncing,
       syncProgress,
       syncFromFile,
+      syncLocal,
       disconnect,
       refresh,
     }),
@@ -238,6 +294,7 @@ export function IntegrationsProvider({ children }) {
       syncing,
       syncProgress,
       syncFromFile,
+      syncLocal,
       disconnect,
       refresh,
     ]

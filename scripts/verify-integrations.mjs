@@ -23,6 +23,8 @@ import {
   stableHash,
 } from "../src/features/integrations/ids.js";
 import { localActivityFileAdapter } from "../src/features/integrations/adapters/localActivityFile.js";
+import { vscodeHistoryAdapter } from "../src/features/integrations/adapters/vscodeHistory.js";
+import { browserHistoryAdapter } from "../src/features/integrations/adapters/browserHistory.js";
 
 let passed = 0;
 const failures = [];
@@ -194,6 +196,59 @@ check("every adapter implements parse and toObservations", () => {
     assert(typeof adapter.parse === "function", `${adapter.id}: parse`);
     assert(typeof adapter.toObservations === "function", `${adapter.id}: toObservations`);
   }
+});
+
+check("VS Code history keeps the file name and drops the path", () => {
+  const parsed = vscodeHistoryAdapter.parse(
+    JSON.stringify({
+      version: 1,
+      records: [{ occurred_at: "2026-10-01T12:00:00.000Z", file_name: "App.jsx" }],
+    })
+  );
+  const [observation] = vscodeHistoryAdapter.toObservations(parsed.records);
+  assertEqual(observation.application, "Visual Studio Code", "application");
+  assertEqual(observation.windowTitle, "App.jsx", "file name");
+  assertEqual(observation.durationSeconds, null, "an edit has no measured duration");
+  assertEqual(observation.source, "import", "source");
+  assertThrows(
+    () =>
+      vscodeHistoryAdapter.parse(
+        JSON.stringify({
+          version: 1,
+          records: [{ occurred_at: "2026-10-01T12:00:00.000Z", file_name: "C:/secret/App.jsx" }],
+        })
+      ),
+    /file name, not a path/,
+    "a path must be refused"
+  );
+});
+
+check("browser history keeps the host and drops an unmeasured duration", () => {
+  const parsed = browserHistoryAdapter.parse(
+    JSON.stringify({
+      version: 1,
+      records: [
+        { occurred_at: "2026-10-17T12:00:00.000Z", host: "GitHub.com", duration_seconds: 90 },
+        { occurred_at: "2026-10-17T12:05:00.000Z", host: "example.com", duration_seconds: 0 },
+      ],
+    })
+  );
+  const observations = browserHistoryAdapter.toObservations(parsed.records);
+  assertEqual(observations[0].application, "github.com", "host is lowercased");
+  assertEqual(observations[0].windowTitle, null, "page title is not stored");
+  assertEqual(observations[0].durationSeconds, 90, "measured duration");
+  assertEqual(observations[1].durationSeconds, null, "zero duration stays missing");
+  assertThrows(
+    () =>
+      browserHistoryAdapter.parse(
+        JSON.stringify({
+          version: 1,
+          records: [{ occurred_at: "2026-10-17T12:00:00.000Z", host: "https://github.com/private", duration_seconds: 1 }],
+        })
+      ),
+    /not a URL/,
+    "a full URL must be refused"
+  );
 });
 
 console.log("\nStatus transitions");

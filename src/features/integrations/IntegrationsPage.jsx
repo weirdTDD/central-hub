@@ -239,29 +239,29 @@ function AdapterCard({
   syncing,
   progress,
   onFile,
+  onSync,
   onDisconnect,
 }) {
-  // A card for an adapter that does not work yet must not look like a working
+  // A connector that does not work yet must not look like a working
   // connection, so it carries no state badge and no controls at all.
   if (!adapter.implemented) {
     return (
-      <section className="rounded-2xl border border-border bg-white p-5 shadow-sm dark:bg-zinc-900">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            {adapter.label}
-          </h2>
-          <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700 dark:bg-zinc-800 dark:text-gray-300">
+      <li className="rounded-2xl border border-border bg-white p-4 shadow-sm dark:bg-zinc-900">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              {adapter.label}
+            </h3>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              {adapter.summary}
+            </p>
+          </div>
+          <span className="inline-flex shrink-0 items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700 dark:bg-zinc-800 dark:text-gray-300">
             Coming soon
           </span>
         </div>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-          {adapter.summary}
-        </p>
-        <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-          This adapter is not available in this build, so there is nothing to
-          connect yet.
-        </p>
-      </section>
+        <ContractDetails adapter={adapter} />
+      </li>
     );
   }
 
@@ -312,12 +312,24 @@ function AdapterCard({
       ) : null}
 
       <div className="mt-5 flex flex-wrap items-center gap-3">
-        <FilePicker
-          adapterId={adapter.id}
-          label={adapter.label}
-          disabled={busy || syncing}
-          onFile={(file) => onFile(adapter, file)}
-        />
+        {adapter.collection === "local" ? (
+          <button
+            type="button"
+            disabled={busy || syncing}
+            onClick={() => onSync(adapter)}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+          >
+            <RefreshCw className={`h-4 w-4 ${busy ? "animate-spin" : ""}`} />
+            Sync this computer
+          </button>
+        ) : (
+          <FilePicker
+            adapterId={adapter.id}
+            label={adapter.label}
+            disabled={busy || syncing}
+            onFile={(file) => onFile(adapter, file)}
+          />
+        )}
 
         {integration ? (
           <button
@@ -447,11 +459,14 @@ export default function IntegrationsPage() {
     syncing,
     syncProgress,
     syncFromFile,
+    syncLocal,
     disconnect,
     refresh,
   } = useIntegrations();
 
   const adapters = useMemo(() => listAdapters(), []);
+  const available = adapters.filter((adapter) => adapter.implemented);
+  const planned = adapters.filter((adapter) => !adapter.implemented);
   const [outcomes, setOutcomes] = useState({});
   const [busyAdapterId, setBusyAdapterId] = useState(null);
 
@@ -480,6 +495,36 @@ export default function IntegrationsPage() {
         [adapter.id]: {
           type: "error",
           message: err?.message || "The activity file could not be imported.",
+        },
+      }));
+    } finally {
+      setBusyAdapterId(null);
+    }
+  };
+
+  const handleSync = async (adapter) => {
+    setBusyAdapterId(adapter.id);
+    try {
+      const result = await syncLocal(adapter);
+      setOutcomes((current) => ({
+        ...current,
+        [adapter.id]:
+          result.status === "error"
+            ? { type: "error", message: result.error }
+            : {
+                type: "success",
+                fileName: adapter.label,
+                recordsSeen: result.recordsSeen,
+                recordsWritten: result.recordsWritten,
+                recordsSkipped: result.recordsSkipped,
+              },
+      }));
+    } catch (err) {
+      setOutcomes((current) => ({
+        ...current,
+        [adapter.id]: {
+          type: "error",
+          message: err?.message || "The connector could not sync.",
         },
       }));
     } finally {
@@ -530,7 +575,7 @@ export default function IntegrationsPage() {
             <div className="flex flex-col gap-1">
               <h1 className="text-3xl font-bold tracking-tight">Integrations</h1>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Integrations bring activity from outside this app into it as
+                Connectors bring activity from outside this app in as
                 observations, which then become sessions and task attribution.
               </p>
             </div>
@@ -579,10 +624,55 @@ export default function IntegrationsPage() {
             </div>
           ) : null}
 
-          <section className="mt-6 rounded-2xl border border-border bg-white p-5 shadow-sm dark:bg-zinc-900">
+          <section className="mt-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              The five states
+              Available
             </h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              These connectors read activity that already exists and import it
+              into your account.
+            </p>
+            <div className="mt-4 space-y-6">
+              {available.map((adapter) => {
+                const integration = integrations.find(
+                  (row) => row.provider === adapter.id
+                );
+
+                return (
+                  <AdapterCard
+                    key={adapter.id}
+                    adapter={adapter}
+                    integration={integration}
+                    outcome={outcomes[adapter.id]}
+                    busy={busyAdapterId === adapter.id}
+                    syncing={syncing}
+                    progress={busyAdapterId === adapter.id ? syncProgress : null}
+                    onFile={handleFile}
+                    onSync={handleSync}
+                    onDisconnect={handleDisconnect}
+                  />
+                );
+              })}
+            </div>
+          </section>
+
+          {planned.length > 0 ? (
+            <section className="mt-8">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Coming soon
+              </h2>
+              <ul className="mt-4 space-y-3">
+                {planned.map((adapter) => (
+                  <AdapterCard key={adapter.id} adapter={adapter} />
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          <details className="mt-6 rounded-2xl border border-border bg-white px-5 py-4 shadow-sm dark:bg-zinc-900">
+            <summary className="cursor-pointer text-sm font-semibold text-gray-900 dark:text-gray-100">
+              What the status badges mean
+            </summary>
             <ul className="mt-3 grid gap-3 sm:grid-cols-2">
               {Object.entries(STATUS_META).map(([state, meta]) => (
                 <li key={state} className="flex items-start gap-3">
@@ -593,29 +683,7 @@ export default function IntegrationsPage() {
                 </li>
               ))}
             </ul>
-          </section>
-
-          <div className="mt-6 space-y-6">
-            {adapters.map((adapter) => {
-              const integration = integrations.find(
-                (row) => row.provider === adapter.id
-              );
-
-              return (
-                <AdapterCard
-                  key={adapter.id}
-                  adapter={adapter}
-                  integration={integration}
-                  outcome={outcomes[adapter.id]}
-                  busy={busyAdapterId === adapter.id}
-                  syncing={syncing}
-                  progress={busyAdapterId === adapter.id ? syncProgress : null}
-                  onFile={handleFile}
-                  onDisconnect={handleDisconnect}
-                />
-              );
-            })}
-          </div>
+          </details>
 
           <SyncHistory
             runs={syncRuns}
