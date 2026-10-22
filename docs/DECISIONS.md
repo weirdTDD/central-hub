@@ -255,6 +255,27 @@ increment when those tables and their UI exist.
 
 **Date:** 2026-10-22
 
+## D-014 — Grok chat is a separate function, and reminders are rows
+
+**Context:** The owner wants to talk to Grok inside Central Hub, with his own tasks, work logs, coding time, and learning time available when he asks, and to set reminders on tasks from the chat or from a form. `ai-analytics` already calls xAI for one-shot JSON analyses (`day_summary`, `classify_activity`, `priorities`, `ask`). That function does not stream, does not keep a conversation, and does not change records. MASTER_SPEC 7G says the app must work with AI unconfigured, that an AI must not invent records, and that a paid key must not reach the browser.
+
+**Options considered:**
+1. Extend `ai-analytics` so one function does JSON analyses and streaming tool calls.
+2. A new `grok-chat` Edge Function for streaming chat and tools, leaving `ai-analytics` as the one-shot path. Reminders are their own table. Delivery writes the existing in-app `notifications` row. The browser Notification API shows that same row on this device when the owner allows it.
+3. Call xAI from the browser with a `VITE_` key.
+
+**Choice:** Option 2.
+
+**Consequences:**
+- The key is `XAI_API_KEY` on the function. The default model is `grok-4.7` (xAI's current chat recommendation, `POST https://api.x.ai/v1/chat/completions`). `XAI_CHAT_MODEL` overrides it; `XAI_MODEL` is the fallback shared with `ai-analytics`. The picker offers `grok-4.7`, `grok-4.6`, `grok-4.5`, `grok-4.3`, and `grok-4`.
+- Context is a tool (`get_owner_context`), not a blob on every message. The tool reads the caller's rows under his JWT, so another account's rows are out of reach. Coding time, learning time, sessions, and work logs are returned separately. File names, page addresses, window titles, and the email are not included.
+- A reminder has to match one existing task. Several matches do not create a reminder, and Grok cannot create a task or change a task's status.
+- The schedule is `task_alerts.due_at`. The app checks it on load, when the tab becomes visible, and every 30 seconds while open. The notification id is derived from the alert and the occurrence, so a second check does not write a second inbox row. A repeat moves `due_at` to the next future time; missed repeats are not replayed as a stack. Quiet hours hold the popup. `kinds.task_alert === false` mutes the inbox write and still advances a repeat. `channels.browser` is this device, not a new database channel: `notifications.channel` stays `in_app`.
+- A powered-off computer cannot show a reminder until Central Hub is opened. That limit is stated in the UI. There is no always-on worker for these reminders.
+- The migration is `supabase/migrations/20261022160000_grok_chat_alerts.sql`. It is not applied to the live project from this environment.
+
+**Date:** 2026-10-22
+
 ## D-011 — Event triggers: a task completion, read from the task table
 
 **Context:** D-010 built the clock half of the workflow foundation: "time-based and event-based triggers" is what the spec asks for, and the event half was left unimplemented on purpose (the engine refused it with a reason). An event trigger needs a way to notice that something happened, a way to know it has already been handled, and a way to guarantee it is not handled twice.

@@ -21,6 +21,8 @@ import LearningPage from "../features/learning/LearningPage";
 import { TrackingProvider } from "../features/tracking/TrackingContext";
 import NotificationsPage from "../features/notifications/NotificationsPage";
 import AskPage from "../features/ai/AskPage";
+import GrokPage from "../features/grok/GrokPage";
+import GrokShell from "../features/grok/GrokShell";
 import { NotificationsProvider } from "../features/notifications/NotificationsContext";
 
 function HomeRedirect() {
@@ -31,6 +33,7 @@ function HomeRedirect() {
 function AppRoutes() {
   return (
     <BrowserRouter>
+      <GrokShell>
       <Routes>
         <Route path="/" element={<HomeRedirect />} />
         <Route path="/login" element={<AuthPage />} />
@@ -147,6 +150,14 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/grok"
+          element={
+            <ProtectedRoute>
+              <GrokPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/settings"
           element={
             <ProtectedRoute>
@@ -160,6 +171,7 @@ function AppRoutes() {
         </Route>
         <Route path="*" element={<HomeRedirect />} />
       </Routes>
+      </GrokShell>
     </BrowserRouter>
   );
 }

@@ -6,6 +6,7 @@ import {
   Code2,
   GraduationCap,
   MessageSquare,
+  Sparkles,
   LayoutDashboard,
   ListTodo,
   LogOut,
@@ -41,6 +42,7 @@ const navigation = [
   { name: "Notifications", href: "/notifications", icon: Bell },
   { name: "Integrations", href: "/integrations", icon: Plug },
   { name: "Ask", href: "/ask", icon: MessageSquare },
+  { name: "Grok", href: "/grok", icon: Sparkles },
   { name: "Reports", href: "/reports", icon: BarChart3 },
   { name: "Settings", href: "/settings", icon: Settings },
 ];

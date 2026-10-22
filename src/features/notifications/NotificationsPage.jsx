@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../components/ui/select";
+import TaskAlertsPanel from "../grok/TaskAlertsPanel.jsx";
 import { useNotifications } from "./NotificationsContext";
 import { CONDITION_TYPES, EVENT_LABELS, EVENT_TYPES } from "./workflowEngine.js";
 import WorkflowJourney from "./WorkflowJourney";
@@ -565,6 +566,10 @@ export default function NotificationsPage() {
               {openNotifications.length} open of {notifications.length} delivered
               {truncated ? " — the list is truncated, not complete" : ""}
             </p>
+          </div>
+
+          <div className="mt-6">
+            <TaskAlertsPanel />
           </div>
 
           {error ? (

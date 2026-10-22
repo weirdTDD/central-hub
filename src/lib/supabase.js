@@ -12,8 +12,8 @@ const viteEnv = (typeof import.meta !== "undefined" && import.meta.env) || {};
 const nodeEnv =
   (typeof globalThis !== "undefined" && globalThis.process?.env) || {};
 const env = { ...nodeEnv, ...viteEnv };
-const supabaseUrl = env.VITE_SUPABASE_URL;
-const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY;
+export const supabaseUrl = env.VITE_SUPABASE_URL;
+export const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY;
 
 /**
  * True when both Supabase env vars are present.

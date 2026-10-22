@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import TaskAlertSettings from "./TaskAlertSettings.jsx";
 
 /**
  * The settings screen for notifications.
@@ -82,6 +83,7 @@ export default function NotificationScreen() {
           </li>
         ))}
       </ul>
+      <TaskAlertSettings />
     </section>
   );
 }

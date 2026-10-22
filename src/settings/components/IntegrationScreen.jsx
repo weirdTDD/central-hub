@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Code2, FileJson, Globe, Shield } from "lucide-react";
 import { listAdapters } from "../../features/integrations/contract.js";
 import CodingTrackerCard from "./CodingTrackerCard.jsx";
+import GrokCard from "./GrokCard.jsx";
 import LearningTrackerCard from "./LearningTrackerCard.jsx";
 
 // The account providers this build does not have.
@@ -69,6 +70,7 @@ export default function IntegrationScreen() {
 
   return (
     <div className="space-y-6">
+    <GrokCard />
     <CodingTrackerCard />
     <LearningTrackerCard />
     <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">

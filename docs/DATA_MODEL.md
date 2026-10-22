@@ -581,6 +581,16 @@ Migration `supabase/migrations/20261022150000_learning_activity.sql` widens `act
 - **Delete:** deleting the connection cascades to heartbeats that reference it. Deleting one local day deletes the learning observations in that range and leaves coding observations, other observations, and sessions alone.
 - **Missing:** a day with no learning heartbeats is "nothing recorded", not zero.
 
+### Grok chats and task reminders (2026-10-22)
+
+Migration `supabase/migrations/20261022160000_grok_chat_alerts.sql`. Requires `public.tasks`. `ai_preferences.grok_model` is added only when that table already exists.
+
+- **grok_conversations** — one chat. `title`, optional `model`, `user_id` default `auth.uid()`. Delete cascades to messages.
+- **grok_messages** — a turn: `user`, `assistant`, or `tool`. A tool turn keeps `tool_call_id`. The message's owner must own the conversation (trigger, security invoker, so RLS applies).
+- **task_alerts** — a reminder for one task (`task_id` on delete cascade). `due_at` is the next occurrence. `repeat` is `none`, `daily`, `weekly`, or `weekdays`. `status` is `scheduled`, `paused`, or `fired`. `last_fired_at` is the occurrence already delivered, so a second open does not deliver it again. `created_by` is `user` or `grok`. The task must belong to the same user.
+- **Delivery:** an inbox row in `public.notifications` with `kind = task_alert` and `channel = in_app`. The id is derived from the alert and the occurrence. Browser notifications are this device showing that row; they are not a database channel.
+- **RLS:** select, insert, update, and delete for `authenticated` where `user_id = auth.uid()`. `anon` has no grants.
+
 ## Relationships / ownership rules
 
 - All records carry user_id; RLS enforces user A cannot read/modify user B's records.

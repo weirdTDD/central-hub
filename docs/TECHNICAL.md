@@ -186,6 +186,7 @@ pnpm lint
 
 node scripts/verify-tracking.mjs    # time-tracking domain rules
 node scripts/verify-learning.mjs    # learning allowlist, idle time, queue, and writes
+node scripts/verify-grok.mjs        # Grok model, reminders, context, and the chat stream
 node scripts/verify-planned-actual.mjs   # planned vs actual: estimates, recorded time, unattributed time
 node scripts/verify-contracts.mjs   # app vocabularies vs the SQL constraints
 node scripts/verify-integrations.mjs   # integration contract, adapter parsing and dedup rules
@@ -259,6 +260,12 @@ order:
    when that migration is already in the chain. The `/learning` page, the
    dashboard Learning card, and the report's learning panel read these columns.
    Apply it before using the browser extension.
+8. `supabase/migrations/20261022160000_grok_chat_alerts.sql` — creates
+   `grok_conversations`, `grok_messages`, and `task_alerts`, with per-owner
+   row-level security. **Requires step 2** (`public.tasks`). Delivering a
+   reminder also needs step 5, because the inbox row is a `notifications`
+   row. Apply it before using `/grok`. Deploy `supabase/functions/grok-chat`
+   and set `XAI_API_KEY` separately; the migration does not contain the key.
 
 Apply them with the Supabase SQL Editor (paste the file, run) or `supabase db push`.
 Afterwards, tell PostgREST to pick up the new schema:
