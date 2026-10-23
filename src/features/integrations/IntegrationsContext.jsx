@@ -1,4 +1,4 @@
-// Central Hub — the integrations context.
+// Sentral Hub — the integrations context.
 //
 // The page shows what is REALLY connected: the state of every connection comes
 // from a database row, never from the browser. A failed import is an outcome the

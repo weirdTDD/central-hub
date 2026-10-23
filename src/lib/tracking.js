@@ -1,4 +1,4 @@
-// Central Hub — the time-tracking data layer.
+// Sentral Hub — the time-tracking data layer.
 //
 // Phase 4 (MASTER_SPEC Section 7C) persistence: raw observations, the sessions
 // derived from them, and the manual corrections that live beside a session.

@@ -5,12 +5,12 @@ const TopLoggedTasks = ({ logs = [] }) => {
   const topTasks = useMemo(() => getTopLoggedTasks(logs), [logs]);
 
   return (
-    <div className="flex h-full flex-col rounded-2xl border border-border bg-card p-6 shadow-sm md:h-90">
+    <div className="flex h-full flex-col rounded-2xl border border-black/5 bg-card-peach p-8 shadow-lift md:h-90 dark:border-white/10">
       <div className="mb-8 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-card-foreground">Top Logged Tasks</h3>
       </div>
 
-      <div className="grow space-y-8 ">
+      <div className="grow space-y-10 ">
         {topTasks.length === 0 ? (
           <p className="py-10 text-center text-muted-foreground">No log data available.</p>
         ) : (

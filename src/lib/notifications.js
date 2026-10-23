@@ -1,4 +1,4 @@
-// Central Hub — the notifications and workflows data layer.
+// Sentral Hub — the notifications and workflows data layer.
 //
 // Phase 6 (MASTER_SPEC Section 7E) persistence: workflow definitions, their
 // execution history, the notifications they deliver, the delivery preferences and

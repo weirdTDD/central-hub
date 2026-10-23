@@ -1,4 +1,4 @@
-// Central Hub — the integrations data layer.
+// Sentral Hub — the integrations data layer.
 //
 // Phase 5 (MASTER_SPEC Section 7D) persistence: one connection row per user and
 // provider, one row per synchronisation attempt, and the provenance link that

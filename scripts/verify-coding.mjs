@@ -1,4 +1,4 @@
-// Central Hub — coding tracker assertions.
+// Sentral Hub — coding tracker assertions.
 //
 // Run:  node scripts/verify-coding.mjs
 //
@@ -98,7 +98,7 @@ function run(events, options) {
   return { state, heartbeats };
 }
 
-console.log("Central Hub — coding tracker assertions\n");
+console.log("Sentral Hub — coding tracker assertions\n");
 
 console.log("Editor and labels");
 check("Cursor is detected and every other host is VS Code", () => {

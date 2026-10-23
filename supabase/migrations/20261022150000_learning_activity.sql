@@ -1,4 +1,4 @@
--- Central Hub — learning activity from the browser extension
+-- Sentral Hub — learning activity from the browser extension
 -- Date: 2026-10-22
 -- Target: Supabase PostgreSQL (apply via Supabase SQL Editor or `supabase db push`)
 --

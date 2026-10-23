@@ -1,4 +1,4 @@
-# Central Hub — Decision Log
+# Sentral Hub — Decision Log
 
 Format: one entry per major decision — context, options, choice, consequences, date.
 
@@ -212,7 +212,7 @@ increment when those tables and their UI exist.
 
 ## D-012 — Coding time is heartbeats on observations, not rows in sessions
 
-**Context:** Central Hub needs automatic coding time from Cursor and VS Code: active time, idle detection, project, language, file activity, and which editor was in use. Supabase is already the store (observations, sessions, integrations, RLS). The sessions table is the recorded-time stream used by planned-versus-actual. A person can also log that same hour by hand.
+**Context:** Sentral Hub needs automatic coding time from Cursor and VS Code: active time, idle detection, project, language, file activity, and which editor was in use. Supabase is already the store (observations, sessions, integrations, RLS). The sessions table is the recorded-time stream used by planned-versus-actual. A person can also log that same hour by hand.
 
 **Options considered:**
 1. A new `coding_sessions` table, written by the extension, shown on its own page.

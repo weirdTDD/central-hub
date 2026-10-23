@@ -19,7 +19,7 @@ const TABS = [
     end: true,
     title: "Profile",
     description:
-      "Your name, role and bio. These are stored on your account, so they follow you into every part of Central Hub.",
+      "Your name, role and bio. These are stored on your account, so they follow you into every part of Sentral Hub.",
   },
   {
     to: "/settings/notifications",
@@ -37,7 +37,7 @@ const TABS = [
     end: false,
     title: "Integrations",
     description:
-      "The bridges between Central Hub and the other tools you use, each with a documented contract.",
+      "The bridges between Sentral Hub and the other tools you use, each with a documented contract.",
   },
 ];
 

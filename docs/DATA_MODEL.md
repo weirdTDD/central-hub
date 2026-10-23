@@ -1,4 +1,4 @@
-# Central Hub — Data Model
+# Sentral Hub — Data Model
 
 Entities, ownership, relationships, and delete behavior. Conceptual; tables introduced as phases ship.
 

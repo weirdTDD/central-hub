@@ -1,4 +1,4 @@
--- Central Hub — Phase 5: integrations (connections, sync runs, observation provenance)
+-- Sentral Hub — Phase 5: integrations (connections, sync runs, observation provenance)
 -- Date: 2026-10-20
 -- Target: Supabase PostgreSQL (apply via Supabase SQL Editor or `supabase db push`)
 --

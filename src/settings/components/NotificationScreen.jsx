@@ -17,7 +17,7 @@ const CHANNELS = [
     label: "In-app",
     state: "Connected",
     connected: true,
-    meaning: "Notifications appear in your Central Hub inbox.",
+    meaning: "Notifications appear in your Sentral Hub inbox.",
   },
   {
     id: "email",

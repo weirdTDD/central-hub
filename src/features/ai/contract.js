@@ -1,4 +1,4 @@
-// Central Hub — the AI contract.
+// Sentral Hub — the AI contract.
 //
 // Serves MASTER_SPEC Section 7G ("Future AI assistance"):
 //   - the app MUST fully work with AI disabled or unconfigured;

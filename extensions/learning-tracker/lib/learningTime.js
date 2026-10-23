@@ -1,4 +1,4 @@
-// Central Hub — learning-time rules.
+// Sentral Hub — learning-time rules.
 //
 // The browser extension and the app both use this module. It has no dependency
 // on the extension API or on React, so the allowlist, the idle rule, and the

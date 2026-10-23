@@ -1,4 +1,4 @@
--- Central Hub — Phase 3: tasks table + row-level security
+-- Sentral Hub — Phase 3: tasks table + row-level security
 -- Date: 2026-10-20
 -- Target: Supabase PostgreSQL (apply via Supabase SQL Editor or `supabase db push`)
 --

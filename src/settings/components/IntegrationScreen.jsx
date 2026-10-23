@@ -77,7 +77,7 @@ export default function IntegrationScreen() {
       <h2 className="text-base font-semibold text-foreground">Connectors</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         A connector is an independent, documented bridge between an outside
-        source of activity and Central Hub. It brings records in as observations,
+        source of activity and Sentral Hub. It brings records in as observations,
         which then become sessions and task attribution.
       </p>
 

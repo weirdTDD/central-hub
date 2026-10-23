@@ -1,4 +1,4 @@
-// Central Hub — "time spent against plan": the rules that compare the PLAN with
+// Sentral Hub — "time spent against plan": the rules that compare the PLAN with
 // the RECORDED time.
 //
 // The PLAN is a task's estimate (`tasks.estimated_duration_seconds`, whole

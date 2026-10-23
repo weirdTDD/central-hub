@@ -1,4 +1,4 @@
--- Central Hub — coding activity from Cursor and VS Code
+-- Sentral Hub — coding activity from Cursor and VS Code
 -- Date: 2026-10-22
 -- Target: Supabase PostgreSQL (apply via Supabase SQL Editor or `supabase db push`)
 --

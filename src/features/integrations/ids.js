@@ -1,4 +1,4 @@
-// Central Hub — integration identity helpers: stable hashing and deterministic ids.
+// Sentral Hub — integration identity helpers: stable hashing and deterministic ids.
 //
 // Serves MASTER_SPEC Section 7D: an adapter's records must be ingestible
 // idempotently, and `public.observations.id` is a client-generated `uuid` primary

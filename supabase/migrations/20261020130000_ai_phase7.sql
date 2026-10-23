@@ -1,4 +1,4 @@
--- Central Hub — Phase 7: AI assistance and evidence-based reviews.
+-- Sentral Hub — Phase 7: AI assistance and evidence-based reviews.
 -- Date: 2026-08-21
 -- Target: Supabase PostgreSQL (apply via Supabase SQL Editor or `supabase db push`)
 --

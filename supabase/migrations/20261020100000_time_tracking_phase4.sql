@@ -1,4 +1,4 @@
--- Central Hub — Phase 4: time tracking (observations, sessions, corrections)
+-- Sentral Hub — Phase 4: time tracking (observations, sessions, corrections)
 -- Date: 2026-10-20
 -- Target: Supabase PostgreSQL (apply via Supabase SQL Editor or `supabase db push`)
 --

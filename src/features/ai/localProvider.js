@@ -1,4 +1,4 @@
-// Central Hub — the on-device provider.
+// Sentral Hub — the on-device provider.
 //
 // Serves MASTER_SPEC Section 7G: "the app MUST fully work with AI disabled or
 // unconfigured". This provider is always available: it needs no key, no network

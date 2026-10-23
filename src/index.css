@@ -4,8 +4,16 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, monospace;
+  --shadow-lift: var(--shadow-card);
+  --color-card-coral: var(--card-coral);
+  --color-card-gold: var(--card-gold);
+  --color-card-rose: var(--card-rose);
+  --color-card-sky: var(--card-sky);
+  --color-card-mist: var(--card-mist);
+  --color-card-peach: var(--card-peach);
+  --color-card-cream: var(--card-cream);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -22,6 +30,8 @@
   --color-heat-2: var(--heat-2);
   --color-heat-3: var(--heat-3);
   --color-heat-4: var(--heat-4);
+  --color-heat-5: var(--heat-5);
+  --color-heat-6: var(--heat-6);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
@@ -87,11 +97,24 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  /* Heatmap intensity ramp: level 1 (lightest) to level 4 (darkest). */
-  --heat-1: #93c5fd;
-  --heat-2: #3b82f6;
-  --heat-3: #1d4ed8;
-  --heat-4: #0b1c33;
+  /* Hilos-style surfaces: saturated stat cards, paler section cards. */
+  --card-coral: #f6c4b4;
+  --card-gold: #f3e08a;
+  --card-rose: #f0c6d8;
+  --card-sky: #b7d4f0;
+  --card-mist: #eef3fb;
+  --card-peach: #fbeee6;
+  --card-cream: #f7f1d8;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06), 0 10px 28px rgb(15 23 42 / 0.1);
+  --teal: oklch(0.52 0.18 185);
+  --teal-foreground: oklch(0.98 0.02 185);
+  /* Heatmap: blue gradient — light (low) to dark (high). */
+  --heat-1: #dbeafe;
+  --heat-2: #bfdbfe;
+  --heat-3: #93c5fd;
+  --heat-4: #60a5f5;
+  --heat-5: #3b82f6;
+  --heat-6: #2563eb;
   --sidebar: oklch(0.968 0.012 258);
   --sidebar-foreground: oklch(0.27 0.04 262);
   --sidebar-primary: oklch(0.5 0.19 262);
@@ -128,12 +151,23 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  /* Heatmap intensity ramp in dark mode runs dim to bright, so the darkest
-     level stays visible against the dark card. */
+  --card-coral: oklch(0.34 0.07 35);
+  --card-gold: oklch(0.34 0.07 95);
+  --card-rose: oklch(0.34 0.06 350);
+  --card-sky: oklch(0.34 0.06 250);
+  --card-mist: oklch(0.26 0.03 258);
+  --card-peach: oklch(0.28 0.04 45);
+  --card-cream: oklch(0.28 0.04 95);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 14px 36px rgb(0 0 0 / 0.4);
+  --teal: oklch(0.7 0.18 185);
+  --teal-foreground: oklch(0.2 0.05 185);
+  /* Same blue gradient as light mode, brighter for a dark card. */
   --heat-1: #1e3a8a;
   --heat-2: #2563eb;
   --heat-3: #3b82f6;
-  --heat-4: #93c5fd;
+  --heat-4: #60a5f5;
+  --heat-5: #93c5fd;
+  --heat-6: #bfdbfe;
   --sidebar: oklch(0.15 0.022 266);
   --sidebar-foreground: oklch(0.96 0.012 250);
   --sidebar-primary: oklch(0.76 0.14 248);

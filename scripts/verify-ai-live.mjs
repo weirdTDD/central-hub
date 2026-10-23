@@ -1,4 +1,4 @@
-// Central Hub — end-to-end check of the AI run lifecycle against a real
+// Sentral Hub — end-to-end check of the AI run lifecycle against a real
 // PostgREST and a real Postgres.
 //
 // This reproduces the bug that produced:
@@ -75,7 +75,7 @@ async function check(name, fn) {
   }
 }
 
-console.log("Central Hub — AI run lifecycle against real PostgREST\n");
+console.log("Sentral Hub — AI run lifecycle against real PostgREST\n");
 
 // The session must be the real signed-in user.
 //

@@ -6,6 +6,7 @@ import {
   formatDurationFromSeconds,
   hasRecordedDuration,
 } from '../../dashboard/logUtils';
+import { hoursGradeFromSeconds, hoursGradeCaption, computeAverageSeconds } from '../../lib/hoursGrade';
 
 
 // --- 1. Utility: Process Real Data into Heatmap Structure ---
@@ -67,12 +68,6 @@ const processWorkLogs = (logs, year, activityByDate = {}) => {
         (learningSeconds ?? 0);
 
       let level = 0;
-      if (hasRecordedDurationDay || hasTracked) {
-        if (paintSeconds > 5 * 3600) level = 4;
-        else if (paintSeconds > 3 * 3600) level = 3;
-        else if (paintSeconds > 3600) level = 2;
-        else level = 1;
-      }
 
       const dayData = {
         level,
@@ -81,6 +76,7 @@ const processWorkLogs = (logs, year, activityByDate = {}) => {
         codingSeconds,
         learningSeconds,
         logSeconds: hasRecordedDurationDay ? logSeconds : null,
+        paintSeconds,
         date: dateStr,
         logs: dayLogs || []
       };
@@ -103,6 +99,23 @@ const processWorkLogs = (logs, year, activityByDate = {}) => {
     }
     
     calendarStructure.push({ name: monthName, weeks });
+  }
+  
+
+  // Compute the average paintSeconds across active days and re-grade each
+  // day relative to that average. This makes the color scale adaptive: the
+  // highest days always land at level 4 (amber) and the lowest at level 1 (pink)
+  // regardless of absolute hours. Days with no data stay at 0 (muted).
+  const averageSeconds = computeAverageSeconds(calendarStructure);
+
+  for (const month of calendarStructure) {
+    for (const week of month.weeks) {
+      for (const day of week) {
+        if (day.hasRecordedDuration || day.hasTracked) {
+          day.level = Math.max(1, hoursGradeFromSeconds(day.paintSeconds, averageSeconds));
+        }
+      }
+    }
   }
 
   return calendarStructure.slice(0, 12);
@@ -232,12 +245,15 @@ const Heatmap = ({ logs, year, activityByDate = {}, onDayClick, onDayHover }) =>
     [logs, year, activityByDate]
   );
 
+  const averageSeconds = useMemo(
+    () => computeAverageSeconds(calendarData),
+    [calendarData]
+  );
+
   const scrollLeft = () => scrollContainerRef.current?.scrollBy({ left: -300, behavior: 'smooth' });
   const scrollRight = () => scrollContainerRef.current?.scrollBy({ left: 300, behavior: 'smooth' });
 
   const getColorClass = (dayData) => {
-    // Entries exist but none has a recorded duration: shown in amber so it is
-    // distinguishable from recorded activity and from an empty day.
     if (dayData.hasData && !dayData.hasRecordedDuration) return 'bg-amber-200';
     switch (dayData.level) {
       case 0: return 'bg-muted';
@@ -245,7 +261,9 @@ const Heatmap = ({ logs, year, activityByDate = {}, onDayClick, onDayHover }) =>
       case 2: return 'bg-heat-2';
       case 3: return 'bg-heat-3';
       case 4: return 'bg-heat-4';
-      default: return 'bg-gray-100';
+      case 5: return 'bg-heat-5';
+      case 6: return 'bg-heat-6';
+      default: return 'bg-muted';
     }
   };
 
@@ -278,7 +296,8 @@ const Heatmap = ({ logs, year, activityByDate = {}, onDayClick, onDayHover }) =>
       {/* TOOLTIP COMPONENT (Renders fixed above the component) */}
       <TooltipCard data={hoveredData} position={hoverPosition} />
 
-      {/* Legend: distinguishes no activity, activity without duration, and recorded time */}
+      {/* Legend: blue gradient — light (low) to dark (high),
+          thresholds shift with the average so the scale is always relative. */}
       <div className="mb-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <span className="inline-block h-3 w-3 rounded-[2px] bg-muted" />
@@ -290,11 +309,27 @@ const Heatmap = ({ logs, year, activityByDate = {}, onDayClick, onDayHover }) =>
         </span>
         <span className="flex items-center gap-1.5">
           <span className="inline-block h-3 w-3 rounded-[2px] bg-heat-1" />
-          Recorded time
+          {hoursGradeCaption(1, averageSeconds) || "Very Low"}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-3 w-3 rounded-[2px] bg-heat-2" />
+          {hoursGradeCaption(2, averageSeconds) || "Low"}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-3 w-3 rounded-[2px] bg-heat-3" />
+          {hoursGradeCaption(3, averageSeconds) || "Below Average"}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="inline-block h-3 w-3 rounded-[2px] bg-heat-4" />
-          5h+
+          {hoursGradeCaption(4, averageSeconds) || "Near Average"}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-3 w-3 rounded-[2px] bg-heat-5" />
+          {hoursGradeCaption(5, averageSeconds) || "Above Average"}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="inline-block h-3 w-3 rounded-[2px] bg-heat-6" />
+          {hoursGradeCaption(6, averageSeconds) || "Peak"}
         </span>
       </div>
 

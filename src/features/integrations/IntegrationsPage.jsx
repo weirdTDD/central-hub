@@ -1,4 +1,4 @@
-// Central Hub — the integrations page.
+// Sentral Hub — the integrations page.
 //
 // Every state on this page comes from the database: an adapter is "connected"
 // only because a real synchronisation succeeded. An adapter that is not

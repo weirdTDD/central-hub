@@ -82,7 +82,7 @@ const TaskStatusChart = ({ logs = [] }) => {
   }, [logs, themeSnapshot]);
 
   return (
-    <div className="h-full rounded-2xl border border-border bg-card p-6 shadow-sm md:h-90">
+    <div className="h-full rounded-2xl border border-black/5 bg-card-sky p-6 shadow-lift md:h-90 dark:border-white/10">
       <h3 className="text-lg font-semibold text-card-foreground">Data Coverage</h3>
       {hasData ? (
         <ReactECharts option={option} style={{ height: 400 }} />

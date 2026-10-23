@@ -1,4 +1,4 @@
-// Central Hub — adapter: local activity file.
+// Sentral Hub — adapter: local activity file.
 //
 // An adapter is an INDEPENDENT, DOCUMENTED bridge between an outside source of
 // activity and the app's observations. This one is deliberately the smallest

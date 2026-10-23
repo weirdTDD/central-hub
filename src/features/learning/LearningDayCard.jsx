@@ -64,7 +64,7 @@ export default function LearningDayCard({ dayKey, timeZone }) {
     .slice(0, 3);
 
   return (
-    <section aria-labelledby="learning-heading" className="rounded-3xl border border-border bg-card p-4 sm:p-5">
+    <section aria-labelledby="learning-heading" className="rounded-3xl border border-black/5 bg-card-rose p-4 shadow-lift sm:p-5 dark:border-white/10">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 id="learning-heading" className="text-lg font-semibold">Learning</h2>

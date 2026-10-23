@@ -1,4 +1,4 @@
-// Central Hub — adapter: Cursor and VS Code coding time.
+// Sentral Hub — adapter: Cursor and VS Code coding time.
 //
 // The extension (extensions/coding-tracker) sends heartbeats itself. This
 // adapter is the contract the app shows, and the parser for the same heartbeat
@@ -68,7 +68,7 @@ export const codingTrackerAdapter = {
   id: ADAPTER_ID,
   label: "Coding tracker",
   summary:
-    "Records active coding time from the Central Hub extension in Cursor and VS Code.",
+    "Records active coding time from the Sentral Hub extension in Cursor and VS Code.",
   implemented: true,
   collection: "extension",
   removalPolicy:
@@ -77,7 +77,7 @@ export const codingTrackerAdapter = {
     canAccess:
       "Active coding time: which editor (Cursor or VS Code), the workspace folder's name, the file's name, and the language. File contents, full paths, window titles, and keystrokes are not read.",
     permissions:
-      "You install the extension and sign in with your Central Hub account. Tracking can be paused from the command palette. The editor shows a Central Hub status item while it is running.",
+      "You install the extension and sign in with your Sentral Hub account. Tracking can be paused from the command palette. The editor shows a Sentral Hub status item while it is running.",
     authentication:
       "The extension signs in with your email and password once. The password is not stored. A refresh token is kept in the editor's secret storage. The anon key is the public project key, never the service role key.",
     reads:

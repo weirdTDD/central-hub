@@ -70,7 +70,7 @@ export default function CodingReportPanel({ from, to }) {
   const overlaps = total != null && projectSum != null && projectSum > total;
 
   return (
-    <section aria-labelledby="coding-report-heading" className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+    <section aria-labelledby="coding-report-heading" className="rounded-2xl border border-black/5 bg-card-sky p-4 shadow-lift sm:p-5 dark:border-white/10">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="coding-report-heading" className="text-lg font-semibold">Coding time</h2>

@@ -1,4 +1,4 @@
--- Central Hub — allow a question to be recorded as an AI run.
+-- Sentral Hub — allow a question to be recorded as an AI run.
 -- Date: 2026-10-22
 --
 -- The chat asks a question about the caller's own records. The run is still

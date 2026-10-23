@@ -1,4 +1,4 @@
-// Central Hub — time-tracking domain logic: sessionization, duration math, attribution.
+// Sentral Hub — time-tracking domain logic: sessionization, duration math, attribution.
 //
 // Serves MASTER_SPEC Section 7C:
 //   - Observation -> Session -> Attribution -> Outcome.

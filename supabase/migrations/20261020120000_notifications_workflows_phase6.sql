@@ -1,4 +1,4 @@
--- Central Hub — Phase 6: notifications and workflow automation
+-- Sentral Hub — Phase 6: notifications and workflow automation
 -- Date: 2026-10-20
 -- Target: Supabase PostgreSQL (apply via Supabase SQL Editor or `supabase db push`)
 --

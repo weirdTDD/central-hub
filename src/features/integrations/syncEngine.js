@@ -1,4 +1,4 @@
-// Central Hub — the synchronisation engine.
+// Sentral Hub — the synchronisation engine.
 //
 // One adapter, one run. The engine opens the connection row, walks it through the
 // contract's state machine, lets the adapter parse the payload, writes the

@@ -1,4 +1,4 @@
-// Central Hub — learning tracker assertions.
+// Sentral Hub — learning tracker assertions.
 //
 // Run:  node scripts/verify-learning.mjs
 //
@@ -117,7 +117,7 @@ function sampleRun(samples) {
   return { state, heartbeats, lastEvent: observationEvent({ sites: DEFAULT_SITES, ...samples.at(-1) }) };
 }
 
-console.log("Central Hub — learning tracker assertions\n");
+console.log("Sentral Hub — learning tracker assertions\n");
 
 console.log("Allowlist");
 check("the default list is freeCodeCamp curriculum and nothing else", () => {

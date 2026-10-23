@@ -1,4 +1,4 @@
-// Central Hub — the ai-analytics Edge Function.
+// Sentral Hub — the ai-analytics Edge Function.
 //
 // This function is the ONLY place that talks to an external AI provider, and it
 // exists for three reasons:

@@ -1,4 +1,4 @@
-// Central Hub — Phase 6 notification and workflow assertions.
+// Sentral Hub — Phase 6 notification and workflow assertions.
 //
 // The repository has no test framework, so the domain rules are verified with plain
 // Node assertions (same pattern as the Phase 4 and Phase 5 verification scripts).

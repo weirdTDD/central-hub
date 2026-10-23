@@ -1,4 +1,4 @@
-// Central Hub — adapter: browser learning time.
+// Sentral Hub — adapter: browser learning time.
 //
 // The extension (extensions/learning-tracker) sends heartbeats itself. This
 // adapter is the contract the app shows, and the parser for the same heartbeat
@@ -67,7 +67,7 @@ export function toObservations(records = []) {
 export const learningTrackerAdapter = {
   id: ADAPTER_ID,
   label: "Learning tracker",
-  summary: "Records active time on the learning sites you choose, from the Central Hub browser extension.",
+  summary: "Records active time on the learning sites you choose, from the Sentral Hub browser extension.",
   implemented: true,
   collection: "extension",
   timelinePath: "/learning",
@@ -78,7 +78,7 @@ export const learningTrackerAdapter = {
     canAccess:
       "Active time on sites you add to the allowlist: the site, and when it can be read from the page, the course, the lesson, and the page title. The address, the query string, and every site that is not on the list are not stored. File contents and keystrokes are not read.",
     permissions:
-      "You load the extension in Chrome, Edge, or Firefox and sign in with your Central Hub account. It can see the active tab's address so it can decide whether that tab is on the allowlist. It does not ask for access to every site, and it does not keep addresses that miss the list.",
+      "You load the extension in Chrome, Edge, or Firefox and sign in with your Sentral Hub account. It can see the active tab's address so it can decide whether that tab is on the allowlist. It does not ask for access to every site, and it does not keep addresses that miss the list.",
     authentication:
       "The extension signs in with your email and password once. The password is not stored. A refresh token is kept in the extension's storage. The anon key is the public project key, never the service role key.",
     reads:

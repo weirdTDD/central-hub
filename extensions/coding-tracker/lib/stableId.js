@@ -2,7 +2,7 @@
 // on its own, without the app's source tree. scripts/verify-coding.mjs asserts
 // that the two copies still produce the same ids. Keep them in lockstep.
 
-// Central Hub — stable identifiers: a deterministic hash and UUID-shaped ids.
+// Sentral Hub — stable identifiers: a deterministic hash and UUID-shaped ids.
 //
 // WHY this module exists: several domains need an id that is the SAME for the same
 // input on every machine and every run — the idempotency key of an imported

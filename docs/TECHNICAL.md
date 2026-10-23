@@ -1,10 +1,10 @@
-# DailyLogs — Technical Documentation
+# Sentral Hub — Technical Documentation
 
-Technical reference for the DailyLogs frontend workstream: architecture, modules, data flow, and a changelog of what was added or changed.
+Technical reference for the Sentral Hub frontend workstream: architecture, modules, data flow, and a changelog of what was added or changed.
 
 ## 1. Architecture overview
 
-DailyLogs is a client-only SPA. There is no API layer yet. App state lives in React context and `localStorage` for auth/theme.
+Sentral Hub is a client-only SPA. There is no API layer yet. App state lives in React context and `localStorage` for auth/theme.
 
 ```text
 Browser
@@ -45,7 +45,7 @@ Theme preference is applied on boot via `applyTheme(readTheme())` from `src/sett
 | `AuthIllustration.jsx` | SVG illustration for the promo panel |
 | `ProtectedRoute.jsx` | Redirects unauthenticated users to `/login` |
 
-**Session key:** `localStorage["dailylogs-auth"]`
+**Session key:** `localStorage["sentral-hub-auth"]`
 
 **Behavior notes:**
 - Sign-up mode collects full name, email, password
@@ -121,7 +121,7 @@ Reports consume `useLogs()` so create/edit/delete on the dashboard also updates 
 | `components/NotificationScreen.jsx` | Points at the Notifications page and lists the real channel states |
 | `components/IntegrationScreen.jsx` | SSO rows (Google connected, Microsoft connect, SAML) |
 
-**Theme key:** `localStorage["dailylogs-theme"]`
+**Theme key:** `localStorage["sentral-hub-theme"]`
 
 ### Notifications & workflows — `src/features/notifications/`
 
@@ -171,7 +171,7 @@ Dashboard **Export as CSV** exports either:
 | File | Purpose |
 |------|---------|
 | `vite.config.js` | React + Tailwind plugins; `@` → `./src` |
-| `package.json` | Scripts and dependencies (`activity_app`) |
+| `package.json` | Scripts and dependencies (`sentral-hub`) |
 | `pnpm-lock.yaml` | Lockfile (prefer pnpm; ignore stray `package-lock.json`) |
 | `.gitignore` | Ignores `node_modules`, `dist`, env files; `/logs` is root-only so `src/logs` is tracked |
 
@@ -278,7 +278,7 @@ This section summarizes the workstream relative to the empty/scaffold repo.
 - Global styles (`src/index.css`), app entry (`src/main.jsx`), path alias `@`
 
 #### Auth
-- Full sign-in / sign-up page matching the DailyLogs mock
+  - Full sign-in / sign-up page matching the Sentral Hub design
 - `AuthContext` with localStorage persistence
 - `ProtectedRoute` wrapping app screens
 - Sidebar logout wired to clear session

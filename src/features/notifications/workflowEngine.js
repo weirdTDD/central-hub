@@ -1,4 +1,4 @@
-// Central Hub — the workflow engine.
+// Sentral Hub — the workflow engine.
 //
 // Serves MASTER_SPEC Section 7E: "a reliable workflow foundation with time-based
 // and event-based triggers, explicit conditions and permitted actions, persistent job

@@ -1,4 +1,4 @@
-// Central Hub — the tasks data layer.
+// Sentral Hub — the tasks data layer.
 //
 // Tasks are the planned work of the app. This layer owns reading and writing the
 // task rows; the UI never talks to the database directly.

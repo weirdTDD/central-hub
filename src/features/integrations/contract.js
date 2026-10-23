@@ -1,4 +1,4 @@
-// Central Hub — the integration contract: adapter registry, statuses, and the
+// Sentral Hub — the integration contract: adapter registry, statuses, and the
 // documentation every adapter must carry.
 //
 // Serves MASTER_SPEC Section 7D: integrations are independent adapters with

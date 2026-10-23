@@ -2,7 +2,6 @@ import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
-import AuthIllustration from "./AuthIllustration";
 
 const inputClass =
   "peer w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-transparent focus:border-primary focus:ring-2 focus:ring-primary/20";
@@ -118,17 +117,19 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto grid min-h-screen w-full max-w-7xl lg:grid-cols-[minmax(0,1fr)_minmax(340px,0.95fr)]">
-        <section className="relative flex flex-col px-6 py-8 sm:px-10 lg:px-16 lg:py-10">
-          <Link to="/login" className="inline-flex w-fit">
-            <img src="/logo.svg" alt="Dailylogs" className="h-10 w-auto object-contain dark:brightness-0 dark:invert" />
-          </Link>
+        <section className="relative flex flex-col px-6 py-8 sm:px-10 lg:px-16 lg:py-10 font-serif">
+          <div className="relative z-10">
+            <Link to="/login" className="inline-flex w-fit">
+              <img src="/Sentral-Hub-Logo.png" alt="Sentral Hub" className="h-25 w-auto" />
+            </Link>
+          </div>
 
           <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-10">
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Hey, Your DailyLogs here!
+              Welcome to Sentral Hub
             </h1>
             <p className="mt-2 text-sm text-gray-500 sm:text-base">
-              Sign in with your BST Account to log your activities
+              Sign in to connect your goals, tasks, time tracking, and learning
             </p>
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-4">
@@ -204,7 +205,7 @@ export default function AuthPage() {
                   setError("");
                   setMode((current) => (current === "signup" ? "login" : "signup"));
                 }}
-                 className="font-semibold text-primary hover:underline"
+                className="font-semibold text-primary hover:underline"
               >
                 {mode === "signup" ? "Login" : "Sign up"}
               </button>
@@ -229,30 +230,40 @@ export default function AuthPage() {
 
             <p className="mt-10 text-center text-xs text-gray-500">
               By creating an account, you agree to our{" "}
-               <a href="#terms" className="underline underline-offset-2 hover:text-primary">
+              <a href="#terms" className="underline underline-offset-2 hover:text-primary">
                 Terms of Use
               </a>
             </p>
           </div>
         </section>
 
-        <aside className="hidden p-6 lg:flex lg:items-stretch lg:p-8">
-          <div className="flex w-full flex-col justify-between rounded-[28px] bg-blue-black px-8 py-10 text-white shadow-xl">
-            <div>
-              <h2 className="text-3xl font-bold leading-tight">Track activities with DailyLog</h2>
-              <p className="mt-4 max-w-sm text-sm leading-relaxed text-blue-200">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-                incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-                exercitation.
-              </p>
-              <button
-                type="button"
-                className="mt-6 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-              >
-                Learn More
-              </button>
+        <aside className="hidden lg:flex lg:items-stretch lg:overflow-hidden py-[30%] px-16">
+          <div
+            className="relative flex h-full w-full flex-col justify-between overflow-hidden px-8 py-10 text-white rounded-3xl"
+            style={{
+              backgroundImage:
+                "url('https://images.unsplash.com/photo-1690029670420-34fa5ad95814?q=80&w=774&auto=format&fit=crop')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }}
+          >
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/75 via-black/45 to-transparent" />
+
+            <div className="relative z-10">
+              <div></div>
             </div>
-            <AuthIllustration />
+
+            <div className="relative z-10 pb-16">
+              <h2 className="text-3xl font-bold font-serif italic tracking-tight leading-tight">
+                Connect what you plan with what you do
+              </h2>
+              <p className="mt-4 max-w-sm text-sm md:text-base tracking-tight  leading-relaxed text-blue-100">
+                Sentral Hub ties together your goals, tasks, time tracking,
+                learning, and reports into one system.
+              </p>
+              
+            </div>
           </div>
         </aside>
       </div>

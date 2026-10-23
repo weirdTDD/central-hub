@@ -1,7 +1,7 @@
 {
   "name": "central-hub-coding-tracker",
-  "displayName": "Central Hub Coding Tracker",
-  "description": "Records active coding time from Cursor and VS Code into Central Hub.",
+  "displayName": "Sentral Hub Coding Tracker",
+  "description": "Records active coding time from Cursor and VS Code into Sentral Hub.",
   "version": "0.1.0",
   "publisher": "central-hub",
   "license": "UNLICENSED",
@@ -17,27 +17,27 @@
     "commands": [
       {
         "command": "centralHub.signIn",
-        "title": "Central Hub: Sign In"
+        "title": "Sentral Hub: Sign In"
       },
       {
         "command": "centralHub.signOut",
-        "title": "Central Hub: Sign Out"
+        "title": "Sentral Hub: Sign Out"
       },
       {
         "command": "centralHub.pause",
-        "title": "Central Hub: Pause Tracking"
+        "title": "Sentral Hub: Pause Tracking"
       },
       {
         "command": "centralHub.resume",
-        "title": "Central Hub: Resume Tracking"
+        "title": "Sentral Hub: Resume Tracking"
       },
       {
         "command": "centralHub.status",
-        "title": "Central Hub: Show Tracking Status"
+        "title": "Sentral Hub: Show Tracking Status"
       }
     ],
     "configuration": {
-      "title": "Central Hub",
+      "title": "Sentral Hub",
       "properties": {
         "centralHub.supabaseUrl": {
           "type": "string",

@@ -1,4 +1,4 @@
-// Central Hub — Phase 4 time-tracking assertions.
+// Sentral Hub — Phase 4 time-tracking assertions.
 //
 // The repository has no test framework, so the domain rules are verified with plain
 // Node assertions (same pattern as the task state-machine checks).
@@ -83,7 +83,7 @@ const observation = (id, offset, durationSeconds, extra = {}) => ({
   ...extra,
 });
 
-console.log("Central Hub — time tracking domain assertions\n");
+console.log("Sentral Hub — time tracking domain assertions\n");
 
 console.log("Duration and overlap rule");
 check("union counts overlapping intervals once", () => {

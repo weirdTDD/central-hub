@@ -1,4 +1,4 @@
-// Central Hub — the AI provider registry.
+// Sentral Hub — the AI provider registry.
 //
 // Serves MASTER_SPEC Section 7G: "the app MUST fully work with AI disabled or
 // unconfigured". The registry is how that promise is kept: the on-device

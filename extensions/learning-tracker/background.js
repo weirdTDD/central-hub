@@ -1,4 +1,4 @@
-// Central Hub learning tracker.
+// Sentral Hub learning tracker.
 //
 // Runs as a Manifest V3 service worker in Chrome and as an event page in
 // Firefox. Active time is recorded only for the allowlist, and only while the
@@ -239,7 +239,7 @@ async function flush() {
         })
       );
       const connection = Array.isArray(integration) ? integration[0] : integration;
-      if (!connection?.id) throw new Error("Central Hub did not return the learning tracker connection.");
+      if (!connection?.id) throw new Error("Sentral Hub did not return the learning tracker connection.");
       if (pending.length === 0) break;
 
       guard += 1;
@@ -477,7 +477,7 @@ async function refreshAccessToken(url, anonKey, refreshToken) {
   });
   const body = await response.json().catch(() => ({}));
   if (!response.ok || !body.access_token) {
-    throw new Error(body.error_description || body.msg || body.error || "The Central Hub session expired. Sign in again.");
+    throw new Error(body.error_description || body.msg || body.error || "The Sentral Hub session expired. Sign in again.");
   }
   if (body.refresh_token) await storageSet({ [KEYS.refresh]: body.refresh_token });
   return body.access_token;
@@ -501,8 +501,8 @@ async function send(request) {
   if (!response.ok) {
     const message =
       (body && (body.message || body.error_description || body.msg || body.error)) ||
-      `Central Hub returned ${response.status}.`;
-    throw new Error(typeof message === "string" ? message : "Central Hub rejected the learning heartbeat.");
+      `Sentral Hub returned ${response.status}.`;
+    throw new Error(typeof message === "string" ? message : "Sentral Hub rejected the learning heartbeat.");
   }
   return body;
 }

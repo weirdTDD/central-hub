@@ -1,4 +1,4 @@
-// Central Hub — the xAI (Grok) provider.
+// Sentral Hub — the xAI (Grok) provider.
 //
 // Serves MASTER_SPEC Section 7G and Section 8.
 //

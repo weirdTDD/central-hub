@@ -1,4 +1,4 @@
-// Central Hub — Phase 4C "time spent against plan" assertions.
+// Sentral Hub — Phase 4C "time spent against plan" assertions.
 //
 // The repository has no test framework, so the domain rules are verified with plain
 // Node assertions (same pattern as the time-tracking checks).
@@ -76,7 +76,7 @@ const makeCorrection = (
   created_at: at(createdAt),
 });
 
-console.log("Central Hub — planned vs actual assertions\n");
+console.log("Sentral Hub — planned vs actual assertions\n");
 
 console.log("Plan and recorded time");
 check("a task with an estimate reports plan, actual and variance", () => {

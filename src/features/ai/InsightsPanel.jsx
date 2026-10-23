@@ -160,7 +160,7 @@ export default function InsightsPanel({ logs = [], from = null, to = null }) {
   };
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+    <section className="rounded-2xl border border-black/5 bg-card-mist p-6 shadow-lift dark:border-white/10">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold text-foreground">Analysis</h2>

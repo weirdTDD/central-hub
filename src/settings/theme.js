@@ -1,4 +1,4 @@
-export const THEME_KEY = "dailylogs-theme";
+export const THEME_KEY = "sentral-hub-theme";
 
 const listeners = new Set();
 

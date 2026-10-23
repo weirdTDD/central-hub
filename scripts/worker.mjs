@@ -1,4 +1,4 @@
-// Central Hub — the workflow worker: the scheduler runtime.
+// Sentral Hub — the workflow worker: the scheduler runtime.
 //
 // Serves MASTER_SPEC Section 7E: "persistent job scheduling", "idempotency and
 // duplicate prevention", "retry policies and execution history", "cancellation and

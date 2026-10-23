@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Central Hub Learning Tracker",
+  "name": "Sentral Hub Learning Tracker",
   "version": "0.1.0",
-  "description": "Records active time on the learning sites you choose and sends it to Central Hub.",
+  "description": "Records active time on the learning sites you choose and sends it to Sentral Hub.",
   "permissions": ["tabs", "idle", "storage", "alarms"],
   "background": {
     "service_worker": "background.js",
@@ -10,7 +10,7 @@
     "type": "module"
   },
   "action": {
-    "default_title": "Central Hub Learning",
+    "default_title": "Sentral Hub Learning",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",

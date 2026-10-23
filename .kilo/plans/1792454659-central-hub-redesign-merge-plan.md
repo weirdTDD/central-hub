@@ -1,16 +1,16 @@
-# Central Hub — Redesign Merge Plan
+# Sentral Hub — Redesign Merge Plan
 
 Plan file: `.kilo/plans/1792454659-central-hub-redesign-merge-plan.md`
 
 ## 1. Assessment of the existing application
 
-The repo is a client-only React/Vite SPA named `activity_app` (DailyLogs product), per `README.md` and `docs/TECHNICAL.md`.
+The repo is a client-only React/Vite SPA named `sentral-hub` (Sentral Hub product), per `README.md` and `docs/TECHNICAL.md`.
 
 **Stack:** React 19, Vite 7, React Router 7, Tailwind CSS 4, Radix UI primitives, Recharts + ECharts, date-fns, react-day-picker, pnpm. Path alias `@` → `./src`. No test framework, no type-check script, no lint failures recorded yet.
 
 **Architecture (client-only, no API layer):**
 - `src/App.jsx` composes `AuthProvider` > `LogsProvider` > `AppRoutes`.
-- `AuthContext` — mock auth: any non-empty email/password succeeds; session in `localStorage["dailylogs-auth"]`; Google button seeds a mock user. No server, no password hashing, tokens in localStorage.
+- `AuthContext` — mock auth: any non-empty email/password succeeds; session in `localStorage["sentral-hub-auth"]`; Google button seeds a mock user. No server, no password hashing, tokens in localStorage.
 - `LogsContext` — in-memory work logs seeded from `src/report/mockData.js` (`WORK_LOGS`); resets to seed on reload. No persistence.
 - Routes preserved: `/login`, `/dashboard`, `/logs/new`, `/logs/:id/edit`, `/reports`, `/settings/{profile,notifications,integrations}`.
 - UI: purple `#5B16E1` accents inline in components (e.g. `DashboardPage.jsx`); `index.css` already defines oklch design tokens but they are purple-leaning; shadcn-style primitives under `src/components/ui/`.

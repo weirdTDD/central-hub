@@ -1,4 +1,4 @@
-// Central Hub — coding-time rules.
+// Sentral Hub — coding-time rules.
 //
 // The VS Code / Cursor extension and the app both use this module. It has no
 // dependency on the editor API or on React, so the idle rule, the session

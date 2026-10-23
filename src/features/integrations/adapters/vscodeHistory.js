@@ -1,4 +1,4 @@
-// Central Hub — adapter: VS Code local history.
+// Sentral Hub — adapter: VS Code local history.
 //
 // Reads the edit history VS Code already keeps on this computer (User/History).
 // The collector on the dev server reads those files. This module only parses the

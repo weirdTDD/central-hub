@@ -1,4 +1,4 @@
-// Central Hub — the evidence layer: what may be shown to an AI provider.
+// Sentral Hub — the evidence layer: what may be shown to an AI provider.
 //
 // Serves MASTER_SPEC Section 7G: "Minimize and disclose what user data is sent
 // to any external AI provider."

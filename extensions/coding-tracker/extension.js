@@ -1,8 +1,8 @@
-// Central Hub coding tracker.
+// Sentral Hub coding tracker.
 //
 // One extension runs in both Cursor and VS Code. It records active editor time
 // (not keystrokes, not file contents, not full paths) and sends heartbeats to
-// the signed-in user's Central Hub account. While offline, heartbeats stay in
+// the signed-in user's Sentral Hub account. While offline, heartbeats stay in
 // the editor's global state and are sent later. Sending them again is safe:
 // each heartbeat has a deterministic id.
 
@@ -203,16 +203,16 @@ function paintStatus() {
   if (!statusBar || !extensionContext) return;
   const queued = (extensionContext.globalState.get(QUEUE_KEY) ?? []).length;
   const editor = detectEditor(vscode.env.appName) === "cursor" ? "Cursor" : "VS Code";
-  let text = `Central Hub: ${editor}`;
+  let text = `Sentral Hub: ${editor}`;
   let detail = "Tracking active coding time.";
   if (tracker.paused) {
-    text = "Central Hub: paused";
+    text = "Sentral Hub: paused";
     detail = "Tracking is paused. Resume from the command palette.";
   } else if (lastError) {
-    text = "Central Hub: sync error";
+    text = "Sentral Hub: sync error";
     detail = lastError;
   } else if (queued > 0) {
-    text = `Central Hub: ${queued} queued`;
+    text = `Sentral Hub: ${queued} queued`;
     detail = "Heartbeats are waiting to be sent.";
   }
   statusBar.text = text;
@@ -224,7 +224,7 @@ async function showStatus() {
   const signedIn = Boolean(await extensionContext?.secrets.get(REFRESH_SECRET));
   const lines = [
     tracker.paused ? "Tracking is paused." : "Tracking is on.",
-    signedIn ? "Signed in to Central Hub." : "Not signed in. Run Central Hub: Sign In.",
+    signedIn ? "Signed in to Sentral Hub." : "Not signed in. Run Sentral Hub: Sign In.",
     queued > 0 ? `${queued} heartbeats are waiting to be sent.` : "Nothing is waiting to be sent.",
   ];
   if (lastError) lines.push(lastError);
@@ -246,13 +246,13 @@ async function signIn() {
   });
   if (!anonKey) return;
   const email = await vscode.window.showInputBox({
-    title: "Central Hub email",
-    prompt: "The email you use to sign in to Central Hub",
+    title: "Sentral Hub email",
+    prompt: "The email you use to sign in to Sentral Hub",
     ignoreFocusOut: true,
   });
   if (!email) return;
   const password = await vscode.window.showInputBox({
-    title: "Central Hub password",
+    title: "Sentral Hub password",
     prompt: "Used once to sign in. It is not stored.",
     password: true,
     ignoreFocusOut: true,
@@ -275,7 +275,7 @@ async function signIn() {
   lastError = "";
   failures = 0;
   paintStatus();
-  vscode.window.showInformationMessage("Central Hub coding tracker is signed in.");
+  vscode.window.showInformationMessage("Sentral Hub coding tracker is signed in.");
   await flush();
 }
 
@@ -283,7 +283,7 @@ async function signOut() {
   await extensionContext?.secrets.delete(REFRESH_SECRET);
   lastError = "";
   paintStatus();
-  vscode.window.showInformationMessage("Central Hub coding tracker was signed out. Queued heartbeats stay on this computer until you sign in again.");
+  vscode.window.showInformationMessage("Sentral Hub coding tracker was signed out. Queued heartbeats stay on this computer until you sign in again.");
 }
 
 async function flush() {
@@ -291,7 +291,7 @@ async function flush() {
   const { url, anonKey, heartbeatSeconds, idleSeconds } = settings();
   if (!url || !anonKey) {
     if ((extensionContext.globalState.get(QUEUE_KEY) ?? []).length > 0) {
-      lastError = "Add the Supabase URL and anon key, then run Central Hub: Sign In.";
+      lastError = "Add the Supabase URL and anon key, then run Sentral Hub: Sign In.";
       paintStatus();
     }
     return;
@@ -326,7 +326,7 @@ async function flush() {
       );
       const connection = Array.isArray(integration) ? integration[0] : integration;
       if (!connection?.id) {
-        throw new Error("Central Hub did not return the coding tracker connection.");
+        throw new Error("Sentral Hub did not return the coding tracker connection.");
       }
       if (queued.length === 0) break;
       const batch = queued.slice(0, 100);
@@ -403,7 +403,7 @@ async function refreshAccessToken(url, anonKey, refreshToken) {
   });
   const body = await response.json().catch(() => ({}));
   if (!response.ok || !body.access_token) {
-    throw new Error(body.error_description || body.msg || "The Central Hub session expired. Sign in again.");
+    throw new Error(body.error_description || body.msg || "The Sentral Hub session expired. Sign in again.");
   }
   if (body.refresh_token) {
     await extensionContext.secrets.store(REFRESH_SECRET, body.refresh_token);
@@ -429,8 +429,8 @@ async function send(request) {
   if (!response.ok) {
     const message =
       (body && (body.message || body.error_description || body.msg || body.error)) ||
-      `Central Hub returned ${response.status}.`;
-    throw new Error(typeof message === "string" ? message : "Central Hub rejected the coding heartbeat.");
+      `Sentral Hub returned ${response.status}.`;
+    throw new Error(typeof message === "string" ? message : "Sentral Hub rejected the coding heartbeat.");
   }
   return body;
 }

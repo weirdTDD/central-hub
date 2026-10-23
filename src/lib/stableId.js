@@ -1,4 +1,4 @@
-// Central Hub — stable identifiers: a deterministic hash and UUID-shaped ids.
+// Sentral Hub — stable identifiers: a deterministic hash and UUID-shaped ids.
 //
 // WHY this module exists: several domains need an id that is the SAME for the same
 // input on every machine and every run — the idempotency key of an imported

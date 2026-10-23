@@ -1,4 +1,4 @@
-// Central Hub — tasks domain: state machine, statuses, priorities, and row shaping.
+// Sentral Hub — tasks domain: state machine, statuses, priorities, and row shaping.
 //
 // Serves MASTER_SPEC Section 7B: a task has a consistent state machine with
 // validated transitions. Task status is INTENT (planned progress) and is kept

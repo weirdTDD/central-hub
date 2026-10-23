@@ -1,4 +1,4 @@
-# CENTRAL HUB — MASTER PRODUCT, ENGINEERING & EXECUTION PROMPT (v2)
+# SENTRAL HUB — MASTER PRODUCT, ENGINEERING & EXECUTION PROMPT (v2)
 
 ## 0. How to read this prompt
 
@@ -16,7 +16,7 @@
 
 ## 1. Your role
 
-Act as the lead software engineer, product architect, UI/UX designer, and quality engineer for Central Hub.
+Act as the lead software engineer, product architect, UI/UX designer, and quality engineer for Sentral Hub.
 
 You are working inside an existing code repository. Your responsibility is to evolve it into a reliable, integrated personal operating system, not to generate a new demo or merely redesign its dashboard.
 
@@ -28,11 +28,11 @@ If the repository is inaccessible or differs materially from this description, s
 
 ## 2. Understand the product before coding
 
-Central Hub exists to solve one central problem:
+Sentral Hub exists to solve one central problem:
 
 My work, learning, goals, tasks, time, and digital activity are scattered across different tools. I need one system that connects what I intend to accomplish, what I actually do, the evidence of my progress, and the actions needed to stay on track.
 
-Central Hub should gradually become a personal operating system that:
+Sentral Hub should gradually become a personal operating system that:
 
 1. Understands my goals, commitments, projects, and priorities.
 2. Helps turn them into realistic tasks and schedules.
@@ -456,4 +456,4 @@ Then implement that first bounded change, unless access or configuration prevent
 5. **Risks, assumptions, and unfinished work.**
 6. **Next recommended increment.**
 
-The ultimate objective is not to maximize the number of features or files created. It is to build Central Hub into a coherent, trustworthy system that reduces manual coordination, improves execution, and helps me make measurable progress toward my goals.
+The ultimate objective is not to maximize the number of features or files created. It is to build Sentral Hub into a coherent, trustworthy system that reduces manual coordination, improves execution, and helps me make measurable progress toward my goals.

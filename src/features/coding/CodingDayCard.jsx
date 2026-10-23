@@ -66,7 +66,7 @@ export default function CodingDayCard({ dayKey, timeZone }) {
   const editors = groupedCoveredSeconds(heartbeats, (beat) => editorLabel(beat.editor || "unknown"));
 
   return (
-    <section aria-labelledby="coding-heading" className="rounded-3xl border border-border bg-card p-4 sm:p-5">
+    <section aria-labelledby="coding-heading" className="rounded-3xl border border-black/5 bg-card-sky p-4 shadow-lift sm:p-5 dark:border-white/10">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 id="coding-heading" className="text-lg font-semibold">Coding</h2>

@@ -1,4 +1,4 @@
-// Central Hub — a question asked of the user's own records.
+// Sentral Hub — a question asked of the user's own records.
 //
 // The chat sends a question. It does not send a new capability to invent
 // sessions or to change a task. The question and the earlier turns are text

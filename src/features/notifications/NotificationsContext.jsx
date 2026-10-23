@@ -1,4 +1,4 @@
-// Central Hub — the notifications context.
+// Sentral Hub — the notifications context.
 //
 // Everything on this page comes from the database: a notification exists because a
 // workflow actually delivered it, and a workflow shows its real next occurrence.

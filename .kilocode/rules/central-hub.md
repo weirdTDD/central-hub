@@ -1,4 +1,4 @@
-# Central Hub — Agent Rules (read every session)
+# Sentral Hub — Agent Rules (read every session)
 
 Project: personal operating system connecting goals, tasks, time tracking, learning, reminders and reports. Repo: weirdTDD/central-hub (React/Vite frontend). Full spec: `docs/MASTER_SPEC.md` (read ONLY the section relevant to the current task). Memory between sessions: `docs/PROGRESS.md`.
 

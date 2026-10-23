@@ -1,4 +1,4 @@
-// Central Hub — the AI data layer.
+// Sentral Hub — the AI data layer.
 //
 // Serves MASTER_SPEC Section 7G. Every read is bounded and every write is
 // owner-scoped by the database (RLS), never by the client.

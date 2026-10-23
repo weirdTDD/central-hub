@@ -1,4 +1,4 @@
-// Central Hub — Phase 5 integration framework assertions.
+// Sentral Hub — Phase 5 integration framework assertions.
 //
 // The repository has no test framework, so the integration contract is verified
 // with plain Node assertions (same pattern as the tracking and contract scripts).
@@ -97,7 +97,7 @@ const objectFile = JSON.stringify({
 
 const arrayFile = JSON.stringify([RECORD]);
 
-console.log("Central Hub — integration framework assertions\n");
+console.log("Sentral Hub — integration framework assertions\n");
 
 console.log("Stable identity");
 check("stableHash returns 32 lowercase hex characters", () => {

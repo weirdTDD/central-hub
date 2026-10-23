@@ -6,7 +6,7 @@ import { isWithinInterval, parseISO } from 'date-fns';
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLogs } from '../../dashboard/LogsContext';
-import { downloadCsv } from '../../dashboard/logUtils';
+import { downloadCsv, durationSecondsOf } from '../../dashboard/logUtils';
 import { localDayKey, systemTimeZone } from '../../lib/dates';
 import { isSupabaseConfigured } from '../../lib/supabase';
 import { listCodingObservations, listLearningObservations } from '../../lib/tracking';
@@ -14,6 +14,7 @@ import { coveredSeconds as codingCoveredSeconds, heartbeatsFromRows as codingHea
 import { coveredSeconds as learningCoveredSeconds, heartbeatsFromRows as learningHeartbeatsFromRows } from '../../../extensions/learning-tracker/lib/learningTime.js';
 import { reportRangeBounds } from '../../features/coding/range.js';
 import KpiSummary from './KpiSummary';
+import ActivityBreakdownChart from './ActivityBreakdownChart';
 import {
   Select,
   SelectContent,
@@ -87,6 +88,25 @@ const ProductivityReport = () => {
 
   const activity = useTrackedDays(dateRange?.from, dateRange?.to);
 
+  const trackedTotals = useMemo(() => {
+    let codingSeconds = 0
+    let learningSeconds = 0
+    for (const day of Object.values(activity.byDate ?? {})) {
+      codingSeconds += Number(day?.coding) || 0
+      learningSeconds += Number(day?.learning) || 0
+    }
+    return { codingSeconds, learningSeconds }
+  }, [activity.byDate])
+
+  const workLogSeconds = useMemo(
+    () =>
+      filteredLogs.reduce(
+        (sum, log) => sum + (durationSecondsOf(log) ?? 0),
+        0
+      ),
+    [filteredLogs]
+  )
+
   // The heatmap renders one calendar per year that actually holds data. Rendering a
   // single year would silently drop every log from the other years of the range,
   // while the KPI cards, charts and CSV export would still include them.
@@ -117,7 +137,7 @@ const ProductivityReport = () => {
       
       <div className="mb-8 grid items-center gap-6 sm:grid-cols-1 md:grid-cols-2">
         <div>
-          <h1 className="py-3 text-3xl font-bold text-foreground">Productivity Report</h1>
+          <h1 className="py-3 text-4xl font-serif font-bold text-foreground">Productivity Report</h1>
           <p className="mt-1 font-medium text-muted-foreground">View and export your recorded work activity. The calendar also includes coding and learning time.</p>
         </div>
         <div className='flex items-center md:justify-end gap-4 mb-5'>
@@ -139,7 +159,7 @@ const ProductivityReport = () => {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8 ">
-        <div className="grid items-center gap-4 rounded-2xl border border-border bg-card sm:grid-cols-1 md:grid-cols-2">
+        <div className="grid items-center gap-4 rounded-2xl border border-black/5 bg-card shadow-lift sm:grid-cols-1 md:grid-cols-2 dark:border-white/10">
           <div className="flex items-center px-3 py-2">
             <span className="mr-2 text-sm font-semibold text-muted-foreground">Date Range</span>
             <div  > 
@@ -242,9 +262,13 @@ const ProductivityReport = () => {
      </div>
 
      <div className='grid grid-cols-1 md:grid-cols-2 items-center gap-6 mt-10'>
-      <div className=''>
-        <TaskStatusChart logs={filteredLogs} />
-      </div>
+       <div className=''>
+         <ActivityBreakdownChart
+           codingSeconds={trackedTotals.codingSeconds}
+           learningSeconds={trackedTotals.learningSeconds}
+           workLogSeconds={workLogSeconds}
+         />
+       </div>
 
       <div className=''>
         <TopLoggedTasks logs={filteredLogs} />

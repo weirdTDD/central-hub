@@ -1,4 +1,4 @@
-// Central Hub — the notifications page.
+// Sentral Hub — the notifications page.
 //
 // Everything on this page is a fact from the database: a notification exists
 // because a workflow really delivered it, a workflow shows the occurrence it will

@@ -42,7 +42,7 @@ export default function Plan({
   const visible = state === "ready" ? items : [];
 
   return (
-    <section aria-labelledby="plan-heading" className={cn("rounded-3xl border border-border bg-card p-4 sm:p-5", className)}>
+    <section aria-labelledby="plan-heading" className={cn("rounded-3xl border border-black/5 bg-card-cream p-4 shadow-lift sm:p-5 dark:border-white/10", className)}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 id="plan-heading" className="text-lg font-semibold">{title}</h2>

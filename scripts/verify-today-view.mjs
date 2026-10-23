@@ -1,4 +1,4 @@
-// Central Hub — day view assertions.
+// Sentral Hub — day view assertions.
 //
 // The repository has no test framework, so the day-bucketing rules are verified
 // with plain Node assertions.
@@ -56,7 +56,7 @@ function assertEqual(actual, expected, message) {
 const DAY = "2026-10-20";
 const ZONE = "UTC";
 
-console.log("Central Hub — day view assertions\n");
+console.log("Sentral Hub — day view assertions\n");
 
 check("Tuesday 20 Oct 2026 sits in Mon 19 – Sun 25", () => {
   const week = weekWindow(DAY);

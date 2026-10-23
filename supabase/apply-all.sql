@@ -1,4 +1,4 @@
--- Central Hub — consolidated schema, ALL phases in dependency order.
+-- Sentral Hub — consolidated schema, ALL phases in dependency order.
 --
 -- WHY THIS FILE EXISTS
 --   The schema is split across six versioned migrations under
@@ -37,7 +37,7 @@
 -- ==========================================================================
 -- ===== 20261020090000_work_logs_phase2.sql
 -- ==========================================================================
--- Central Hub — Phase 2: work_logs schema completion + row-level security
+-- Sentral Hub — Phase 2: work_logs schema completion + row-level security
 -- Date: 2026-10-20
 -- Target: Supabase PostgreSQL (apply via Supabase SQL Editor or `supabase db push`)
 --
@@ -267,7 +267,7 @@ commit;
 -- ==========================================================================
 -- ===== 20261020091000_tasks_phase3.sql
 -- ==========================================================================
--- Central Hub — Phase 3: tasks table + row-level security
+-- Sentral Hub — Phase 3: tasks table + row-level security
 -- Date: 2026-10-20
 -- Target: Supabase PostgreSQL (apply via Supabase SQL Editor or `supabase db push`)
 --
@@ -518,7 +518,7 @@ commit;
 -- ==========================================================================
 -- ===== 20261020100000_time_tracking_phase4.sql
 -- ==========================================================================
--- Central Hub — Phase 4: time tracking (observations, sessions, corrections)
+-- Sentral Hub — Phase 4: time tracking (observations, sessions, corrections)
 -- Date: 2026-10-20
 -- Target: Supabase PostgreSQL (apply via Supabase SQL Editor or `supabase db push`)
 --
@@ -945,7 +945,7 @@ commit;
 -- ==========================================================================
 -- ===== 20261020110000_integrations_phase5.sql
 -- ==========================================================================
--- Central Hub — Phase 5: integrations (connections, sync runs, observation provenance)
+-- Sentral Hub — Phase 5: integrations (connections, sync runs, observation provenance)
 -- Date: 2026-10-20
 -- Target: Supabase PostgreSQL (apply via Supabase SQL Editor or `supabase db push`)
 --
@@ -1451,7 +1451,7 @@ commit;
 -- ==========================================================================
 -- ===== 20261020120000_notifications_workflows_phase6.sql
 -- ==========================================================================
--- Central Hub — Phase 6: notifications and workflow automation
+-- Sentral Hub — Phase 6: notifications and workflow automation
 -- Date: 2026-10-20
 -- Target: Supabase PostgreSQL (apply via Supabase SQL Editor or `supabase db push`)
 --
@@ -2126,7 +2126,7 @@ commit;
 -- ==========================================================================
 -- ===== 20261020130000_ai_phase7.sql
 -- ==========================================================================
--- Central Hub — Phase 7: AI assistance and evidence-based reviews.
+-- Sentral Hub — Phase 7: AI assistance and evidence-based reviews.
 -- Date: 2026-08-21
 -- Target: Supabase PostgreSQL (apply via Supabase SQL Editor or `supabase db push`)
 --
@@ -2477,7 +2477,7 @@ commit;
 -- ==========================================================================
 -- ===== 20261022140000_coding_activity.sql
 -- ==========================================================================
--- Central Hub — coding activity from Cursor and VS Code
+-- Sentral Hub — coding activity from Cursor and VS Code
 -- Date: 2026-10-22
 -- Target: Supabase PostgreSQL (apply via Supabase SQL Editor or `supabase db push`)
 --

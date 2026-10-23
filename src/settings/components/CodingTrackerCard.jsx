@@ -77,7 +77,7 @@ export default function CodingTrackerCard() {
       ) : null}
       {state === "ready" && !connection ? (
         <p className="mt-4 text-sm text-muted-foreground">
-          Not connected. Install the extension, then run Central Hub: Sign In in Cursor or VS Code.
+          Not connected. Install the extension, then run Sentral Hub: Sign In in Cursor or VS Code.
         </p>
       ) : null}
       {state === "ready" && connection ? (
@@ -102,8 +102,8 @@ export default function CodingTrackerCard() {
       <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
         <li>Apply <code className="text-foreground">supabase/migrations/20261022140000_coding_activity.sql</code> to the database.</li>
         <li>Install <code className="text-foreground">extensions/coding-tracker</code> in Cursor or VS Code. The README has the commands.</li>
-        <li>Run <span className="text-foreground">Central Hub: Sign In</span> and use the same account as this app. The URL and anon key are the values in .env.</li>
-        <li>The status bar shows Central Hub while tracking is on. Pause and resume from the command palette.</li>
+        <li>Run <span className="text-foreground">Sentral Hub: Sign In</span> and use the same account as this app. The URL and anon key are the values in .env.</li>
+        <li>The status bar shows Sentral Hub while tracking is on. Pause and resume from the command palette.</li>
       </ol>
 
       <div className="mt-4 flex flex-wrap gap-3">

@@ -1,4 +1,4 @@
-// Central Hub — the time-tracking context.
+// Sentral Hub — the time-tracking context.
 //
 // The page shows what the database REALLY holds: a session is a recorded
 // interval, its attribution is explicit, and a correction lives BESIDE the

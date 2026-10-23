@@ -111,7 +111,7 @@ export default function AskPanel({ from = null, to = null, className }) {
     <MessageScrollerProvider autoScroll>
       <section
         className={cn(
-          "flex h-[32rem] min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm",
+          "flex h-[32rem] min-h-0 flex-col overflow-hidden rounded-2xl border border-black/5 bg-card-peach shadow-lift dark:border-white/10",
           className
         )}
       >

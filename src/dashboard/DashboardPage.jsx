@@ -18,6 +18,7 @@ import {
   durationStringToSeconds,
   isParseableDuration,
 } from "./logUtils";
+import { hoursGradeFromSeconds, hoursGradeSurface } from "../lib/hoursGrade";
 import {
   buildDayView,
   differenceText,
@@ -220,7 +221,7 @@ export default function DashboardPage() {
           />
 
           {truncated.length > 0 ? (
-            <div role="status" className="rounded-2xl border border-border bg-card px-4 py-3 text-sm">
+            <div role="status" className="rounded-2xl border border-black/5 bg-card-gold px-4 py-3 text-sm shadow-lift dark:border-white/10">
               <p className="font-semibold">Showing the most recent records</p>
               <p className="mt-1 text-muted-foreground">
                 The loaded {truncated.join(", ")} are incomplete. Older records are not
@@ -311,7 +312,7 @@ export default function DashboardPage() {
               }
             />
 
-            <section aria-labelledby="journal-heading" className="rounded-3xl border border-border bg-card p-4 sm:p-5">
+            <section aria-labelledby="journal-heading" className="rounded-3xl border border-black/5 bg-card p-4 shadow-lift sm:p-5 dark:border-white/10">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 id="journal-heading" className="text-lg font-semibold">Journal</h2>
@@ -376,7 +377,7 @@ export default function DashboardPage() {
 
 function Reminder({ state, error, reminder }) {
   return (
-    <section aria-labelledby="reminder-heading" className="rounded-3xl border border-primary/20 bg-primary/10 p-4 sm:p-5">
+    <section aria-labelledby="reminder-heading" className="rounded-3xl border border-black/5 bg-card-gold p-4 shadow-lift sm:p-5 dark:border-white/10">
       <div className="flex items-start gap-3">
         <Bell className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
         <div className="min-w-0 flex-1">
@@ -421,8 +422,13 @@ function WeekSummary({ state, error, totals, startKey, endKey }) {
     startKey && endKey
       ? `${formatDayHeading(startKey)} – ${formatDayHeading(endKey)}`
       : "";
+  const recordedGrade = hoursGradeFromSeconds(
+    totals?.actualSeconds && totals.sessionsInScope > 0
+      ? totals.actualSeconds / 7
+      : 0
+  );
   return (
-    <section aria-labelledby="week-heading" className="rounded-3xl border border-border bg-card p-4 sm:p-5">
+    <section aria-labelledby="week-heading" className="rounded-3xl border border-black/5 bg-card-mist p-4 shadow-lift sm:p-5 dark:border-white/10">
       <h2 id="week-heading" className="text-lg font-semibold">This week</h2>
       <p className="mt-1 text-xs text-muted-foreground">
         {range ? `${range}. ` : ""}
@@ -437,20 +443,36 @@ function WeekSummary({ state, error, totals, startKey, endKey }) {
       ) : null}
       {state === "ready" ? (
         <dl className="mt-4 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl bg-muted px-3 py-3">
-            <dt className="text-xs font-medium text-muted-foreground">Planned</dt>
+          <div className="rounded-2xl border border-black/5 bg-card-gold px-3 py-3 shadow-lift dark:border-white/10">
+            <dt className="text-xs font-medium text-foreground/70">Planned</dt>
             <dd className="mt-1 text-lg font-semibold">{plannedTotalText(totals)}</dd>
           </div>
-          <div className="rounded-2xl bg-progress/10 px-3 py-3">
-            <dt className="text-xs font-medium text-muted-foreground">Recorded</dt>
+          <div className={`rounded-2xl border border-black/5 px-3 py-3 shadow-lift dark:border-white/10 ${hoursGradeSurface(recordedGrade)}`}>
+            <dt className="text-xs font-medium text-foreground/70">Recorded</dt>
             <dd className="mt-1 text-lg font-semibold">{recordedTotalText(totals)}</dd>
           </div>
-          <div className="rounded-2xl bg-muted px-3 py-3">
-            <dt className="text-xs font-medium text-muted-foreground">Difference</dt>
+          <div className={`rounded-2xl border border-black/5 px-3 py-3 shadow-lift dark:border-white/10 ${differenceSurface(totals)}`}>
+            <dt className="text-xs font-medium text-foreground/70">Difference</dt>
             <dd className="mt-1 text-lg font-semibold">{differenceText(totals)}</dd>
           </div>
         </dl>
       ) : null}
     </section>
   );
+}
+
+function differenceSurface(totals) {
+  if (
+    !totals ||
+    totals.sessionsInScope === 0 ||
+    totals.sessionsWithoutDuration > 0 ||
+    totals.openTasksWithoutEstimate > 0 ||
+    totals.plannedSeconds === 0
+  ) {
+    return "bg-muted";
+  }
+  const difference = totals.actualSeconds - totals.plannedSeconds;
+  if (difference < 0) return "bg-heat-1";
+  if (difference > 0) return "bg-heat-4";
+  return "bg-heat-3";
 }

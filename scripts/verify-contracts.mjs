@@ -1,4 +1,4 @@
-// Central Hub — contract check: the app's vocabularies vs the database constraints.
+// Sentral Hub — contract check: the app's vocabularies vs the database constraints.
 //
 // The task statuses, priorities and attribution sources are defined in JavaScript
 // (src/features/tasks/taskUtils.js, src/features/tracking/sessionUtils.js) AND in
@@ -80,7 +80,7 @@ function tableBody(sql, table) {
   return match ? match[1] : null;
 }
 
-console.log("Central Hub — schema/JS contract assertions\n");
+console.log("Sentral Hub — schema/JS contract assertions\n");
 
 console.log("Vocabulary drift");
 check("task statuses match the tasks_status_valid constraint", () => {

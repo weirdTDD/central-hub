@@ -1,4 +1,4 @@
-// Central Hub — the day view.
+// Sentral Hub — the day view.
 //
 // The dashboard shows one local day: the tasks due that day (the plan) and the
 // sessions that start that day (the journal). A task has a due date and no clock

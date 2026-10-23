@@ -1,4 +1,4 @@
-// Central Hub — the "planned vs actual" section of the productivity report.
+// Sentral Hub — the "planned vs actual" section of the productivity report.
 //
 // WHAT THIS SECTION SHOWS: for one date range, the PLAN (each task's estimate)
 // next to the RECORDED time (the sessions the tracker stored).
@@ -461,7 +461,7 @@ export default function PlannedVsActualPanel({ from, to }) {
   return (
     <section
       aria-labelledby="planned-vs-actual-heading"
-      className="rounded-[1.75rem] border border-border bg-card p-4 shadow-sm sm:p-5"
+      className="rounded-[1.75rem] border border-black/5 bg-card-cream p-4 shadow-lift sm:p-5 dark:border-white/10"
     >
       <h2
         id="planned-vs-actual-heading"
@@ -533,24 +533,24 @@ export default function PlannedVsActualPanel({ from, to }) {
           ) : null}
 
           <dl className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-border bg-background p-3">
-              <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            <div className="rounded-xl border border-black/5 bg-card-gold p-3 shadow-lift dark:border-white/10">
+              <dt className="text-xs font-semibold tracking-wide text-foreground/70 uppercase">
                 Planned (open tasks)
               </dt>
               <dd className="mt-1 text-xl font-semibold text-foreground">
                 {plannedText}
               </dd>
             </div>
-            <div className="rounded-xl border border-border bg-background p-3">
-              <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            <div className="rounded-xl border border-black/5 bg-card-sky p-3 shadow-lift dark:border-white/10">
+              <dt className="text-xs font-semibold tracking-wide text-foreground/70 uppercase">
                 Recorded
               </dt>
               <dd className="mt-1 text-xl font-semibold text-foreground">
                 {recordedText}
               </dd>
             </div>
-            <div className="rounded-xl border border-border bg-background p-3">
-              <dt className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            <div className="rounded-xl border border-black/5 bg-card-coral p-3 shadow-lift dark:border-white/10">
+              <dt className="text-xs font-semibold tracking-wide text-foreground/70 uppercase">
                 Difference
               </dt>
               <dd className="mt-1 text-xl font-semibold text-foreground">

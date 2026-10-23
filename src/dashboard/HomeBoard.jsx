@@ -38,7 +38,7 @@ export default function HomeBoard({
   sessionDayKeys = [],
 }) {
   const name = personName(user);
-  const heading = name ? `Hey, ${name}` : greetingFor(new Date(), timeZone);
+  const heading = name ? `Hey, ${name.split(" ")[0]}` : greetingFor(new Date(), timeZone);
   const weekFrom = days[0] ? localDayRange(days[0].key, timeZone)?.from : null;
   const weekTo = days.length ? localDayRange(days[days.length - 1].key, timeZone)?.to : null;
   const requestKey = `${weekFrom ?? ""}|${weekTo ?? ""}|${timeZone}`;
@@ -120,7 +120,7 @@ export default function HomeBoard({
         <div className="flex items-center gap-3">
           <img src={avatarFor(user)} alt="" className="h-12 w-12 rounded-full" />
           <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{heading}</h1>
+            <h1 className="text-4xl font-serif font-bold tracking-tight sm:text-3xl">{heading}</h1>
             <p className="mt-0.5 text-sm text-muted-foreground">
               {featured
                 ? `Latest course: ${featured.key}`
@@ -131,13 +131,13 @@ export default function HomeBoard({
         <div className="flex flex-wrap gap-2">
           <Link
             to="/reports"
-            className="inline-flex min-h-11 items-center rounded-full border border-border bg-card px-4 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex min-h-11 items-center rounded-full border border-black/5 bg-card px-4 text-sm font-semibold shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-white/10"
           >
             Review
           </Link>
           <Link
             to="/learning"
-            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-black/5 bg-card-sky px-4 text-sm font-semibold shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-white/10"
           >
             <Zap className="h-4 w-4" aria-hidden="true" />
             Day streak
@@ -151,7 +151,7 @@ export default function HomeBoard({
       </header>
 
       <div className="@container">
-      <div className="grid items-stretch gap-3 @min-[860px]:grid-cols-[minmax(0,1.25fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_12.75rem]">
+      <div className="grid items-stretch gap-3 @min-[860px]:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_19rem]">
         <TrackCard
           eyebrow="Learn"
           icon={BookOpen}
@@ -170,36 +170,42 @@ export default function HomeBoard({
           href="/learning"
           tone="learn"
         />
-        <TrackCard
-          eyebrow="Plan"
-          icon={ListTodo}
-          title={
-            planState === "ready"
-              ? nextTask?.title || "Nothing due"
-              : statusTitle(planState)
-          }
-          detail={
-            planState === "ready"
-              ? nextTask
-                ? estimateText(nextTask.estimatedSeconds)
-                : "No open task is due this day."
-              : statusDetail(planState)
-          }
-          href="/tasks"
-        />
-        <TrackCard
-          eyebrow="Code"
-          icon={Code2}
-          title={projects[0]?.key || (state === "ready" ? "No coding recorded" : statusTitle(state))}
-          detail={
-            state === "ready"
-              ? codingTotal != null
-                ? `${durationText(codingTotal)} today`
-                : "No editor time on this day."
-              : statusDetail(state)
-          }
-          href="/coding"
-        />
+
+        <div className="flex flex-col gap-3">
+            <TrackCard
+            eyebrow="Plan"
+            icon={ListTodo}
+            title={
+              planState === "ready"
+                ? nextTask?.title || "Nothing due"
+                : statusTitle(planState)
+            }
+            detail={
+              planState === "ready"
+                ? nextTask
+                  ? estimateText(nextTask.estimatedSeconds)
+                  : "No open task is due this day."
+                : statusDetail(planState)
+            }
+            href="/tasks"
+            tone="plan"
+          />
+          <TrackCard
+            eyebrow="Code"
+            icon={Code2}
+            title={projects[0]?.key || (state === "ready" ? "No coding recorded" : statusTitle(state))}
+            detail={
+              state === "ready"
+                ? codingTotal != null
+                  ? `${durationText(codingTotal)} today`
+                  : "No editor time on this day."
+                : statusDetail(state)
+            }
+            href="/coding"
+            tone="code"
+          />
+        </div>
+        
         <StreakCard
           days={days}
           selectedKey={dayKey}
@@ -214,7 +220,7 @@ export default function HomeBoard({
       </div>
       </div>
 
-      <section aria-labelledby="continue-heading" className="rounded-3xl border border-border bg-card">
+      <section aria-labelledby="continue-heading" className="rounded-3xl border border-black/5 bg-card-mist shadow-lift dark:border-white/10">
         <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-5">
           <h2 id="continue-heading" className="flex items-center gap-2 text-base font-semibold">
             <span aria-hidden="true">↗</span>
@@ -269,15 +275,21 @@ export default function HomeBoard({
   );
 }
 
-function TrackCard({ eyebrow, icon, title, detail, share, shareLabel, href, tone }) {
+const TRACK_TONE = {
+  learn: "border-black/5 bg-card-coral shadow-lift dark:border-white/10",
+  plan: "border-black/5 bg-card-gold shadow-lift dark:border-white/10",
+  code: "border-black/5 bg-card-rose shadow-lift dark:border-white/10",
+};
+
+function TrackCard({ eyebrow, icon, title, detail, share, shareLabel, href, tone = "learn" }) {
   return (
     <Link
       to={href}
-      className="flex min-h-36 items-center gap-2 rounded-3xl border border-border bg-card p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className={`flex min-h-36 items-center gap-2 rounded-3xl border p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${TRACK_TONE[tone] ?? TRACK_TONE.learn}`}
     >
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          <span className={`flex h-8 w-8 items-center justify-center rounded-full ${tone === "learn" ? "bg-emerald-500/15 text-emerald-600" : "bg-muted text-foreground"}`}>
+        <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-foreground/70">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/55 text-foreground dark:bg-white/10">
             {createElement(icon, { className: "h-4 w-4", "aria-hidden": true })}
           </span>
           {eyebrow}
@@ -285,28 +297,28 @@ function TrackCard({ eyebrow, icon, title, detail, share, shareLabel, href, tone
         <span className="mt-3 line-clamp-2 block text-base font-semibold text-foreground">{title}</span>
         {share != null ? (
           <span className="mt-3 block">
-            <span className="block h-2 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-              <span className="block h-full rounded-full bg-emerald-500" style={{ width: `${share}%` }} />
+            <span className="block h-2 overflow-hidden rounded-full bg-black/10 dark:bg-white/15" aria-hidden="true">
+              <span className="block h-full rounded-full bg-foreground/70" style={{ width: `${share}%` }} />
             </span>
-            <span className="mt-1 block text-xs text-muted-foreground">{shareLabel}</span>
+            <span className="mt-1 block text-xs text-foreground/70">{shareLabel}</span>
           </span>
         ) : null}
-        <span className="mt-2 block text-sm text-muted-foreground">{detail}</span>
+        <span className="mt-2 block text-sm text-foreground/70">{detail}</span>
       </span>
-      <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+      <ChevronRight className="h-5 w-5 shrink-0 text-foreground/50" aria-hidden="true" />
     </Link>
   );
 }
 
 function StreakCard({ days, selectedKey, active, streak, activeThisWeek, known, state, onSelectDay }) {
   return (
-    <section aria-label="This week" className="flex h-full flex-col rounded-3xl bg-[var(--blue-black)] p-4 text-white">
+    <section aria-label="This week" className="flex h-full flex-col rounded-3xl bg-[var(--blue-black)] p-4 text-white shadow-lift">
       <div className="flex items-start justify-between gap-3">
         <Zap className="h-5 w-5" aria-hidden="true" />
         <p className="text-5xl font-bold leading-none">{known ? streak : "–"}</p>
       </div>
       <h2 className="mt-3 text-lg font-semibold">Day streak</h2>
-      <p className="mt-1 text-sm text-white/75">
+      <p className="mt-1 text-[15px] text-muted-foreground text-white/65 mb-6">
         {state === "unconfigured"
           ? "Not connected. Recorded days show up after Supabase is configured."
           : state === "loading"
@@ -354,8 +366,8 @@ function ContinueRow({ kind, title, seconds, share, note, href }) {
         <p className="truncate font-medium">{title}</p>
         {share != null ? (
           <div className="mt-2 flex items-center gap-3">
-            <div className="h-1.5 max-w-xs flex-1 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-              <div className="h-full rounded-full bg-emerald-500" style={{ width: `${share}%` }} />
+            <div className="h-1.5 max-w-xs flex-1 overflow-hidden rounded-full bg-black/10 dark:bg-white/15" aria-hidden="true">
+              <div className="h-full rounded-full bg-foreground/70" style={{ width: `${share}%` }} />
             </div>
             <span className="text-xs text-muted-foreground">{share}% of this week</span>
           </div>
@@ -368,7 +380,7 @@ function ContinueRow({ kind, title, seconds, share, note, href }) {
       ) : null}
       <Link
         to={href}
-        className="inline-flex min-h-11 items-center rounded-full bg-emerald-500 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="inline-flex min-h-11 items-center rounded-full bg-foreground px-4 text-sm font-semibold text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         Continue
       </Link>

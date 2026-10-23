@@ -62,7 +62,7 @@ export default function LearningReportPanel({ from, to }) {
   ).sort((a, b) => (b.activeSeconds ?? -1) - (a.activeSeconds ?? -1));
 
   return (
-    <section aria-labelledby="learning-report-heading" className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+    <section aria-labelledby="learning-report-heading" className="rounded-2xl border border-black/5 bg-card-rose p-4 shadow-lift sm:p-5 dark:border-white/10">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="learning-report-heading" className="text-lg font-semibold">Learning time</h2>

@@ -1,4 +1,4 @@
-// Central Hub — adapter: browser history on this computer.
+// Sentral Hub — adapter: browser history on this computer.
 //
 // Reads visits Chrome has already recorded. The collector reduces each visit to
 // a host and, when Chrome measured one, a duration. The full URL, the query

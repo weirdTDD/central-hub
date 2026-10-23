@@ -52,7 +52,7 @@ export function ChartLineDots({ logs = [] }) {
   const totalEntries = chartData.reduce((sum, day) => sum + day.completed, 0)
 
   return (
-    <Card>
+    <Card className="bg-card-mist">
       <CardHeader>
         <CardTitle>Log Entries by Day of Week</CardTitle>
         <CardDescription>

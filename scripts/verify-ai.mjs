@@ -1,4 +1,4 @@
-// Central Hub — assertions for the AI layer (Phase 7).
+// Sentral Hub — assertions for the AI layer (Phase 7).
 //
 // Run: node scripts/verify-ai.mjs
 //
@@ -96,7 +96,7 @@ function assertThrows(fn, pattern, message) {
   }
 }
 
-console.log("Central Hub — AI contract assertions\n");
+console.log("Sentral Hub — AI contract assertions\n");
 
 // ---------------------------------------------------------------------------
 // The contract
