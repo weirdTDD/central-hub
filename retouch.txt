@@ -1,0 +1,89 @@
+I reviewed this repo with nemotron 3.5 super VL,"review this repo: 'https://github.com/Sydney335/personal-life-planner', I like the nice Layout and tell how the nice layout and features can fit or merge into sentral hub". This was the response for implementation after reviewingand writing the prompt --> I won't implement anything myself — here is a copy-paste-ready implementation prompt for Option A, with the files to touch, exact sub-tasks, acceptance criteria, and constraints.
+
+---
+
+# Implementation prompt (Option A — layout polish only)
+
+## Goal
+Bring three layout/feature ideas from Sydney335/personal-life-planner ("Daylight") into Sentral Hub, as small non-breaking increments. No data-model changes, no new tables, no new dependencies, no migration work. Every number must remain traceable to rows the DB holds (honesty rule from PROGRESS.md). All four sub-tasks degrade gracefully when Supabase is unconfigured.
+
+## Sub-tasks (in order)
+
+### 1. Mini month calendar in the sidebar (`src/report/components/Sidebar.jsx`)
+Add a small month calendar under the nav menu, above the footer, modeled on Daylight's `MiniCalendar`:
+- Shows the current month grid (M..S headers), day buttons, prev/next month arrows.
+- Highlights the selected day (today by default, synced with the dashboard day).
+- Dots on days that have data (sessions or tasks on that day).
+- Clicking a day navigates to `/dashboard?day=YYYY-MM-DD` (or sets the dashboard's selected day via query param / state lifted into `AppShell` — pick the simplest approach that works with `React Router`).
+- Collapses gracefully in icon-only sidebar mode (hide text, keep day numbers).
+- Uses existing token classes (`border-border`, `bg-card`, `text-muted-foreground`, etc.) — no hard-coded colors.
+
+### 2. Summary strip on the dashboard day view (`src/dashboard/DashboardPage.jsx`)
+Add a strip at the top of the day content (above `HomeBoard` or right after the `AppShell` wrapper), modeled on Daylight's `summary-strip`:
+- Tasks due today: `X / Y completed` (computed from `tasks.rows` where `dueDate === dayKey`).
+- Recorded today: total duration of sessions starting today (use `formatDurationFromSeconds` from `src/dashboard/logUtils.js`; sessions already loaded via `listSessions`).
+- Planned today: sum of `estimatedSeconds` for tasks due today (`null` estimate → "No estimate").
+- States: unconfigured / loading / error / ready / empty — reuse the existing `Block` component and `sectionState` pattern already in the file.
+- Never renders missing data as `0`; show "No estimate" / "No time recorded" when unknown.
+
+### 3. Sync-status chip in the shell topbar (`src/components/AppShell.jsx`)
+Add a top-right chip in the shell header (next to the existing mobile menu trigger) that shows the last integrations sync state:
+- Read the `integrations` table via `src/lib/integrations.js` (`listIntegrations` — confirm exact export name; fallback to "Not connected" if it doesn't exist).
+- Show a truthful badge: last successful sync time, or "Not connected", or "Error" — mirroring the truthful-state pattern on `/integrations`.
+- Degrades gracefully when Supabase is unconfigured or the read fails (show "Not connected", never crash).
+- Styled with tokens, ≥44px touch target, accessible label.
+
+### 4. Metric-card style for `/reports` KPI cards (`src/report/components/ProductivityReport.jsx`, `src/report/components/KpiSummary.jsx`)
+Make the KPI cards on the report page follow Daylight's metric-card pattern (big number + label + caption answering "where does this number come from"):
+- Each card gets a caption line explaining the source (e.g. "Sum of recorded durations from work logs in range", "Work log entries in range", "Sessions that start this week").
+- Cards that can be incomplete add a completeness note ("Some entries have no recorded duration and are excluded").
+- Use existing token classes (`bg-card`, `border-border`, `text-muted-foreground`, heat ramp tokens) — no hard-coded colors.
+- Keep the existing `missing > 0` note below the grid.
+
+## Files to touch
+- `src/report/components/Sidebar.jsx` — mini calendar
+- `src/dashboard/DashboardPage.jsx` — summary strip
+- `src/components/AppShell.jsx` — sync-status chip (header area)
+- `src/report/components/ProductivityReport.jsx` — KPI captions / completeness
+- `src/report/components/KpiSummary.jsx` — KPI card captions
+
+Possibly supporting:
+- `src/lib/integrations.js` — confirm `listIntegrations` export exists (used by chip)
+- `src/dashboard/logUtils.js` — `formatDurationFromSeconds`, `hasRecordedDuration` already exist; reuse them
+
+## Acceptance criteria (verification)
+All must hold before the change is considered done:
+1. `pnpm lint` → only the 4 pre-existing errors (AuthContext/LogsContext `react-refresh/only-export-components`; SettingsPage unused `Icon`; vite.config.js `__dirname`). **No new lint errors.**
+2. `pnpm build` → succeeds.
+3. Preview server → `/`, `/dashboard`, `/reports` all return 200 (existing routes unchanged).
+4. Layout works from 320px width upward with no horizontal scrolling (per MASTER_SPEC §6).
+5. Touch targets ≥ 44×44px on mobile; visible focus indicators; keyboard accessible.
+6. Tokens only — **zero new hard-coded colors** (grep for `#` hex literals and `bg-gray-`/`text-gray-` additions; must be none).
+7. Loading / empty / error / "Not connected" states preserved on every changed surface.
+8. No existing feature removed or broken (dashboard journal, week summary, queue, plan all still work).
+9. All existing verification scripts still pass: `node scripts/verify-tracking.mjs`, `verify-contracts.mjs`, `verify-integrations.mjs`, `verify-planned-actual.mjs` (unchanged, but re-run to confirm no regression).
+10. Mini calendar day click navigates to dashboard for that day; sync-status chip shows a truthful state or degrades gracefully; summary strip never shows `0` for unknown data.
+
+## Constraints / rules to follow (from PROGRESS.md)
+- One small increment per session; keep the diff reviewable in ~10 minutes.
+- Do not rewrite or restructure large parts of the app. Reuse existing components (`Block`, `AppShell`, shadcn Sidebar, date pickers).
+- Prefer Server Components where sensible, but this is a Vite/React-Router SPA — keep client components.
+- Validate input and handle failure paths explicitly (no silent failures).
+- Design tokens only (no hard-coded colors); blue primary palette; rounded corners; mobile-first.
+- Never store secrets or send data to third parties.
+- Do not touch migrations, schema, auth behavior, or add dependencies.
+
+## Data / helpers already available (reuse, don't rebuild)
+- `DashboardPage` already loads `tasks`, `sessions`, `corrections`, `notifications` and has `dayKey`, `todayKey(timeZone)`, `formatDurationFromSeconds` (logUtils), `durationText` (todayView), `buildDayView` → `view.summary.totals` (`plannedSeconds`, `actualSeconds`, `sessionsInScope`, `openTasksWithoutEstimate`, `sessionsWithoutDuration`).
+- `src/dashboard/logUtils.js`: `formatDurationFromSeconds(seconds)`, `hasRecordedDuration(log)`, `durationSecondsOf(log)`, `MISSING_DURATION_LABEL`.
+- `src/lib/dates.js`: `todayKey(timeZone)`, `systemTimeZone()`, `localDayKey(iso, tz)`.
+- `src/components/ui/calendar.jsx`, `select.jsx`, `button.jsx`, `card.jsx`, `sheet.jsx`, `drawer.jsx` exist (shadcn-style).
+- `src/report/components/Sidebar.jsx` uses shadcn `Sidebar`, `SidebarMenuItem`, etc. from `@/components/ui/sidebar`.
+- `src/lib/integrations.js` — confirm export names before importing (bounded reads with exact count).
+
+## Definition of done for the implementing model
+Write the four changes, run lint + build + the verification scripts, paste the real command output, and confirm each acceptance criterion status (Implemented / Tested / Partial / Blocked). Do not mark anything "Tested" unless you actually ran the command and can show output.
+
+---
+
+That's the full prompt. If you hand it to another model, ask it to confirm it read `src/components/AppShell.jsx`, `src/report/components/Sidebar.jsx`, `src/dashboard/DashboardPage.jsx`, `src/report/components/KpiSummary.jsx`, and `src/dashboard/logUtils.js` before editing, and to paste real lint/build/verify output when done.

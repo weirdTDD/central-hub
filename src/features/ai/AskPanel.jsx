@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { ArrowUp, CircleAlert, Loader2, MessageCircleDashed } from "lucide-react";
+import { ArrowUp, CircleAlert, MessageCircleDashed } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { Button } from "@/components/ui/button";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
@@ -111,12 +112,12 @@ export default function AskPanel({ from = null, to = null, className }) {
     <MessageScrollerProvider autoScroll>
       <section
         className={cn(
-          "flex h-[32rem] min-h-0 flex-col overflow-hidden rounded-2xl border border-black/5 bg-card-peach shadow-lift dark:border-white/10",
+          "flex h-[30rem] min-h-0 flex-col overflow-hidden rounded-xl border border-border bg-card-peach shadow-sm ",
           className
         )}
       >
-        <header className="px-5 pt-5 pb-3">
-          <Title className="text-lg font-semibold text-foreground">Ask</Title>
+        <header className="px-4 pt-4 pb-2">
+          <Title className="text-base font-semibold text-foreground">Ask</Title>
           <p className="mt-1 text-sm text-muted-foreground">
             {scoped
               ? "Questions use the date range on this page."
@@ -140,7 +141,7 @@ export default function AskPanel({ from = null, to = null, className }) {
           ) : (
             <MessageScroller>
               <MessageScrollerViewport>
-                <MessageScrollerContent aria-busy={running} className="gap-6 px-5 py-2">
+                <MessageScrollerContent aria-busy={running} className="gap-5 px-4 py-2">
                   {messages.map((message) =>
                     message.role === "user" ? (
                       <MessageScrollerItem key={message.id} messageId={message.id} scrollAnchor>
@@ -173,7 +174,7 @@ export default function AskPanel({ from = null, to = null, className }) {
                         <MessageContent>
                           <MessageHeader>Grok</MessageHeader>
                           <p className="flex items-center gap-2 text-muted-foreground">
-                            <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                            <Skeleton className="size-4" />
                             Asking Grok
                           </p>
                         </MessageContent>
@@ -187,7 +188,7 @@ export default function AskPanel({ from = null, to = null, className }) {
           )}
         </div>
 
-        <div className="flex flex-col gap-3 px-5 pt-3 pb-5">
+        <div className="flex flex-col gap-2 px-4 pt-2 pb-4">
           {messages.length === 0 ? (
             <div className="no-scrollbar flex gap-2 overflow-x-auto overscroll-x-contain">
               {STARTERS.map((starter) => (
@@ -222,7 +223,7 @@ export default function AskPanel({ from = null, to = null, className }) {
                 disabled={running}
                 placeholder="Ask a question about your records"
                 aria-label="Question"
-                className="min-h-16"
+                className="min-h-14"
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
@@ -231,13 +232,13 @@ export default function AskPanel({ from = null, to = null, className }) {
                   }
                 }}
               />
-              <InputGroupAddon align="block-end" className="pt-1">
+              <InputGroupAddon align="block-end" className="pt-0.5">
                 <InputGroupButton
                   type="submit"
                   variant="default"
                   size="icon-sm"
                   disabled={!canSend}
-                  className="ml-auto rounded-full"
+                  className="ml-auto rounded-lg"
                   aria-label="Send"
                 >
                   <ArrowUp />

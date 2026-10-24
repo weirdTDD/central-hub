@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Bell,
   BarChart3,
+  ChevronUp,
   Clock,
   Code2,
   GraduationCap,
@@ -42,19 +44,38 @@ const navigation = [
   { name: "Integrations", href: "/integrations", icon: Plug },
   { name: "Ask", href: "/ask", icon: MessageSquare },
   { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 export default function AppSidebar({ currentPath = "/reports" }) {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { setOpenMobile } = useSidebar();
+  const { isMobile, open, setOpen, setOpenMobile } = useSidebar();
+  const [accountOpen, setAccountOpen] = useState(false);
 
   const name = personName(user) || user?.email || "Account";
+  const closeAccountMenu = () => {
+    setAccountOpen(false);
+    setOpenMobile(false);
+  };
+  const toggleAccountMenu = () => {
+    if (!isMobile && !open) setOpen(true);
+    setAccountOpen((current) => !current);
+  };
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="group-data-[collapsible=icon]:items-center">
+      <SidebarHeader className="flex-row items-center justify-between gap-2 group-data-[collapsible=icon]:justify-center">
+        <Link
+          to="/dashboard"
+          aria-label="Sentral Hub home"
+          className="min-w-0 group-data-[collapsible=icon]:hidden"
+        >
+          <img
+            src="/Sentral-Hub-Logo.png"
+            alt="Sentral Hub"
+            className="h-16 w-auto max-w-40 object-contain"
+          />
+        </Link>
         <SidebarTrigger />
       </SidebarHeader>
 
@@ -71,6 +92,7 @@ export default function AppSidebar({ currentPath = "/reports" }) {
                       isActive={currentPath === href}
                       tooltip={label}
                       onClick={() => setOpenMobile(false)}
+                      className="text-xs"
                     >
                       <Icon />
                       <span>{label}</span>
@@ -84,33 +106,63 @@ export default function AppSidebar({ currentPath = "/reports" }) {
       </SidebarContent>
 
       <SidebarFooter>
-        <div className="flex items-center gap-2 px-2 py-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-          <img
-            src={initialsAvatar(name)}
-            alt=""
-            className="size-8 shrink-0 rounded-full object-cover"
-          />
-          <span className="truncate text-sm font-semibold group-data-[collapsible=icon]:hidden">
-            {name}
-          </span>
-        </div>
         <SidebarMenu>
-          <SidebarMenuItem>
+          <SidebarMenuItem className="relative">
             <SidebarMenuButton
-              tooltip="Logout"
-              onClick={async () => {
-                setOpenMobile(false);
-                try {
-                  await signOut();
-                } catch {
-                  // The session is cleared locally regardless; continue to login.
-                }
-                navigate("/login", { replace: true });
-              }}
+              type="button"
+              aria-label={`Account menu for ${name}`}
+              aria-expanded={accountOpen}
+              title="Account"
+              onClick={toggleAccountMenu}
+              className="h-11 rounded-xl border border-sidebar-border bg-sidebar-accent/35 px-2 group-data-[collapsible=icon]:size-9!"
             >
-              <LogOut />
-              <span>Logout</span>
+              <img
+                src={initialsAvatar(name)}
+                alt=""
+                className="size-7 shrink-0 rounded-full object-cover"
+              />
+              <span className="min-w-0 flex-1 truncate text-left text-xs font-semibold group-data-[collapsible=icon]:hidden">
+                <span className="block truncate">{name}</span>
+                <span className="block text-xs font-normal text-muted-foreground">Account</span>
+              </span>
+              <ChevronUp className={`ml-auto size-3.5 text-muted-foreground transition-transform group-data-[collapsible=icon]:hidden ${accountOpen ? "" : "rotate-180"}`} />
             </SidebarMenuButton>
+            {accountOpen ? (
+              <div className="absolute inset-x-0 bottom-full z-50 mb-2 space-y-1 rounded-xl border border-sidebar-border bg-sidebar p-2 shadow-lg group-data-[collapsible=icon]:hidden">
+                {user?.email ? (
+                  <p className="truncate px-2 pb-2 text-xs text-muted-foreground">{user.email}</p>
+                ) : null}
+                <Link
+                  to="/settings"
+                  onClick={closeAccountMenu}
+                  aria-current={currentPath.startsWith("/settings") ? "page" : undefined}
+                  className={`flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring ${
+                    currentPath.startsWith("/settings")
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground"
+                  }`}
+                >
+                  <Settings className="size-4" aria-hidden="true" />
+                  Settings
+                </Link>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    closeAccountMenu();
+                    try {
+                      await signOut();
+                    } catch {
+                      // The session is cleared locally regardless; continue to login.
+                    }
+                    navigate("/login", { replace: true });
+                  }}
+                  className="flex min-h-10 w-full items-center gap-2 rounded-lg px-2 text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+                >
+                  <LogOut className="size-4" aria-hidden="true" />
+                  Log out
+                </button>
+              </div>
+            ) : null}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

@@ -26,6 +26,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatDurationFromSeconds } from "../../dashboard/logUtils";
 import { isSupabaseConfigured } from "../../lib/supabase";
+import { Skeleton } from "../../components/ui/skeleton";
 import { listTaskReferences } from "../../lib/tasks";
 import { listRecentCorrections, listSessions } from "../../lib/tracking";
 import { ACTIVE_STATUSES, TASK_STATUSES } from "../tasks/taskUtils";
@@ -461,7 +462,7 @@ export default function PlannedVsActualPanel({ from, to }) {
   return (
     <section
       aria-labelledby="planned-vs-actual-heading"
-      className="rounded-[1.75rem] border border-black/5 bg-card-cream p-4 shadow-lift sm:p-5 dark:border-white/10"
+      className="rounded-[1.75rem] border border-border bg-card-cream p-4 shadow-lift sm:p-5"
     >
       <h2
         id="planned-vs-actual-heading"
@@ -490,12 +491,11 @@ export default function PlannedVsActualPanel({ from, to }) {
           Not connected. Configure Supabase to load the comparison.
         </p>
       ) : status === "loading" ? (
-        <p
-          role="status"
-          className="mt-4 rounded-xl border border-border bg-background px-4 py-3 text-sm text-muted-foreground"
-        >
-          Loading…
-        </p>
+        <div className="mt-4 rounded-xl border border-border bg-background px-4 py-3">
+          <Skeleton className="h-4 w-1/3 mb-1" />
+          <Skeleton className="h-6 w-full mb-1" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
       ) : status === "error" ? (
         <div
           role="alert"
@@ -533,7 +533,7 @@ export default function PlannedVsActualPanel({ from, to }) {
           ) : null}
 
           <dl className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-black/5 bg-card-gold p-3 shadow-lift dark:border-white/10">
+            <div className="rounded-xl border border-border bg-card-gold p-3 shadow-lift">
               <dt className="text-xs font-semibold tracking-wide text-foreground/70 uppercase">
                 Planned (open tasks)
               </dt>
@@ -541,7 +541,7 @@ export default function PlannedVsActualPanel({ from, to }) {
                 {plannedText}
               </dd>
             </div>
-            <div className="rounded-xl border border-black/5 bg-card-sky p-3 shadow-lift dark:border-white/10">
+            <div className="rounded-xl border border-border bg-card-sky p-3 shadow-lift">
               <dt className="text-xs font-semibold tracking-wide text-foreground/70 uppercase">
                 Recorded
               </dt>
@@ -549,7 +549,7 @@ export default function PlannedVsActualPanel({ from, to }) {
                 {recordedText}
               </dd>
             </div>
-            <div className="rounded-xl border border-black/5 bg-card-coral p-3 shadow-lift dark:border-white/10">
+            <div className="rounded-xl border border-border bg-card-coral p-3 shadow-lift">
               <dt className="text-xs font-semibold tracking-wide text-foreground/70 uppercase">
                 Difference
               </dt>

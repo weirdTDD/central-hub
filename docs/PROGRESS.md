@@ -1,5 +1,13 @@
 # Sentral Hub — Progress Log
 
+**Notifications setup diagnostics (2026-10-23):** When Supabase reports missing Phase 6 tables, `/notifications` now explains the migration, schema-cache refresh, and required worker process. This improves setup guidance; the migration and worker still need to be configured for the live project.
+
+**Refresh route preservation (2026-10-23):** Protected routes wait for Supabase session restoration before redirecting, and unauthenticated deep links retain pathname, query, and hash through sign-in. Password and Google sign-in return to the requested page; the dashboard remains the fallback when there is no prior destination.
+
+**Sidebar state persistence (2026-10-23):** The desktop sidebar now starts collapsed unless the user explicitly saved it open, and its cookie is read on mount so route changes do not reset it to expanded. Mobile navigation remains closed by default and opens only through its trigger.
+
+**Shared UI and color consistency (2026-10-23):** Removed the month calendar and its task/session reads from the sidebar. Standardized the signed-in shell with a responsive sticky header, consistent content width and spacing, shared heading/input styling, and common button sizing. Unified surfaces and layout while preserving intentional color differences: coral, gold, rose, and sky cards, distinct multi-hue chart series, blue progress indicators, and green success states, all with light/dark tokens. The dashboard day selector and summary remain URL-driven and intact. `pnpm lint` passes; `pnpm build` succeeds (4360 modules). The existing large-chunk warning remains.
+
 **Project rename (2026-10-22):** The project name has been changed from "DailyLogs" / "Central Hub" to "Sentral Hub" across metadata (`package.json`, `index.html`), the auth/about page (`AuthPage.jsx`), README, docs, and extension display names. All code-visible references (script headers, migration comments, source module comments) were updated. The `THEME_KEY` localStorage key was changed from `dailylogs-theme` to `sentral-hub-theme` (this resets existing users' theme preference). Internal identifiers (`centralHub.*`, `CENTRAL_HUB_*` env vars, the GitHub repo URL `weirdTDD/central-hub`) were left unchanged to avoid breaking existing installs. Lint passes with 0 errors; build succeeds (4359 modules).
 
 **Activity breakdown pie chart (2026-10-22):** The report page shows an interactive pie chart tracking coding, learning, and work-log time as a share of total tracked time for the selected range. Uses the shadcn/ui `ChartPieInteractive` pattern (`recharts` `Pie`/`PieChart`/`Sector`/`Label` inside `ChartContainer` + `ChartStyle`): an interactive `Select` dropdown highlights a category's sector (expanding its radius), a center `Label` shows the formatted total duration, and `ChartTooltip` shows per-category seconds. Coding/learning totals are aggregated from the `useTrackedDays` hook's `byDate` map; work-log total is computed from `filteredLogs` via `durationSecondsOf`. Colors use design tokens: `--progress` (blue) for coding, `--teal` (new token in `src/index.css`) for learning, `--chart-1` (amber) for work logs. Zero-value categories are omitted from the chart but still selectable; an empty range shows "No time recorded". Lint passes (0 errors); build succeeds (4360 modules). Note: `listCodingObservations` defaults to a 1000-row limit — days with >1000 heartbeats (frequent context switches) may truncate (a warning is shown by `CodingPage`).
@@ -431,7 +439,66 @@ Two harness bugs were found and fixed on the way, both worth knowing about: the 
    - **Theme-aware chart colours**: `TaskStatusChart` now uses `useSyncExternalStore` to subscribe to theme changes via `theme.js` (`subscribeTheme`/`isDark`), so chart tokens refresh on toggle. Added a subscriber broadcast to `applyTheme`.
    - **Unused exports removed**: `refreshLogs` removed from `LogsContext`; `logsWithDuration` removed from `calculateKPIs` return.
    - **Realtime publication**: `work_logs` added to `supabase_realtime` in the migration (idempotent).
-   - **UTC day slicing**: `LogsContext.toLogShape` now derives the fallback date via `new Date(row.created_at).toLocaleDateString("sv-SE")` (local date) instead of `String(row.created_at).slice(0, 10)` (UTC date).
+    - **UTC day slicing**: `LogsContext.toLogShape` now derives the fallback date via `new Date(row.created_at).toLocaleDateString("sv-SE")` (local date) instead of `String(row.created_at).slice(0, 10)` (UTC date).
+
+### Layout compacting (2026-10-24)
+Compacted buttons, cards, heading sizes, and spacing across the app to match a denser, grok.com/dashboard/-inspired aesthetic. Mobile-first, tokens only, no hardcoded colours:
+
+- **`src/index.css`**: Reduced `.hub-main h1/h2/h3` scales; added `.btn-compact` (min-h-9, rounded-lg) and `.card-compact` utility classes.
+- **`src/components/AppShell.jsx`**: Logo `h-18`→`h-12`; header `px-4`→`px-3`, `min-h-14`→`min-h-10`; sync chip `min-h-11`→`min-h-9`, `max-w-[calc(100vw-5rem)]`→`max-w-[calc(100vw-3rem)]`; main `max-w-[1360px]`→`max-w-7xl`, padding `px-4 py-5`→`px-3 py-4`.
+- **`src/components/Plan.jsx`**: Cards `rounded-3xl p-4`→`rounded-xl p-3`, buttons `min-h-11`→`min-h-9`, `rounded-full`→`rounded-lg`, headings `text-lg`→`text-base`, removed `text-[11px]`, `gap-3`→`gap-2`, `space-y-3`→`space-y-2`, `mt-4`→`mt-3`.
+- **`src/components/Queue.jsx`**: Same compact treatment as Plan; Notice component compacted.
+- **`src/dashboard/DashboardPage.jsx`**: Block component `px-4 py-3`→`px-3 py-2`; outer container `gap-6`→`gap-4`; DaySummary/Reminder/WeekSummary `rounded-3xl p-4`→`rounded-xl p-3`, `shadow-lift`→`shadow-sm`; metric cards `rounded-2xl px-3 py-3`→`rounded-xl px-2.5 py-2`; grid `gap-6`→`gap-4`; add-task form inputs/buttons `min-h-11`→`min-h-9`, `rounded-full`→`rounded-lg`, `px-4`→`px-3`; journal section compacted.
+- **`src/dashboard/HomeBoard.jsx`**: Heading `text-4xl`→`text-xl`; streak number `text-5xl`→`text-3xl`; track cards `min-h-36`→`min-h-32`, `rounded-3xl p-4`→`rounded-xl p-3`, icon `h-8`→`h-6`, title `text-base`→`text-sm`; replaced desktop-first `@min-[860px]` grid + `@container` with mobile-first `sm:grid-cols-2 lg:grid-cols-[...]`; ContinueRow `min-h-11`→`min-h-9`, `rounded-full`→`rounded-lg`.
+- **`src/report/components/KpiSummary.jsx`**: Cards `min-h-40`→`min-h-32`, `rounded-2xl`→`rounded-xl`, `text-5xl` values→`text-3xl`, grid `gap-6`→`gap-4`.
+- **`src/report/components/ProductivityReport.jsx`**: Heading `text-4xl`→`text-2xl`; `text-gray-600`→`text-muted-foreground`; `w-45`→`w-full sm:w-48`.
+- **`src/report/components/Sidebar.jsx`**: Fixed hardcoded `text-[11px]`→`text-xs`.
+
+Verification: lint clean except pre-existing IntegrationsPage `react-hooks/purity` error (not caused by this change); build succeeds (4360 modules); all 7 verification scripts pass (tracking 46, contracts 17, integrations 53, planned-actual 20, today-view 16, coding 22, AI 35, notifications 61).
+
+### Typography centralization (2026-10-24)
+Centralized all typography sizes into shared design tokens per the compact SaaS dashboard scale. No arbitrary font sizes remain in components:
+
+- **`src/index.css`**: Added typography tokens to `@theme inline` overriding standard Tailwind sizes:
+  - `--text-xs`: 0.6875rem (11px) — supporting metadata
+  - `--text-sm`: 0.75rem (12px) — form labels, table text
+  - `--text-base`: 0.8125rem (13px) — body, navigation, buttons, inputs
+  - `--text-lg`: 0.9375rem (15px) — section headings
+  - `--text-xl`: clamp(1.25rem, ..., 1.375rem) (20px mobile → 22px desktop) — page titles
+  - `--text-2xl`: clamp(1.375rem, ..., 1.5rem) (22px mobile → 24px desktop) — KPI values
+  - `--text-3xl`–`--text-7xl`: remapped to compact values
+  - Leading: --leading-tight 1.3 (page titles), --leading-snug 1.46 (card titles), --leading-normal 1.5 (body)
+  - Spacing: --space-card-padding clamp(0.75rem, ..., 1rem) (12-14px mobile → 16px desktop), --space-card-gap, --space-section-gap
+  - Removed custom utility classes that conflicted with Tailwind JIT; standard text-* classes now resolve through the centralized tokens.
+- All `text-[Npx]` arbitrary values removed from components (17 instances across HomeBoard, Queue, Plan, Bars, TrackingPage, WorkflowJourney, Heatmap).
+- Custom utility class references (.text-page-title, .text-body, etc.) removed from HomeBoard.jsx; standard text-* classes used instead.
+- Fixed missing closing `}` in LearningReportPanel.jsx function.
+- Fixed stray `}` in NotificationsPage.jsx NewWorkflowForm.
+
+Verification: lint clean except pre-existing IntegrationsPage `Date.now()` purity error (not caused by this change); build succeeds (4360 modules); all 8 verification scripts pass (270 assertions, 0 failed).
+
+### Shadcn skeleton loading components (2026-10-24)
+Replaced all text-based "Loading…" states with shadcn `Skeleton` components (`animate-pulse rounded-md bg-muted`) across all pages that fetch data:
+
+- **`src/dashboard/DashboardPage.jsx`**: DaySummary → skeleton metric cards (3), Reminder → skeleton text lines, WeekSummary → skeleton metric cards (3), Journal → skeleton list item; imported `Skeleton` from `../components/ui/skeleton`
+- **`src/components/Plan.jsx`**: Loading state → skeleton list items; imported `Skeleton`
+- **`src/components/Queue.jsx`**: Loading state → skeleton list items; imported `Skeleton`
+- **`src/features/learning/LearningDayCard.jsx`**: Loading → skeleton metric card; imported `Skeleton`
+- **`src/features/learning/LearningReportPanel.jsx`**: Loading → skeleton metric card; imported `Skeleton`
+- **`src/features/learning/LearningPage.jsx`**: Loading → skeleton metric card; imported `Skeleton`
+- **`src/features/coding/CodingDayCard.jsx`**: Loading → skeleton metric card; imported `Skeleton`
+- **`src/features/coding/CodingReportPanel.jsx`**: Loading → skeleton metric card; imported `Skeleton`
+- **`src/features/coding/CodingPage.jsx`**: Loading → skeleton metric card + `Total` component loading → skeleton; imported `Skeleton`
+- **`src/features/notifications/NotificationsPage.jsx`**: Inbox loading → skeleton list items; imported `Skeleton`
+- **`src/features/integrations/IntegrationsPage.jsx`**: SyncHistory loading → skeleton rows; added `loading` prop to `SyncHistory`; imported `Skeleton`
+- **`src/features/ai/AskPanel.jsx`**: Replaced `Loader2` spinner with `Skeleton` in "Asking Grok" indicator
+- **`src/features/ai/InsightsPanel.jsx`**: Replaced `Loader2` spinner with `Skeleton` in running button
+- **`src/features/ai/ClassificationReview.jsx`**: Replaced `Loader2` spinner with `Skeleton` in busy accept button
+- **`src/features/tracking/TrackingPage.jsx`**: Loading → skeleton metric card; imported `Skeleton`
+- **`src/features/tracking/PlannedVsActualPanel.jsx`**: Loading → skeleton metric cards (3); imported `Skeleton`
+- **`src/components/Queue.jsx`**: Fixed invisible action button — added missing `bg-primary` background and `hover:bg-primary/90` (white `text-primary-foreground` text was invisible on white card background); added `py-1.5` for consistent padding.
+
+Verification: lint clean except pre-existing IntegrationsPage `Date.now()` purity error; build succeeds (4360 modules); all 8 verification scripts pass (270 assertions, 0 failed).
 
 ## Decisions (see docs/DECISIONS.md)
 

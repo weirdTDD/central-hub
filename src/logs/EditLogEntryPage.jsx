@@ -53,12 +53,12 @@ function LogEditForm({ log, onSave, onDelete, saving, error }) {
       <LogEntryForm values={values} onChange={setValues} noteLabel="Notes" />
 
       {validationError ? (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-destructive">
           {validationError}
         </p>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
       ) : null}
@@ -68,7 +68,7 @@ function LogEditForm({ log, onSave, onDelete, saving, error }) {
           type="button"
           onClick={onDelete}
           disabled={saving}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-destructive px-4 py-2 text-sm font-semibold text-destructive-foreground hover:bg-destructive/90 disabled:opacity-60"
         >
           <Trash2 className="h-4 w-4" />
           Delete Log
@@ -77,7 +77,7 @@ function LogEditForm({ log, onSave, onDelete, saving, error }) {
           <button
             type="button"
             onClick={() => navigate("/logs")}
-            className="rounded-lg border border-border bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-zinc-800"
+            className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
           >
             Cancel
           </button>
@@ -106,7 +106,7 @@ export default function EditLogEntryPage() {
   if (loading && !existing) {
     return (
       <LogEntryLayout>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Loading log entry...</p>
+        <p className="text-sm text-muted-foreground">Loading log entry...</p>
       </LogEntryLayout>
     );
   }
@@ -141,14 +141,14 @@ export default function EditLogEntryPage() {
 
   return (
     <LogEntryLayout>
-      <nav className="text-sm text-gray-500 dark:text-gray-400">
+      <nav className="text-sm text-muted-foreground">
           <Link to="/logs" className="hover:text-primary">
           Work logs
         </Link>
         <span className="mx-1.5">/</span>
         <span>Log</span>
         <span className="mx-1.5">/</span>
-        <span className="text-gray-700 dark:text-gray-200">Edit Log Entry</span>
+        <span className="text-foreground">Edit Log Entry</span>
       </nav>
 
       <h1 className="mt-3 text-3xl font-bold tracking-tight">Edit Log Entry</h1>

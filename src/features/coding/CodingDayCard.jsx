@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Skeleton } from "../../components/ui/skeleton";
 import { durationText, formatDayHeading } from "../../dashboard/todayView";
 import {
   coveredSeconds,
@@ -66,7 +67,7 @@ export default function CodingDayCard({ dayKey, timeZone }) {
   const editors = groupedCoveredSeconds(heartbeats, (beat) => editorLabel(beat.editor || "unknown"));
 
   return (
-    <section aria-labelledby="coding-heading" className="rounded-3xl border border-black/5 bg-card-sky p-4 shadow-lift sm:p-5 dark:border-white/10">
+    <section aria-labelledby="coding-heading" className="rounded-3xl border border-border bg-card-sky p-4 shadow-lift sm:p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 id="coding-heading" className="text-lg font-semibold">Coding</h2>
@@ -85,7 +86,13 @@ export default function CodingDayCard({ dayKey, timeZone }) {
         {viewState === "unconfigured" ? (
           <p className="text-sm text-muted-foreground">Not connected. Configure Supabase to load coding activity.</p>
         ) : null}
-        {viewState === "loading" ? <p className="text-sm text-muted-foreground">Loading coding activity…</p> : null}
+        {viewState === "loading" ? (
+          <div className="mt-3 flex flex-col gap-2">
+            <Skeleton className="h-4 w-1/3 mb-1" />
+            <Skeleton className="h-8 w-full mb-2" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
+        ) : null}
         {viewState === "error" ? (
           <p role="alert" className="text-sm text-destructive">{viewError}</p>
         ) : null}

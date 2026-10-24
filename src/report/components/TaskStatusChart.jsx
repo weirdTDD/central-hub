@@ -82,12 +82,12 @@ const TaskStatusChart = ({ logs = [] }) => {
   }, [logs, themeSnapshot]);
 
   return (
-    <div className="h-full rounded-2xl border border-black/5 bg-card-sky p-6 shadow-lift md:h-90 dark:border-white/10">
-      <h3 className="text-lg font-semibold text-card-foreground">Data Coverage</h3>
+    <div className="h-full rounded-xl border border-border bg-card-sky p-3 shadow-sm">
+      <h3 className="text-base font-semibold text-card-foreground">Data Coverage</h3>
       {hasData ? (
-        <ReactECharts option={option} style={{ height: 400 }} />
+        <ReactECharts option={option} style={{ height: 280 }} />
       ) : (
-        <p className="py-24 text-center text-sm text-muted-foreground">
+        <p className="pt-12 text-center text-sm text-muted-foreground">
           No data collected for the selected range.
         </p>
       )}

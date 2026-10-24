@@ -120,38 +120,38 @@ export default function HomeBoard({
         <div className="flex items-center gap-3">
           <img src={avatarFor(user)} alt="" className="h-12 w-12 rounded-full" />
           <div>
-            <h1 className="text-4xl font-serif font-bold tracking-tight sm:text-3xl">{heading}</h1>
-            <p className="mt-0.5 text-sm text-muted-foreground">
+            <h1 className="text-xl font-serif font-bold tracking-tight">{heading}</h1>
+            <p className="mt-0.5 text-base text-muted-foreground">
               {featured
                 ? `Latest course: ${featured.key}`
                 : `${formatDayHeading(dayKey) || "Today"}. Recorded time shows up here.`}
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link
-            to="/reports"
-            className="inline-flex min-h-11 items-center rounded-full border border-black/5 bg-card px-4 text-sm font-semibold shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-white/10"
-          >
-            Review
-          </Link>
-          <Link
-            to="/learning"
-            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-black/5 bg-card-sky px-4 text-sm font-semibold shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-white/10"
-          >
-            <Zap className="h-4 w-4" aria-hidden="true" />
-            Day streak
-            {streakKnown ? (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-foreground px-1 text-[11px] font-bold text-background">
-                {streak}
-              </span>
-            ) : null}
-          </Link>
-        </div>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              to="/reports"
+              className="inline-flex min-h-9 items-center rounded-lg border border-border bg-card px-3 text-base font-semibold shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Review
+            </Link>
+            <Link
+              to="/learning"
+              className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-border bg-card-sky px-3 text-base font-semibold shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Zap className="h-3 w-3" aria-hidden="true" />
+              Day streak
+              {streakKnown ? (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-foreground px-1 text-xs font-bold text-background">
+                  {streak}
+                </span>
+              ) : null}
+            </Link>
+          </div>
       </header>
 
       <div className="@container">
-      <div className="grid items-stretch gap-3 @min-[860px]:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_19rem]">
+      <div className="grid items-stretch gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)_240px]">
         <TrackCard
           eyebrow="Learn"
           icon={BookOpen}
@@ -220,32 +220,32 @@ export default function HomeBoard({
       </div>
       </div>
 
-      <section aria-labelledby="continue-heading" className="rounded-3xl border border-black/5 bg-card-mist shadow-lift dark:border-white/10">
-        <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-5">
-          <h2 id="continue-heading" className="flex items-center gap-2 text-base font-semibold">
+      <section aria-labelledby="continue-heading" className="rounded-xl border border-border bg-card-mist shadow-sm">
+        <div className="flex items-center justify-between gap-2 px-3 py-3 sm:px-4">
+          <h2 id="continue-heading" className="flex items-center gap-2 text-lg font-semibold">
             <span aria-hidden="true">↗</span>
             Pick up where you left off
           </h2>
           <Link
             to="/learning"
-            className="inline-flex min-h-11 items-center text-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex min-h-9 items-center text-base font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             See all
           </Link>
         </div>
         {truncated ? (
-          <p className="px-5 pb-2 text-xs text-muted-foreground">
+          <p className="px-3 pb-1 text-xs text-muted-foreground">
             This week has more heartbeats than were loaded, so the bars cover the loaded ones.
           </p>
         ) : null}
         {state === "error" ? (
-          <p role="alert" className="px-5 pb-5 text-sm text-destructive">{error}</p>
+          <p role="alert" className="px-3 pb-2 text-base text-destructive">{error}</p>
         ) : null}
         {state === "unconfigured" && courses.length === 0 ? (
-          <p className="px-5 pb-5 text-sm text-muted-foreground">Not connected. Configure Supabase to load courses.</p>
+          <p className="px-3 pb-2 text-base text-muted-foreground">Not connected. Configure Supabase to load courses.</p>
         ) : null}
         {courses.length === 0 && planState === "ready" && plan.length === 0 && state !== "loading" ? (
-          <p className="px-5 pb-5 text-sm text-muted-foreground">
+          <p className="px-3 pb-2 text-base text-muted-foreground">
             Nothing to pick up yet. A tracked learning site, a coding session, or a task due today will show up here.
           </p>
         ) : null}
@@ -276,49 +276,49 @@ export default function HomeBoard({
 }
 
 const TRACK_TONE = {
-  learn: "border-black/5 bg-card-coral shadow-lift dark:border-white/10",
-  plan: "border-black/5 bg-card-gold shadow-lift dark:border-white/10",
-  code: "border-black/5 bg-card-rose shadow-lift dark:border-white/10",
+  learn: "border-l-4 border-l-card-coral bg-card-coral shadow-lift",
+  plan: "border-l-4 border-l-card-gold bg-card-gold shadow-lift",
+  code: "border-l-4 border-l-card-rose bg-card-rose shadow-lift",
 };
 
 function TrackCard({ eyebrow, icon, title, detail, share, shareLabel, href, tone = "learn" }) {
   return (
     <Link
       to={href}
-      className={`flex min-h-36 items-center gap-2 rounded-3xl border p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${TRACK_TONE[tone] ?? TRACK_TONE.learn}`}
+      className={`flex min-h-32 items-center gap-2 rounded-xl border p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${TRACK_TONE[tone] ?? TRACK_TONE.learn}`}
     >
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-foreground/70">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/55 text-foreground dark:bg-white/10">
-            {createElement(icon, { className: "h-4 w-4", "aria-hidden": true })}
+        <span className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-foreground/70">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-card/55 text-foreground dark:bg-card/10">
+            {createElement(icon, { className: "h-3 w-3", "aria-hidden": true })}
           </span>
           {eyebrow}
         </span>
-        <span className="mt-3 line-clamp-2 block text-base font-semibold text-foreground">{title}</span>
+        <span className="mt-2 line-clamp-2 block text-base font-semibold text-foreground">{title}</span>
         {share != null ? (
-          <span className="mt-3 block">
-            <span className="block h-2 overflow-hidden rounded-full bg-black/10 dark:bg-white/15" aria-hidden="true">
+          <span className="mt-2 block">
+            <span className="block h-1.5 overflow-hidden rounded-full bg-border" aria-hidden="true">
               <span className="block h-full rounded-full bg-foreground/70" style={{ width: `${share}%` }} />
             </span>
             <span className="mt-1 block text-xs text-foreground/70">{shareLabel}</span>
           </span>
         ) : null}
-        <span className="mt-2 block text-sm text-foreground/70">{detail}</span>
+        <span className="mt-1 block text-base text-foreground/70">{detail}</span>
       </span>
-      <ChevronRight className="h-5 w-5 shrink-0 text-foreground/50" aria-hidden="true" />
+      <ChevronRight className="h-4 w-4 shrink-0 text-foreground/50" aria-hidden="true" />
     </Link>
   );
 }
 
 function StreakCard({ days, selectedKey, active, streak, activeThisWeek, known, state, onSelectDay }) {
   return (
-    <section aria-label="This week" className="flex h-full flex-col rounded-3xl bg-[var(--blue-black)] p-4 text-white shadow-lift">
-      <div className="flex items-start justify-between gap-3">
-        <Zap className="h-5 w-5" aria-hidden="true" />
-        <p className="text-5xl font-bold leading-none">{known ? streak : "–"}</p>
+    <section aria-label="This week" className="flex h-full flex-col rounded-xl border border-border bg-card-sky p-3 text-foreground shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <Zap className="h-4 w-4" aria-hidden="true" />
+        <p className="text-2xl font-bold leading-none">{known ? streak : "–"}</p>
       </div>
-      <h2 className="mt-3 text-lg font-semibold">Day streak</h2>
-      <p className="mt-1 text-[15px] text-muted-foreground text-white/65 mb-6">
+      <h2 className="mt-2 text-lg font-semibold">Day streak</h2>
+      <p className="mb-4 mt-1 text-base text-muted-foreground">
         {state === "unconfigured"
           ? "Not connected. Recorded days show up after Supabase is configured."
           : state === "loading"
@@ -329,7 +329,7 @@ function StreakCard({ days, selectedKey, active, streak, activeThisWeek, known, 
                 ? `${activeThisWeek} day${activeThisWeek === 1 ? "" : "s"} with recorded time this week. The count stops at the edge of this week.`
                 : "Recorded days show up when the week has loaded."}
       </p>
-      <div className="mt-4 grid grid-cols-7 gap-1" role="group" aria-label="Days this week">
+      <div className="mt-3 grid grid-cols-7 gap-1" role="group" aria-label="Days this week">
         {days.map((day) => {
           const on = active.has(day.key);
           const selected = day.key === selectedKey;
@@ -340,13 +340,13 @@ function StreakCard({ days, selectedKey, active, streak, activeThisWeek, known, 
               aria-pressed={selected}
               aria-label={`${day.weekday} ${day.dayNumber}${on ? ", time recorded" : ", nothing recorded"}`}
               onClick={() => onSelectDay(day.key)}
-              className="flex min-h-11 flex-col items-center justify-center gap-1 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="flex min-h-9 flex-col items-center justify-center gap-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <span className="text-[10px] uppercase text-white/70">{String(day.weekday).slice(0, 1)}</span>
+              <span className="text-xs uppercase text-muted-foreground">{String(day.weekday).slice(0, 1)}</span>
               <span
-                className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
-                  selected ? "ring-2 ring-white" : ""
-                } ${on ? "bg-emerald-400 text-[var(--blue-black)]" : "bg-white/15 text-white/80"}`}
+                className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
+                  selected ? "ring-2 ring-ring" : ""
+                } ${on ? "bg-progress text-progress-foreground" : "bg-muted text-muted-foreground"}`}
               >
                 {day.dayNumber}
               </span>
@@ -360,13 +360,13 @@ function StreakCard({ days, selectedKey, active, streak, activeThisWeek, known, 
 
 function ContinueRow({ kind, title, seconds, share, note, href }) {
   return (
-    <li className="flex flex-wrap items-center gap-3 px-4 py-3 sm:px-5">
+    <li className="flex flex-wrap items-center gap-2 px-3 py-2 sm:px-4">
       <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{kind}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{kind}</p>
         <p className="truncate font-medium">{title}</p>
         {share != null ? (
-          <div className="mt-2 flex items-center gap-3">
-            <div className="h-1.5 max-w-xs flex-1 overflow-hidden rounded-full bg-black/10 dark:bg-white/15" aria-hidden="true">
+          <div className="mt-1 flex items-center gap-2">
+            <div className="h-1.5 max-w-xs flex-1 overflow-hidden rounded-full bg-border" aria-hidden="true">
               <div className="h-full rounded-full bg-foreground/70" style={{ width: `${share}%` }} />
             </div>
             <span className="text-xs text-muted-foreground">{share}% of this week</span>
@@ -376,11 +376,11 @@ function ContinueRow({ kind, title, seconds, share, note, href }) {
         ) : null}
       </div>
       {seconds != null ? (
-        <p className="text-sm text-muted-foreground">{durationText(seconds)}</p>
+        <p className="text-base text-muted-foreground">{durationText(seconds)}</p>
       ) : null}
       <Link
         to={href}
-        className="inline-flex min-h-11 items-center rounded-full bg-foreground px-4 text-sm font-semibold text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="inline-flex min-h-9 items-center rounded-lg bg-foreground px-3 text-base font-semibold text-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         Continue
       </Link>

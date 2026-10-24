@@ -6,6 +6,33 @@
 @theme inline {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, monospace;
+  /* Centralized typography scale — Sentral Hub compact SaaS dashboard scale.
+     All sizes in rem (1rem = 16px). These override standard Tailwind text
+     sizes so every text-sm/text-xs/text-base across the app uses the compact
+     scale. Do not introduce arbitrary font sizes into individual components. */
+  --text-xs: 0.6875rem; /* 11px — supporting metadata */
+  --text-sm: 0.75rem; /* 12px — form labels, table text */
+  --text-base: 0.8125rem; /* 13px — body text, navigation, buttons, inputs */
+  --text-lg: 0.9375rem; /* 15px — section headings */
+  --text-xl: clamp(1.25rem, 1.5vw + 1rem, 1.375rem); /* 20px mobile → 22px desktop — page titles */
+  --text-2xl: clamp(1.375rem, 1.5vw + 1rem, 1.5rem); /* 22px mobile → 24px desktop — KPI values */
+  --text-3xl: 0.9375rem; /* 15px — card/component headings */
+  --text-4xl: clamp(1.25rem, 1.5vw + 1rem, 1.375rem); /* 20px mobile → 22px desktop — page titles */
+  --text-5xl: clamp(1.375rem, 1.5vw + 1rem, 1.5rem); /* 22px mobile → 24px desktop — KPI values */
+  --text-6xl: 1.5rem;
+  --text-7xl: 1.75rem;
+  --leading-page-title: 1.3; /* 26px mobile → 29px desktop */
+  --leading-card-title: 1.46; /* ~19px */
+  --leading-body: 1.5; /* ~19-20px */
+  --leading-meta: 1.3;
+  /* Override standard leading utilities for compact scale */
+  --leading-tight: 1.3;
+  --leading-snug: 1.46;
+  --leading-normal: 1.5;
+  /* Compact spacing tokens */
+  --space-card-padding: clamp(0.75rem, 1vw + 0.5rem, 1rem); /* 12-14px mobile → 16px desktop */
+  --space-card-gap: clamp(0.75rem, 1vw + 0.5rem, 1rem); /* 12-16px between cards */
+  --space-section-gap: clamp(0.75rem, 1vw + 0.5rem, 1rem);
   --shadow-lift: var(--shadow-card);
   --color-card-coral: var(--card-coral);
   --color-card-gold: var(--card-gold);
@@ -44,7 +71,9 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-progress: var(--progress);
   --color-progress-foreground: var(--progress-foreground);
+  --color-success: var(--success);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -71,7 +100,7 @@
   --blue-700: #1d4ed8;
   --blue-800: #1e3a8a;
   --blue-black: #0b1c33;
-  --radius: 0.625rem;
+  --radius: 0.75rem;
   --background: oklch(0.982 0.006 258);
   --foreground: oklch(0.27 0.04 262);
   --card: oklch(0.997 0.003 258);
@@ -88,7 +117,9 @@
   --accent-foreground: oklch(0.32 0.06 262);
   --progress: oklch(0.58 0.16 250);
   --progress-foreground: oklch(0.985 0.008 258);
+  --success: oklch(0.55 0.16 150);
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0.008 258);
   --border: oklch(0.9 0.012 258);
   --input: oklch(0.9 0.012 258);
   --ring: oklch(0.5 0.19 262);
@@ -97,7 +128,7 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  /* Hilos-style surfaces: saturated stat cards, paler section cards. */
+  /* Warm and cool accents distinguish dashboard sections and data series. */
   --card-coral: #f6c4b4;
   --card-gold: #f3e08a;
   --card-rose: #f0c6d8;
@@ -105,8 +136,8 @@
   --card-mist: #eef3fb;
   --card-peach: #fbeee6;
   --card-cream: #f7f1d8;
-  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06), 0 10px 28px rgb(15 23 42 / 0.1);
-  --teal: oklch(0.52 0.18 185);
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.05), 0 6px 18px rgb(15 23 42 / 0.07);
+  --teal: oklch(0.53 0.13 184);
   --teal-foreground: oklch(0.98 0.02 185);
   /* Heatmap: blue gradient — light (low) to dark (high). */
   --heat-1: #dbeafe;
@@ -126,39 +157,41 @@
 }
 
 .dark {
-  --background: oklch(0.17 0.02 264);
-  --foreground: oklch(0.96 0.012 250);
-  --card: oklch(0.22 0.024 264);
-  --card-foreground: oklch(0.96 0.012 250);
-  --popover: oklch(0.23 0.026 264);
-  --popover-foreground: oklch(0.96 0.012 250);
+  --background: oklch(0.12 0 0);
+  --foreground: oklch(0.96 0 0);
+  --card: oklch(0.19 0 0);
+  --card-foreground: oklch(0.96 0 0);
+  --popover: oklch(0.21 0 0);
+  --popover-foreground: oklch(0.96 0 0);
   --primary: oklch(0.76 0.14 248);
   --primary-foreground: oklch(0.2 0.05 264);
-  --secondary: oklch(0.28 0.026 264);
-  --secondary-foreground: oklch(0.96 0.012 250);
-  --muted: oklch(0.27 0.022 264);
-  --muted-foreground: oklch(0.76 0.03 250);
-  --accent: oklch(0.3 0.035 260);
-  --accent-foreground: oklch(0.96 0.012 250);
+  --secondary: oklch(0.23 0 0);
+  --secondary-foreground: oklch(0.96 0 0);
+  --muted: oklch(0.2 0 0);
+  --muted-foreground: oklch(0.7 0 0);
+  --accent: oklch(0.26 0 0);
+  --accent-foreground: oklch(0.96 0 0);
   --progress: oklch(0.76 0.12 230);
   --progress-foreground: oklch(0.2 0.05 264);
+  --success: oklch(0.72 0.14 150);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(0.74 0.04 250 / 14%);
-  --input: oklch(0.74 0.04 250 / 18%);
+  --destructive-foreground: oklch(0.2 0.05 264);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.76 0.14 248);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --card-coral: oklch(0.34 0.07 35);
-  --card-gold: oklch(0.34 0.07 95);
-  --card-rose: oklch(0.34 0.06 350);
-  --card-sky: oklch(0.34 0.06 250);
-  --card-mist: oklch(0.26 0.03 258);
-  --card-peach: oklch(0.28 0.04 45);
-  --card-cream: oklch(0.28 0.04 95);
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 14px 36px rgb(0 0 0 / 0.4);
+  --card-coral: oklch(0.21 0 0);
+  --card-gold: oklch(0.22 0 0);
+  --card-rose: oklch(0.21 0 0);
+  --card-sky: oklch(0.22 0 0);
+  --card-mist: oklch(0.2 0 0);
+  --card-peach: oklch(0.21 0 0);
+  --card-cream: oklch(0.22 0 0);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.24), 0 8px 24px rgb(0 0 0 / 0.25);
   --teal: oklch(0.7 0.18 185);
   --teal-foreground: oklch(0.2 0.05 185);
   /* Same blue gradient as light mode, brighter for a dark card. */
@@ -168,13 +201,13 @@
   --heat-4: #60a5f5;
   --heat-5: #93c5fd;
   --heat-6: #bfdbfe;
-  --sidebar: oklch(0.15 0.022 266);
-  --sidebar-foreground: oklch(0.96 0.012 250);
+  --sidebar: oklch(0.16 0 0);
+  --sidebar-foreground: oklch(0.96 0 0);
   --sidebar-primary: oklch(0.76 0.14 248);
   --sidebar-primary-foreground: oklch(0.2 0.05 264);
   --sidebar-accent: oklch(0.76 0.14 248 / 18%);
   --sidebar-accent-foreground: oklch(0.88 0.07 245);
-  --sidebar-border: oklch(0.74 0.04 250 / 12%);
+  --sidebar-border: oklch(1 0 0 / 8%);
   --sidebar-ring: oklch(0.76 0.14 248);
 }
 
@@ -191,7 +224,8 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased text-base;
+    line-height: var(--leading-body);
   }
   code, kbd, pre, samp {
     @apply font-mono;
@@ -207,4 +241,51 @@
   .recharts-polar-angle-axis-tick text {
     fill: var(--muted-foreground);
   }
+}
+
+.hub-main h1 {
+  @apply text-xl text-foreground font-serif font-bold tracking-tight;
+}
+
+.hub-main h2 {
+  @apply text-lg text-foreground font-semibold;
+}
+
+.hub-main h3 {
+  @apply text-base text-foreground font-semibold;
+}
+
+/* Compact button variant — smaller touch target for dense lists while staying ≥44px. */
+.btn-compact {
+  @apply inline-flex min-h-9 items-center justify-center rounded-lg px-2.5 text-base font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60;
+}
+
+/* Compact card variant — less padding, tighter radius, breathing room via gap. */
+.card-compact {
+  @apply rounded-xl border border-border px-[var(--space-card-padding)] py-[var(--space-card-padding)] shadow-sm;
+}
+
+/* Card content padding for consistent section padding inside cards. */
+.card-section {
+  @apply px-[var(--space-card-padding)] py-[var(--space-card-padding)];
+}
+
+/* Consistent gap between cards / major sections. */
+.card-gap {
+  gap: var(--space-card-gap);
+}
+
+.section-gap {
+  gap: var(--space-section-gap);
+}
+
+.hub-main :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  border-color: var(--input);
+  border-radius: 0.75rem;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.hub-main :is(input, select, textarea)::placeholder {
+  color: var(--muted-foreground);
 }

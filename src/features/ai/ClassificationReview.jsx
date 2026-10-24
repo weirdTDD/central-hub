@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Check, Loader2, X } from "lucide-react";
+import { Check, X } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { confidenceBand } from "./contract.js";
 import { decideClassificationProposal } from "../../lib/ai.js";
@@ -109,7 +110,7 @@ export default function ClassificationReview({ proposals = [], onDecided }) {
                   className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-semibold text-foreground transition-colors hover:bg-muted disabled:opacity-60"
                 >
                   {busy ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                    <Skeleton className="h-3.5 w-3.5" />
                   ) : (
                     <Check className="h-3.5 w-3.5" aria-hidden="true" />
                   )}

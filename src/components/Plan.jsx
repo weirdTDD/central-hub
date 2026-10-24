@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
 import { cn } from "../lib/utils";
+import { Skeleton } from "../components/ui/skeleton";
 import {
   estimateText,
   formatDayHeading,
@@ -42,10 +43,10 @@ export default function Plan({
   const visible = state === "ready" ? items : [];
 
   return (
-    <section aria-labelledby="plan-heading" className={cn("rounded-3xl border border-black/5 bg-card-cream p-4 shadow-lift sm:p-5 dark:border-white/10", className)}>
-      <div className="flex items-start justify-between gap-3">
+    <section aria-labelledby="plan-heading" className={cn("rounded-xl border border-border bg-card-cream p-3 shadow-sm ", className)}>
+      <div className="flex items-start justify-between gap-2">
         <div>
-          <h2 id="plan-heading" className="text-lg font-semibold">{title}</h2>
+          <h2 id="plan-heading" className="text-base font-semibold">{title}</h2>
           {description ? (
             <p className="mt-1 text-xs text-muted-foreground">{description}</p>
           ) : null}
@@ -53,18 +54,25 @@ export default function Plan({
         {headerTo && headerLabel ? (
           <Link
             to={headerTo}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center text-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex min-h-9 items-center justify-center text-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {headerLabel}
           </Link>
         ) : null}
       </div>
 
-      <div className="mt-4">
+      <div className="mt-3">
         {state === "unconfigured" ? (
           <Notice title="Not connected" detail="Configure Supabase to load tasks." />
         ) : null}
-        {state === "loading" ? <Notice title="Loading…" detail="Loading tasks due this day." /> : null}
+        {state === "loading" ? (
+          <div className="mt-3 space-y-2">
+            <Skeleton className="h-4 w-1/3 mb-1" />
+            <Skeleton className="h-8 w-full mb-2" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-4 w-1/3" />
+          </div>
+        ) : null}
         {state === "error" ? (
           <Notice role="alert" tone="error" title="Could not load the plan" detail={error || "Could not load the plan."} />
         ) : null}
@@ -72,7 +80,7 @@ export default function Plan({
           <Notice title={emptyTitle} detail={emptyDetail} />
         ) : null}
         {visible.length > 0 ? (
-          <ol className="space-y-3 border-l border-border pl-4">
+          <ol className="space-y-2 border-l border-border pl-3">
             {visible.map((item) => {
               const action = onAction ? primaryAction(item.status) : null;
               const next = item.isNext;
@@ -80,23 +88,23 @@ export default function Plan({
                 <li key={item.id} className="relative">
                   <span
                     className={cn(
-                      "absolute top-5 -left-[21px] h-2.5 w-2.5 rounded-full border-2",
+                      "absolute top-4 -left-[18px] h-2 w-2 rounded-full border-2",
                       next ? "border-primary bg-primary" : "border-border bg-card"
                     )}
                     aria-hidden="true"
                   />
                   <article
                     className={cn(
-                      "rounded-2xl border px-3 py-3",
+                      "rounded-xl border px-2.5 py-2.5",
                       next
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border bg-background"
                     )}
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         {next ? (
-                          <p className="text-[11px] font-semibold uppercase tracking-wide">Next</p>
+                          <p className="text-xs font-semibold uppercase tracking-wide">Next</p>
                         ) : null}
                         <h3 className="text-sm font-semibold">{item.title || "Untitled"}</h3>
                         <p className={cn("mt-1 text-xs", next ? "text-primary-foreground/80" : "text-muted-foreground")}>
@@ -109,13 +117,13 @@ export default function Plan({
                           onClick={() => onAction(item, action)}
                           disabled={busyId === item.id}
                           className={cn(
-                            "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60",
+                            "inline-flex min-h-9 shrink-0 items-center gap-1 rounded-lg px-2.5 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60",
                             next
                               ? "bg-primary-foreground text-primary"
                               : "bg-secondary text-secondary-foreground"
                           )}
                         >
-                          {item.status === "completed" ? <Check className="h-4 w-4" aria-hidden="true" /> : null}
+                          {item.status === "completed" ? <Check className="h-3 w-3" aria-hidden="true" /> : null}
                           {busyId === item.id ? "Saving…" : action.label}
                         </button>
                       ) : null}
@@ -127,7 +135,7 @@ export default function Plan({
           </ol>
         ) : null}
         {actionError ? (
-          <p role="alert" className="mt-3 text-sm text-destructive">{actionError}</p>
+          <p role="alert" className="mt-2 text-sm text-destructive">{actionError}</p>
         ) : null}
       </div>
       {footer}
@@ -140,7 +148,7 @@ function Notice({ role = "status", title, detail, tone = "neutral" }) {
     <div
       role={role}
       className={cn(
-        "rounded-2xl border px-4 py-3 text-sm",
+        "rounded-xl border px-3 py-2 text-sm",
         tone === "error" ? "border-destructive/40 bg-destructive/5" : "border-border bg-background"
       )}
     >

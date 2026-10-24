@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AppShell from "../../components/AppShell";
+import { Skeleton } from "../../components/ui/skeleton";
 import { formatDurationFromSeconds } from "../../dashboard/logUtils";
 import {
   durationText,
@@ -268,7 +269,13 @@ export default function CodingPage() {
           {actionError ? (
             <p role="alert" className="mt-2 text-sm text-destructive">{actionError}</p>
           ) : null}
-          {shownDayState === "loading" ? <p className="mt-3 text-sm text-muted-foreground">Loading…</p> : null}
+          {shownDayState === "loading" ? (
+            <div className="mt-3 space-y-2">
+              <Skeleton className="h-4 w-1/3 mb-1" />
+              <Skeleton className="h-8 w-full mb-2" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          ) : null}
           {shownDayState === "ready" && sessions.length === 0 ? (
             <p className="mt-3 rounded-2xl bg-muted px-4 py-6 text-sm text-muted-foreground">
               No coding activity recorded on this day.
@@ -337,10 +344,19 @@ function Total({ label, state, error, seconds, empty }) {
   else if (seconds == null) value = empty;
   else value = formatDurationFromSeconds(seconds);
   return (
-    <div className="rounded-2xl border border-border bg-card px-4 py-3">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-semibold">{value}</p>
-      {state === "error" && error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
+    <div className="rounded-xl border border-border bg-card px-3 py-2">
+      {state === "loading" ? (
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-4 w-1/3 mb-1" />
+          <Skeleton className="h-6 w-full mb-1" />
+        </div>
+      ) : (
+        <>
+          <p className="text-xs font-medium text-muted-foreground">{label}</p>
+          <p className="mt-1 text-lg font-semibold">{value}</p>
+          {state === "error" && error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
+        </>
+      )}
     </div>
   );
 }

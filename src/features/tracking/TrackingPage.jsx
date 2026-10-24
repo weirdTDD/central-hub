@@ -7,6 +7,7 @@
 import { useMemo, useState } from "react";
 import { Plus } from "lucide-react";
 import AppShell from "../../components/AppShell";
+import { Skeleton } from "../../components/ui/skeleton";
 import Plan from "../../components/Plan";
 import { systemTimeZone } from "../../lib/dates";
 import {
@@ -169,7 +170,7 @@ export default function TrackingPage() {
                       selected ? "text-primary" : "text-muted-foreground"
                     }`}
                   >
-                    <span className="text-[11px] font-medium">{day.weekday}</span>
+                    <span className="text-xs font-medium">{day.weekday}</span>
                     <span className={`text-sm font-semibold ${selected ? "text-primary" : "text-foreground"}`}>
                       {day.dayNumber}
                     </span>
@@ -212,7 +213,13 @@ export default function TrackingPage() {
           />
 
           <section aria-label="Recorded time">
-            {loading ? <p className="text-sm text-muted-foreground">Loading…</p> : null}
+            {loading ? (
+            <div className="mt-3 flex flex-col gap-2">
+              <Skeleton className="h-4 w-1/3 mb-1" />
+              <Skeleton className="h-8 w-full mb-2" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          ) : null}
             {!loading && isConfigured && !error && entries.length === 0 ? (
               <p className="rounded-2xl bg-muted px-4 py-6 text-sm text-muted-foreground">
                 No time recorded on this day.
@@ -245,7 +252,7 @@ export default function TrackingPage() {
                           <h2 className="text-sm font-semibold">{title}</h2>
                           <p className="shrink-0 text-sm font-medium">{clock ?? "No start time"}</p>
                         </div>
-                        {latest ? <p className="mt-1 text-[11px] font-semibold uppercase tracking-wide">Latest</p> : null}
+                        {latest ? <p className="mt-1 text-xs font-semibold uppercase tracking-wide">Latest</p> : null}
                         <p className={`mt-1 text-xs ${latest ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
                           {detail}
                         </p>

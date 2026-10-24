@@ -73,7 +73,7 @@ export default function NotificationScreen() {
             <span
               className={`inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                 channel.connected
-                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                  ? "bg-success/10 text-success"
                   : "bg-muted text-muted-foreground"
               }`}
             >

@@ -21,12 +21,12 @@ export function WeekChart({ days = [], selectedKey, onSelect, recordedWord = "re
   const scales = peakScale(days.map((day) => day.seconds));
   if (days.length === 0) return null;
   return (
-    <div className="rounded-3xl border border-border bg-card p-4 sm:p-5">
-      <div className="flex items-baseline justify-between gap-3">
+    <div className="rounded-xl border border-border bg-card p-3 sm:p-3">
+      <div className="flex items-baseline justify-between gap-2">
         <h2 className="text-sm font-semibold">This week</h2>
         <p className="text-xs text-muted-foreground">Taller is more active time. No bar means nothing recorded.</p>
       </div>
-      <div className="mt-4 grid grid-cols-7 gap-1.5 sm:gap-2" role="group" aria-label="Days this week">
+      <div className="mt-3 grid grid-cols-7 gap-1 sm:gap-1.5" role="group" aria-label="Days this week">
         {days.map((day, index) => {
           const scale = scales[index];
           const selected = day.key === selectedKey;
@@ -41,9 +41,9 @@ export function WeekChart({ days = [], selectedKey, onSelect, recordedWord = "re
               aria-pressed={selected}
               aria-label={label}
               onClick={() => onSelect(day.key)}
-              className="flex min-h-11 min-w-0 flex-col items-center gap-1 rounded-2xl px-0.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex min-h-9 min-w-0 flex-col items-center gap-1 rounded-xl px-0.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <span className="flex h-28 w-full items-end rounded-2xl bg-muted px-1 pb-1 sm:h-32">
+              <span className="flex h-24 w-full items-end rounded-xl bg-muted px-1 pb-1 sm:h-28">
                 <span
                   className="block w-full rounded-xl"
                   style={{
@@ -52,17 +52,17 @@ export function WeekChart({ days = [], selectedKey, onSelect, recordedWord = "re
                   }}
                 />
               </span>
-              <span className={`text-[10px] font-medium uppercase tracking-wide ${selected ? "text-primary" : "text-muted-foreground"}`}>
+              <span className={`text-xs font-medium uppercase tracking-wide ${selected ? "text-primary" : "text-muted-foreground"}`}>
                 {day.weekday}
               </span>
               <span
-                className={`flex h-8 min-w-8 items-center justify-center rounded-full px-1 text-sm font-semibold ${
+                className={`flex h-7 min-w-7 items-center justify-center rounded-full px-1 text-sm font-semibold ${
                   selected ? "bg-primary text-primary-foreground" : "text-foreground"
                 }`}
               >
                 {day.dayNumber}
               </span>
-              <span className="max-w-full truncate text-[10px] leading-tight text-muted-foreground">
+              <span className="max-w-full truncate text-xs leading-tight text-muted-foreground">
                 {known ? durationText(day.seconds) : ""}
               </span>
             </button>
@@ -125,12 +125,12 @@ export function ShareBars({ title, rows = [], selectedKey = null, onSelect, labe
   const scales = peakScale(rows.map((row) => row.activeSeconds));
   const label = labelOf ?? ((row) => row.key);
   return (
-    <section className="rounded-3xl border border-border bg-card p-4 sm:p-5" aria-label={title}>
-      <div className="flex items-baseline justify-between gap-3">
+    <section className="rounded-xl border border-border bg-card p-3 sm:p-3" aria-label={title}>
+      <div className="flex items-baseline justify-between gap-2">
         <h2 className="text-sm font-semibold">{title}</h2>
         <p className="text-xs text-muted-foreground">Compared with the longest. Not a completion grade.</p>
       </div>
-      <ul className="mt-3 space-y-2">
+      <ul className="mt-2 space-y-1.5">
         {rows.map((row, index) => {
           const scale = scales[index];
           const selected = selectedKey === row.key;
@@ -138,11 +138,11 @@ export function ShareBars({ title, rows = [], selectedKey = null, onSelect, labe
           const interactive = typeof onSelect === "function";
           const body = (
             <>
-              <span className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="flex items-baseline justify-between gap-2 text-sm">
                 <span className="min-w-0 truncate font-medium">{name}</span>
                 <span className="shrink-0 text-muted-foreground">{durationText(row.activeSeconds)}</span>
               </span>
-              <span className="mt-2 block h-2.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+              <span className="mt-1 block h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
                 <span
                   className="block h-full rounded-full"
                   style={{
@@ -160,7 +160,7 @@ export function ShareBars({ title, rows = [], selectedKey = null, onSelect, labe
                   type="button"
                   aria-pressed={selected}
                   onClick={() => onSelect(row.key)}
-                  className={`min-h-11 w-full rounded-2xl px-3 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  className={`min-h-9 w-full rounded-xl px-2.5 py-1.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                     selected ? "bg-primary/10 ring-1 ring-primary" : "hover:bg-muted"
                   }`}
                 >

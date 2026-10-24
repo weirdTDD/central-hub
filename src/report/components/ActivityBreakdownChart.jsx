@@ -92,7 +92,7 @@ export default function ActivityBreakdownChart({ codingSeconds = 0, learningSeco
 
   if (categories.length === 0) {
     return (
-      <Card className="bg-card-peach dark:border-white/10">
+      <Card className="bg-card-peach">
         <CardHeader>
           <CardTitle>Time Breakdown</CardTitle>
           <CardDescription>
@@ -109,7 +109,7 @@ export default function ActivityBreakdownChart({ codingSeconds = 0, learningSeco
   }
 
   return (
-    <Card data-chart={id} className="flex flex-col bg-card-peach dark:border-white/10">
+    <Card data-chart={id} className="flex flex-col bg-card-peach">
       <ChartStyle id={id} config={CHART_CONFIG} />
       <CardHeader className="flex-row items-start space-y-0 pb-0">
         <div className="grid gap-1">
@@ -120,7 +120,7 @@ export default function ActivityBreakdownChart({ codingSeconds = 0, learningSeco
         </div>
         <Select value={activeCategory} onValueChange={setActiveCategory}>
           <SelectTrigger
-            className="ml-auto h-7 w-[130px] rounded-lg pl-2.5"
+            className="ml-auto h-7 sm:w-48 rounded-lg pl-2.5"
             aria-label="Select a category"
           >
             <SelectValue placeholder="Select category" />
@@ -148,11 +148,11 @@ export default function ActivityBreakdownChart({ codingSeconds = 0, learningSeco
         </Select>
       </CardHeader>
       <CardContent className="flex flex-1 justify-center pb-0">
-        <ChartContainer
-          id={id}
-          config={CHART_CONFIG}
-          className="mx-auto aspect-square w-full max-w-[300px]"
-        >
+          <ChartContainer
+            id={id}
+            config={CHART_CONFIG}
+            className="mx-auto aspect-square w-full max-w-[240px]"
+          >
           <PieChart>
             <ChartTooltip
               cursor={false}

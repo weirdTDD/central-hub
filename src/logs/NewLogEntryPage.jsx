@@ -50,7 +50,7 @@ export default function NewLogEntryPage() {
     <LogEntryLayout>
       <div>
         <h1 className="text-3xl font-bold tracking-tight">New Log Entry</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Record your daily tasks and progress
         </p>
       </div>
@@ -59,7 +59,7 @@ export default function NewLogEntryPage() {
         <LogEntryForm values={values} onChange={setValues} showUserName />
 
         {error ? (
-          <p role="alert" className="text-sm text-red-600">
+          <p role="alert" className="text-sm text-destructive">
             {error}
           </p>
         ) : null}
@@ -68,7 +68,7 @@ export default function NewLogEntryPage() {
           <button
             type="button"
             onClick={() => navigate("/logs")}
-            className="rounded-lg border border-border bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-zinc-800"
+            className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-foreground hover:bg-muted"
           >
             Cancel
           </button>

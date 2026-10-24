@@ -1,6 +1,6 @@
 import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
 const inputClass =
@@ -32,6 +32,7 @@ function FloatingField({ id, label, type = "text", value, onChange, autoComplete
 
 export default function AuthPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     isAuthenticated,
     loading,
@@ -51,8 +52,23 @@ export default function AuthPage() {
     password: "",
   });
 
+  const storedReturnTo = window.sessionStorage.getItem("sentral-hub-return-to");
+  const requestedLocation = location.state?.from;
+  const requestedPath = typeof requestedLocation === "string"
+    ? requestedLocation
+    : requestedLocation
+      ? `${requestedLocation.pathname ?? ""}${requestedLocation.search ?? ""}${requestedLocation.hash ?? ""}`
+      : storedReturnTo;
+  const returnTo = requestedPath?.startsWith("/") && !requestedPath.startsWith("//")
+    ? requestedPath
+    : "/dashboard";
+
+  useEffect(() => {
+    if (isAuthenticated) window.sessionStorage.removeItem("sentral-hub-return-to");
+  }, [isAuthenticated]);
+
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={returnTo} replace />;
   }
 
   const update = (key) => (event) => {
@@ -97,7 +113,8 @@ export default function AuthPage() {
           password: form.password,
         });
       }
-      navigate("/dashboard", { replace: true });
+      window.sessionStorage.removeItem("sentral-hub-return-to");
+      navigate(returnTo, { replace: true });
     } catch (err) {
       setError(err?.message || "Authentication failed. Please try again.");
     }
@@ -107,9 +124,11 @@ export default function AuthPage() {
     setError("");
     setNotice("");
     try {
+      window.sessionStorage.setItem("sentral-hub-return-to", returnTo);
       // OAuth redirects the browser to the provider; no local navigation here.
       await signInWithGoogle();
     } catch (err) {
+      window.sessionStorage.removeItem("sentral-hub-return-to");
       setError(err?.message || "Google sign-in failed. Please try again.");
     }
   };
@@ -120,7 +139,7 @@ export default function AuthPage() {
         <section className="relative flex flex-col px-6 py-8 sm:px-10 lg:px-16 lg:py-10 font-serif">
           <div className="relative z-10">
             <Link to="/login" className="inline-flex w-fit">
-              <img src="/Sentral-Hub-Logo.png" alt="Sentral Hub" className="h-25 w-auto" />
+              <img src="/Sentral-Hub-Logo.png" alt="Sentral Hub" className="h-16 md:h-24 w-auto" />
             </Link>
           </div>
 
@@ -128,7 +147,7 @@ export default function AuthPage() {
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
               Welcome to Sentral Hub
             </h1>
-            <p className="mt-2 text-sm text-gray-500 sm:text-base">
+            <p className="mt-2 text-sm text-muted-foreground sm:text-base">
               Sign in to connect your goals, tasks, time tracking, and learning
             </p>
 
@@ -136,7 +155,7 @@ export default function AuthPage() {
               {!isConfigured ? (
                 <div
                   role="status"
-                  className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+                  className="rounded-xl border border-border bg-card-gold px-4 py-3 text-sm text-foreground"
                 >
                   <p className="font-semibold">Not connected</p>
                   <p className="mt-1">{notConfiguredMessage}</p>
@@ -173,7 +192,7 @@ export default function AuthPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword((value) => !value)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -181,9 +200,9 @@ export default function AuthPage() {
                 }
               />
 
-              {error ? <p className="text-sm text-red-600">{error}</p> : null}
+              {error ? <p className="text-sm text-destructive">{error}</p> : null}
               {notice ? (
-                <p role="status" className="text-sm text-emerald-700 dark:text-emerald-400">
+                <p role="status" className="text-sm text-emerald-700 dark:text-progress">
                   {notice}
                 </p>
               ) : null}
@@ -197,7 +216,7 @@ export default function AuthPage() {
               </button>
             </form>
 
-            <p className="mt-4 text-center text-sm text-gray-500">
+            <p className="mt-4 text-center text-sm text-muted-foreground">
               {mode === "signup" ? "Already have an Account? " : "Don't have an Account? "}
               <button
                 type="button"
@@ -228,7 +247,7 @@ export default function AuthPage() {
               Sign in with Google
             </button>
 
-            <p className="mt-10 text-center text-xs text-gray-500">
+            <p className="mt-10 text-center text-xs text-muted-foreground">
               By creating an account, you agree to our{" "}
               <a href="#terms" className="underline underline-offset-2 hover:text-primary">
                 Terms of Use
@@ -258,7 +277,7 @@ export default function AuthPage() {
               <h2 className="text-3xl font-bold font-serif italic tracking-tight leading-tight">
                 Connect what you plan with what you do
               </h2>
-              <p className="mt-4 max-w-sm text-sm md:text-base tracking-tight  leading-relaxed text-blue-100">
+              <p className="mt-4 max-w-sm text-sm md:text-base tracking-tight leading-relaxed text-blue-100">
                 Sentral Hub ties together your goals, tasks, time tracking,
                 learning, and reports into one system.
               </p>

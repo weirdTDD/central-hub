@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CircleAlert, CircleCheck, Loader2, Sparkles } from "lucide-react";
+import { CircleAlert, CircleCheck, Sparkles } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { buildEvidence } from "./evidence.js";
 import { resolveProvider, isOnDeviceOnly } from "./provider.js";
@@ -160,7 +161,7 @@ export default function InsightsPanel({ logs = [], from = null, to = null }) {
   };
 
   return (
-    <section className="rounded-2xl border border-black/5 bg-card-mist p-6 shadow-lift dark:border-white/10">
+    <section className="rounded-2xl border border-border bg-card-mist p-6 shadow-lift">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold text-foreground">Analysis</h2>
@@ -186,7 +187,7 @@ export default function InsightsPanel({ logs = [], from = null, to = null }) {
             className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted disabled:opacity-60"
           >
             {running ? (
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              <Skeleton className="h-4 w-4" />
             ) : null}
             {KIND_LABELS[kind] ?? kind}
           </button>

@@ -5,6 +5,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { Skeleton } from "../../components/ui/skeleton";
 import { durationText } from "../../dashboard/todayView";
 import {
   coveredSeconds,
@@ -70,7 +71,7 @@ export default function CodingReportPanel({ from, to }) {
   const overlaps = total != null && projectSum != null && projectSum > total;
 
   return (
-    <section aria-labelledby="coding-report-heading" className="rounded-2xl border border-black/5 bg-card-sky p-4 shadow-lift sm:p-5 dark:border-white/10">
+    <section aria-labelledby="coding-report-heading" className="rounded-2xl border border-border bg-card-sky p-4 shadow-lift sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="coding-report-heading" className="text-lg font-semibold">Coding time</h2>
@@ -89,7 +90,13 @@ export default function CodingReportPanel({ from, to }) {
       {state === "unconfigured" ? (
         <p className="mt-4 text-sm text-muted-foreground">Not connected. Configure Supabase to load coding activity.</p>
       ) : null}
-      {state === "loading" ? <p className="mt-4 text-sm text-muted-foreground">Loading coding activity…</p> : null}
+      {state === "loading" ? (
+        <div className="mt-3 flex flex-col gap-2">
+          <Skeleton className="h-4 w-1/3 mb-1" />
+          <Skeleton className="h-8 w-full mb-2" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+      ) : null}
       {state === "error" ? (
         <p role="alert" className="mt-4 text-sm text-destructive">{error}</p>
       ) : null}

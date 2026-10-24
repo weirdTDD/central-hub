@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { cn } from "../lib/utils";
+import { Skeleton } from "../components/ui/skeleton";
 import {
   estimateText,
   formatDayHeading,
@@ -39,10 +40,10 @@ export default function Queue({
   const visible = state === "ready" ? items : [];
 
   return (
-    <section aria-labelledby="queue-heading" className={cn("rounded-3xl border border-black/5 bg-card-peach p-4 shadow-lift sm:p-5 dark:border-white/10", className)}>
-      <div className="flex items-start justify-between gap-3">
+    <section aria-labelledby="queue-heading" className={cn("rounded-xl border border-border bg-card-peach p-3 shadow-sm ", className)}>
+      <div className="flex items-start justify-between gap-2">
         <div>
-          <h2 id="queue-heading" className="text-lg font-semibold">{title}</h2>
+          <h2 id="queue-heading" className="text-base font-semibold">{title}</h2>
           {description ? (
             <p className="mt-1 text-xs text-muted-foreground">{description}</p>
           ) : null}
@@ -50,18 +51,25 @@ export default function Queue({
         {headerTo && headerLabel ? (
           <Link
             to={headerTo}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center text-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex min-h-9 items-center justify-center text-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {headerLabel}
           </Link>
         ) : null}
       </div>
 
-      <div className="mt-4">
+      <div className="mt-3">
         {state === "unconfigured" ? (
           <Notice title="Not connected" detail="Configure Supabase to load tasks." />
         ) : null}
-        {state === "loading" ? <Notice title="Loading…" detail="Loading open work." /> : null}
+        {state === "loading" ? (
+          <div className="mt-3 space-y-2">
+            <Skeleton className="h-4 w-1/3 mb-1" />
+            <Skeleton className="h-8 w-full mb-2" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-4 w-1/3" />
+          </div>
+        ) : null}
         {state === "error" ? (
           <Notice role="alert" tone="error" title="Could not load the queue" detail={error || "Could not load the queue."} />
         ) : null}
@@ -77,13 +85,13 @@ export default function Queue({
                 <li
                   key={item.id}
                   className={cn(
-                    "flex items-start gap-3 rounded-2xl border px-3 py-3",
+                    "flex items-start gap-2 rounded-xl border px-2.5 py-2.5",
                     next ? "border-primary bg-primary/10" : "border-border bg-background"
                   )}
                 >
                   <span
                     className={cn(
-                      "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+                      "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
                       next ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                     )}
                     aria-hidden="true"
@@ -92,7 +100,7 @@ export default function Queue({
                   </span>
                   <div className="min-w-0 flex-1">
                     {next ? (
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">Next</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-primary">Next</p>
                     ) : null}
                     <h3 className="text-sm font-semibold">{item.title || "Untitled"}</h3>
                     <p className="mt-1 text-xs text-muted-foreground">{detailLine(item)}</p>
@@ -102,7 +110,7 @@ export default function Queue({
                       type="button"
                       onClick={() => onAction(item, action)}
                       disabled={busyId === item.id}
-                      className="inline-flex min-h-11 shrink-0 items-center rounded-full bg-primary px-3 text-sm font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+                      className="inline-flex min-h-9 shrink-0 items-center rounded-lg bg-primary px-2.5 py-1.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
                     >
                       {busyId === item.id ? "Saving…" : action.label}
                     </button>
@@ -113,7 +121,7 @@ export default function Queue({
           </ol>
         ) : null}
         {actionError ? (
-          <p role="alert" className="mt-3 text-sm text-destructive">{actionError}</p>
+          <p role="alert" className="mt-2 text-sm text-destructive">{actionError}</p>
         ) : null}
       </div>
     </section>
@@ -125,7 +133,7 @@ function Notice({ role = "status", title, detail, tone = "neutral" }) {
     <div
       role={role}
       className={cn(
-        "rounded-2xl border px-4 py-3 text-sm",
+        "rounded-xl border px-3 py-2 text-sm",
         tone === "error" ? "border-destructive/40 bg-destructive/5" : "border-border bg-background"
       )}
     >

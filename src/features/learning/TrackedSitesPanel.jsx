@@ -59,31 +59,31 @@ export default function TrackedSitesPanel({ connection, onChanged }) {
   };
 
   return (
-    <section aria-labelledby="tracked-sites-heading" className="rounded-2xl border border-border bg-card px-4 py-4">
-      <h2 id="tracked-sites-heading" className="text-lg font-semibold">Tracked sites</h2>
+    <section aria-labelledby="tracked-sites-heading" className="rounded-xl border border-border bg-card p-3">
+      <h2 id="tracked-sites-heading" className="text-base font-semibold">Tracked sites</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Only these sites are timed. A page that is not on this list is ignored, and its address is not stored.
         The browser extension reads this list.
       </p>
 
       {!isSupabaseConfigured ? (
-        <p className="mt-3 text-sm text-muted-foreground">
+        <p className="mt-2 text-sm text-muted-foreground">
           Not connected. Add Supabase to .env before this list can be saved. Until then the extension uses freeCodeCamp's curriculum pages.
         </p>
       ) : null}
 
       {!explicit && isSupabaseConfigured ? (
-        <p className="mt-3 text-sm text-muted-foreground">
+        <p className="mt-2 text-sm text-muted-foreground">
           freeCodeCamp's curriculum is the default until you save a list.
         </p>
       ) : null}
 
       {list.length === 0 ? (
-        <p className="mt-3 text-sm text-muted-foreground">No sites are tracked. Time in the browser is not recorded.</p>
+        <p className="mt-2 text-sm text-muted-foreground">No sites are tracked. Time in the browser is not recorded.</p>
       ) : (
-        <ul className="mt-3 divide-y divide-border">
+        <ul className="mt-2 divide-y divide-border">
           {list.map((site) => (
-            <li key={site.id} className="flex items-center justify-between gap-3 py-2">
+            <li key={site.id} className="flex items-center justify-between gap-2 py-1.5">
               <div className="min-w-0">
                 <p className="text-sm font-medium">{site.label}</p>
                 <p className="truncate text-xs text-muted-foreground">{patternText(site)}</p>
@@ -96,7 +96,7 @@ export default function TrackedSitesPanel({ connection, onChanged }) {
                   if (!confirmed) return;
                   persist(list.filter((item) => item.id !== site.id));
                 }}
-                className="inline-flex min-h-11 shrink-0 items-center rounded-xl border border-border px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+                className="inline-flex min-h-9 shrink-0 items-center rounded-lg border border-border px-2.5 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
               >
                 Remove
               </button>
@@ -107,7 +107,7 @@ export default function TrackedSitesPanel({ connection, onChanged }) {
 
       {isSupabaseConfigured ? (
         <form
-          className="mt-4 grid gap-3"
+          className="mt-3 grid gap-2"
           onSubmit={(event) => {
             event.preventDefault();
             add(pattern, label);
@@ -119,7 +119,7 @@ export default function TrackedSitesPanel({ connection, onChanged }) {
               value={label}
               onChange={(event) => setLabel(event.target.value)}
               placeholder="freeCodeCamp"
-              className="min-h-11 rounded-xl border border-border bg-background px-3"
+              className="min-h-9 rounded-lg border border-border bg-background px-2.5"
             />
           </label>
           <label className="grid gap-1 text-sm">
@@ -129,13 +129,13 @@ export default function TrackedSitesPanel({ connection, onChanged }) {
               onChange={(event) => setPattern(event.target.value)}
               placeholder="freecodecamp.org/learn"
               required
-              className="min-h-11 rounded-xl border border-border bg-background px-3"
+              className="min-h-9 rounded-lg border border-border bg-background px-2.5"
             />
           </label>
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex min-h-11 items-center justify-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+            className="inline-flex min-h-9 items-center justify-center rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
           >
             {saving ? "Saving…" : "Add site"}
           </button>
@@ -143,14 +143,14 @@ export default function TrackedSitesPanel({ connection, onChanged }) {
       ) : null}
 
       {isSupabaseConfigured ? (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-2 flex flex-wrap gap-2">
           {SUGGESTED_SITES.filter((site) => !list.some((item) => item.id === site.id)).map((site) => (
             <button
               key={site.id}
               type="button"
               disabled={saving}
               onClick={() => persist([...list, site])}
-              className="inline-flex min-h-11 items-center rounded-xl border border-border px-3 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+              className="inline-flex min-h-9 items-center rounded-lg border border-border px-2.5 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
             >
               Add {site.label}
             </button>
@@ -159,10 +159,10 @@ export default function TrackedSitesPanel({ connection, onChanged }) {
       ) : null}
 
       {error ? (
-        <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>
+        <p role="alert" className="mt-2 text-sm text-destructive">{error}</p>
       ) : null}
       {notice ? (
-        <p role="status" className="mt-3 text-sm text-muted-foreground">{notice}</p>
+        <p role="status" className="mt-2 text-sm text-muted-foreground">{notice}</p>
       ) : null}
     </section>
   );

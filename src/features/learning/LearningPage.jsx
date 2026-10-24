@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AppShell from "../../components/AppShell";
+import { Skeleton } from "../../components/ui/skeleton";
 import { formatDurationFromSeconds } from "../../dashboard/logUtils";
 import {
   durationText,
@@ -210,16 +211,16 @@ export default function LearningPage() {
 
   return (
     <AppShell currentPath="/learning">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6">
-        <header className="flex flex-wrap items-end justify-between gap-4">
+      <div className="mx-auto flex max-w-6xl flex-col gap-4">
+        <header className="flex flex-wrap items-end justify-between gap-2">
           <div>
             <p className="text-sm text-muted-foreground">{headingDate}</p>
-            <h1 className="mt-1 text-4xl font-bold tracking-tight">Learning</h1>
+            <h1 className="mt-1 text-xl font-bold tracking-tight">Learning</h1>
             <p className="mt-1 max-w-xl text-sm text-muted-foreground">
               Active time on the sites you track. Times follow {timeZone}. This is separate from coding time, manual sessions, and work logs.
             </p>
           </div>
-          <section aria-label="Learning totals" className="grid w-full gap-3 sm:w-auto sm:grid-cols-2">
+          <section aria-label="Learning totals" className="grid w-full gap-2 sm:w-auto sm:grid-cols-2">
             <Total label={heading} state={shownDayState} error={shownDayError} seconds={dayTotal} empty="No learning activity recorded" />
             <Total label="This week" state={weekState} error={weekError} seconds={weekTotal} empty="No learning activity recorded" />
           </section>
@@ -230,27 +231,27 @@ export default function LearningPage() {
         <ConnectionNote connection={connection} error={connectionError} configured={isSupabaseConfigured} />
 
         {truncated || weekTruncated ? (
-          <p role="status" className="rounded-2xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+          <p role="status" className="rounded-xl border border-border bg-card px-3 py-2 text-sm text-muted-foreground">
             Showing the latest 1000 heartbeats in a loaded day. Older heartbeats in that day are not in these totals.
           </p>
         ) : null}
 
         {shownDayState === "error" ? (
-          <div role="alert" className="rounded-2xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm">
+          <div role="alert" className="rounded-xl border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm">
             <p className="font-semibold">Could not load learning activity</p>
             <p className="mt-1">{shownDayError}</p>
           </div>
         ) : null}
 
         {!isSupabaseConfigured ? (
-          <div role="status" className="rounded-2xl border border-border bg-card px-4 py-3 text-sm">
+          <div role="status" className="rounded-xl border border-border bg-card px-3 py-2 text-sm">
             <p className="font-semibold">Not connected</p>
             <p className="mt-1 text-muted-foreground">Configure Supabase to load learning activity.</p>
           </div>
         ) : null}
 
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
-          <div className="grid gap-4">
+        <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+          <div className="grid gap-3">
             {byCourse.length > 0 ? (
               <ShareBars
                 title="Courses"
@@ -259,7 +260,7 @@ export default function LearningPage() {
                 onSelect={chooseFocus}
               />
             ) : shownDayState === "loading" ? null : (
-              <p className="rounded-3xl border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
+              <p className="rounded-xl border border-dashed border-border px-3 py-3 text-sm text-muted-foreground">
                 Courses show up here after a tracked site records time. The bar is how long you spent, not how much of a course is finished.
               </p>
             )}
@@ -268,11 +269,11 @@ export default function LearningPage() {
             ) : null}
           </div>
 
-          <section aria-label="Learning timeline" className="grid gap-4">
+          <section aria-label="Learning timeline" className="grid gap-3">
             {latest && shownDayState === "ready" ? (
-              <article className="rounded-3xl bg-primary px-5 py-5 text-primary-foreground">
+              <article className="rounded-xl bg-primary px-3 py-3 text-primary-foreground">
                 <p className="text-xs font-medium uppercase tracking-wide text-primary-foreground/80">Pick up where you left off</p>
-                <h2 className="mt-2 text-xl font-semibold">
+                <h2 className="mt-2 text-base font-semibold">
                   {latest.courseLabel || latest.siteLabel || latest.siteHost || "Learning"}
                 </h2>
                 <p className="mt-1 text-sm text-primary-foreground/90">
@@ -287,22 +288,22 @@ export default function LearningPage() {
                 <button
                   type="button"
                   onClick={() => setFocusKey(focusKey ? null : courseKey(latest) || siteKey(latest))}
-                  className="mt-4 inline-flex min-h-11 items-center rounded-full bg-primary-foreground px-4 text-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="mt-3 inline-flex min-h-9 items-center rounded-lg bg-primary-foreground px-3 text-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   {focusKey ? "Show every course" : "Focus this course"}
                 </button>
               </article>
             ) : null}
 
-            <div className="rounded-3xl border border-border bg-card p-4 sm:p-5">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold">Timeline</h2>
+            <div className="rounded-xl border border-border bg-card p-3">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-base font-semibold">Timeline</h2>
                 {shownDayState === "ready" && heartbeats.length > 0 ? (
                   <button
                     type="button"
                     onClick={removeDay}
                     disabled={deleting}
-                    className="inline-flex min-h-11 items-center rounded-xl border border-border px-3 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+                    className="inline-flex min-h-9 items-center rounded-xl border border-border px-2.5 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
                   >
                     {deleting ? "Deleting…" : "Delete this day"}
                   </button>
@@ -314,24 +315,30 @@ export default function LearningPage() {
               {actionError ? (
                 <p role="alert" className="mt-2 text-sm text-destructive">{actionError}</p>
               ) : null}
-              {shownDayState === "loading" ? <p className="mt-3 text-sm text-muted-foreground">Loading…</p> : null}
+              {shownDayState === "loading" ? (
+                <div className="mt-3 space-y-2">
+                  <Skeleton className="h-4 w-1/3 mb-1" />
+                  <Skeleton className="h-8 w-full mb-2" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              ) : null}
               {shownDayState === "ready" && visibleSessions.length === 0 ? (
-                <p className="mt-3 rounded-2xl bg-muted px-4 py-6 text-sm text-muted-foreground">
+                <p className="mt-2 rounded-xl bg-muted px-3 py-2 text-sm text-muted-foreground">
                   {sessions.length === 0 ? "No learning activity recorded on this day." : "Nothing in this course on this day."}
                 </p>
               ) : null}
               {visibleSessions.length > 0 ? (
-                <ol className="relative mt-4 space-y-3 border-l border-border pl-5">
+                <ol className="relative mt-3 space-y-2 border-l border-border pl-4">
                   {visibleSessions.map((session) => {
                     const current = session.id === latest?.id;
                     return (
                       <li key={session.id} className="relative">
                         <span
-                          className={`absolute top-5 -left-[26px] h-3 w-3 rounded-full border-2 bg-background ${current ? "border-primary" : "border-progress"}`}
+                          className={`absolute top-4 -left-[22px] h-2.5 w-2.5 rounded-full border-2 bg-background ${current ? "border-primary" : "border-progress"}`}
                           aria-hidden="true"
                         />
-                        <article className={`rounded-2xl px-4 py-3 ${current ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-                          <div className="flex items-start justify-between gap-3">
+                        <article className={`rounded-xl px-3 py-2 ${current ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                          <div className="flex items-start justify-between gap-2">
                             <h3 className="text-sm font-semibold">
                               {session.courseLabel || session.siteLabel || session.siteHost || "Unknown site"}
                             </h3>
@@ -345,10 +352,10 @@ export default function LearningPage() {
                             {session.endedAt ? ` · until ${formatClock(session.endedAt, timeZone) ?? "an unknown time"}` : ""}
                           </p>
                           {session.lessons?.length > 0 ? (
-                            <ul className={`mt-3 space-y-2 text-xs ${current ? "text-primary-foreground/85" : "text-muted-foreground"}`}>
+                            <ul className={`mt-2 space-y-1 text-xs ${current ? "text-primary-foreground/85" : "text-muted-foreground"}`}>
                               {session.lessons.slice(0, 8).map((lesson) => (
                                 <li key={`${lesson.lessonLabel ?? "none"}-${lesson.pageTitle ?? "none"}`}>
-                                  <span className="mb-1 flex items-center justify-between gap-3">
+                                  <span className="mb-1 flex items-center justify-between gap-2">
                                     <span className="min-w-0 truncate">{lesson.lessonLabel || lesson.pageTitle || "Page"}</span>
                                     <span className="shrink-0">{durationText(lesson.durationSeconds)}</span>
                                   </span>
@@ -370,11 +377,11 @@ export default function LearningPage() {
 
         <TrackedSitesPanel connection={connection} onChanged={() => setReloadKey((value) => value + 1)} />
 
-        <p className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-          <Link to="/settings/integrations" className="inline-flex min-h-11 items-center font-semibold text-primary">
+        <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          <Link to="/settings/integrations" className="inline-flex min-h-9 items-center font-semibold text-primary">
             Tracker setup
           </Link>
-          <Link to="/reports" className="inline-flex min-h-11 items-center font-semibold text-primary">
+          <Link to="/reports" className="inline-flex min-h-9 items-center font-semibold text-primary">
             Reports
           </Link>
         </p>
@@ -391,9 +398,9 @@ function Total({ label, state, error, seconds, empty }) {
   else if (seconds == null) value = empty;
   else value = formatDurationFromSeconds(seconds);
   return (
-    <div className="rounded-2xl border border-border bg-card px-4 py-3">
+    <div className="rounded-xl border border-border bg-card px-3 py-2">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
-      <p className="mt-1 text-lg font-semibold">{value}</p>
+      <p className="mt-1 text-base font-semibold">{value}</p>
       {state === "error" && error ? <p className="mt-1 text-xs text-destructive">{error}</p> : null}
     </div>
   );

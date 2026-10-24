@@ -112,7 +112,7 @@ export default function LogsPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Work logs</h1>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Manage and view your daily work logs
               </p>
             </div>
@@ -120,7 +120,7 @@ export default function LogsPage() {
               <button
                 type="button"
                 onClick={handleExport}
-                className="inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-white px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10 dark:border-primary/40 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                className="inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-card px-4 py-2 text-sm font-semibold text-primary hover:bg-primary/10 dark:border-primary/40"
               >
                 <TbShare2 className="h-5 w-5" />
                 Export as CSV
@@ -137,7 +137,7 @@ export default function LogsPage() {
 
           <div className="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center">
             <label className="relative flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 value={query}
                 onChange={(event) => {
@@ -145,7 +145,7 @@ export default function LogsPage() {
                   setPage(1);
                 }}
                 placeholder="Search by task or description"
-                className="w-full rounded-xl border border-border bg-white py-2.5 pl-10 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-zinc-900"
+                className="w-full rounded-xl border border-border bg-card py-2.5 pl-10 pr-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </label>
             <DateRangePicker
@@ -161,7 +161,7 @@ export default function LogsPage() {
           {truncated ? (
             <div
               role="status"
-              className="mt-6 rounded-2xl border border-border bg-gray-50 px-4 py-3 text-sm text-gray-700"
+              className="mt-6 rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground"
             >
               <p className="font-semibold">Showing the most recent {logs.length} logs</p>
               <p className="mt-1">
@@ -175,7 +175,7 @@ export default function LogsPage() {
           {error ? (
             <div
               role="alert"
-              className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+              className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
             >
               <p className="font-semibold">Could not load work logs</p>
               <p className="mt-1">{error}</p>
@@ -185,7 +185,7 @@ export default function LogsPage() {
           {!isConfigured ? (
             <div
               role="status"
-              className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+              className="mt-6 rounded-2xl border border-border bg-card-gold px-4 py-3 text-sm text-foreground"
             >
               <p className="font-semibold">Not connected</p>
               <p className="mt-1">
@@ -195,10 +195,10 @@ export default function LogsPage() {
             </div>
           ) : null}
 
-          <section className="mt-6 overflow-hidden rounded-2xl border border-border bg-white shadow-sm dark:bg-zinc-900">
+          <section className="mt-6 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-sm">
-                <thead className="border-b border-border bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:bg-zinc-950 dark:text-gray-400">
+                <thead className="border-b border-border bg-muted text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   <tr>
                     <th className="px-4 py-3">
                       <input
@@ -219,7 +219,7 @@ export default function LogsPage() {
                 <tbody>
                   {pageLogs.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-4 py-10 text-center text-gray-500">
+                      <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
                         {emptyMessage}
                       </td>
                     </tr>
@@ -247,32 +247,32 @@ export default function LogsPage() {
                                 alt=""
                                 className="h-9 w-9 rounded-full object-cover"
                               />
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                              <span className="font-medium text-foreground">
                                 {log.user.name}
                               </span>
                             </div>
                           </td>
-                          <td className={`max-w-xs truncate text-gray-700 dark:text-gray-300 ${dense ? "px-4 py-2" : "px-4 py-4"}`}>
+                          <td className={`max-w-xs truncate text-foreground  ${dense ? "px-4 py-2" : "px-4 py-4"}`}>
                             {log.task}
                           </td>
-                          <td className={`whitespace-nowrap text-gray-600 dark:text-gray-400 ${dense ? "px-4 py-2" : "px-4 py-4"}`}>
+                          <td className={`whitespace-nowrap text-muted-foreground  ${dense ? "px-4 py-2" : "px-4 py-4"}`}>
                             {formatDisplayDate(log.date)}
                           </td>
-                          <td className={`whitespace-nowrap text-gray-600 dark:text-gray-400 ${dense ? "px-4 py-2" : "px-4 py-4"}`}>
+                          <td className={`whitespace-nowrap text-muted-foreground  ${dense ? "px-4 py-2" : "px-4 py-4"}`}>
                             {log.duration}
                           </td>
                           <td className={dense ? "px-4 py-2" : "px-4 py-4"}>
-                            <div className="flex items-center gap-2 text-gray-400">
+                            <div className="flex items-center gap-2 text-muted-foreground">
                                 <Link
                                   to={`/logs/${log.id}/edit`}
-                                  className="rounded-md p-1.5 hover:bg-gray-100 hover:text-primary dark:hover:bg-zinc-800"
+                                  className="rounded-md p-1.5 hover:bg-accent hover:text-primary"
                                   aria-label={`Edit ${log.task}`}
                               >
                                 <Pencil className="h-4 w-4" />
                               </Link>
                               <button
                                 type="button"
-                                className="rounded-md p-1.5 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-zinc-800"
+                                className="rounded-md p-1.5 hover:bg-accent hover:text-foreground"
                                 aria-label={`More actions for ${log.task}`}
                               >
                                 <MoreVertical className="h-4 w-4" />
@@ -288,18 +288,18 @@ export default function LogsPage() {
             </div>
 
             <div className="flex flex-col gap-4 border-t border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <label className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+              <label className="inline-flex items-center gap-2 text-sm text-muted-foreground">
                 <button
                   type="button"
                   role="switch"
                   aria-checked={dense}
                   onClick={() => setDense((value) => !value)}
                   className={`relative h-6 w-11 rounded-full transition-colors ${
-                    dense ? "bg-progress" : "bg-gray-300 dark:bg-zinc-600"
+                    dense ? "bg-progress" : "bg-muted "
                   }`}
                 >
                   <span
-                    className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                    className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-card shadow transition-transform ${
                       dense ? "translate-x-5" : ""
                     }`}
                   />
@@ -312,14 +312,14 @@ export default function LogsPage() {
                   type="button"
                   disabled={currentPage === 1}
                   onClick={() => setPage((value) => Math.max(1, value - 1))}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-40 dark:hover:bg-zinc-800"
+                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent disabled:opacity-40"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Back
                 </button>
                 {pageItems(currentPage, totalPages).map((item, index) =>
                   item === "…" ? (
-                    <span key={`ellipsis-${index}`} className="px-2 text-sm text-gray-400">
+                    <span key={`ellipsis-${index}`} className="px-2 text-sm text-muted-foreground">
                       …
                     </span>
                   ) : (
@@ -330,7 +330,7 @@ export default function LogsPage() {
                       className={`min-w-8 rounded-lg px-2 py-1.5 text-sm font-medium ${
                         item === currentPage
                           ? "bg-progress text-progress-foreground"
-                          : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-zinc-800"
+                          : "text-muted-foreground hover:bg-accent  "
                       }`}
                     >
                       {item}
@@ -341,7 +341,7 @@ export default function LogsPage() {
                   type="button"
                   disabled={currentPage === totalPages}
                   onClick={() => setPage((value) => Math.min(totalPages, value + 1))}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-40 dark:hover:bg-zinc-800"
+                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent disabled:opacity-40"
                 >
                   Next
                   <ChevronRight className="h-4 w-4" />
@@ -351,7 +351,7 @@ export default function LogsPage() {
           </section>
 
           {dateRange?.from && dateRange?.to ? (
-            <p className="mt-3 text-xs text-gray-500">
+            <p className="mt-3 text-xs text-muted-foreground">
               Showing logs from {format(dateRange.from, "MMM d, yyyy")} to{" "}
               {format(dateRange.to, "MMM d, yyyy")}
             </p>

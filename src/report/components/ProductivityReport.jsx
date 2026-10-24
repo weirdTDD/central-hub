@@ -137,7 +137,7 @@ const ProductivityReport = () => {
       
       <div className="mb-8 grid items-center gap-6 sm:grid-cols-1 md:grid-cols-2">
         <div>
-          <h1 className="py-3 text-4xl font-serif font-bold text-foreground">Productivity Report</h1>
+          <h1 className="py-2 text-2xl font-serif font-bold text-foreground">Productivity Report</h1>
           <p className="mt-1 font-medium text-muted-foreground">View and export your recorded work activity. The calendar also includes coding and learning time.</p>
         </div>
         <div className='flex items-center md:justify-end gap-4 mb-5'>
@@ -158,8 +158,8 @@ const ProductivityReport = () => {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8 ">
-        <div className="grid items-center gap-4 rounded-2xl border border-black/5 bg-card shadow-lift sm:grid-cols-1 md:grid-cols-2 dark:border-white/10">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div className="grid items-center gap-4 rounded-2xl border border-border bg-card shadow-lift sm:grid-cols-1 md:grid-cols-2">
           <div className="flex items-center px-3 py-2">
             <span className="mr-2 text-sm font-semibold text-muted-foreground">Date Range</span>
             <div  > 
@@ -172,12 +172,12 @@ const ProductivityReport = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-4    min-w-45 justify-end">
+          <div className="flex items-center gap-4 min-w-40 justify-end">
             <span className="mr-2 text-sm font-semibold text-muted-foreground">Department</span>
-            <div className="flex items-center gap-4 ">
-              <span className="text-sm text-gray-600 p-1">
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground p-1">
                 <Select>
-                  <SelectTrigger className="w-45 ">
+                  <SelectTrigger className="w-full sm:w-48">
                     <SelectValue placeholder="All Departments" />
                   </SelectTrigger>
                   <SelectContent >
@@ -217,7 +217,7 @@ const ProductivityReport = () => {
       ) : null}
 
       {truncated ? (
-        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="mb-6 rounded-xl border border-border bg-card-gold px-4 py-3 text-sm text-foreground">
           {totalLogs} work logs are stored, but only the most recent {logs.length}{" "}
           are loaded. Every number, chart and export on this page covers the loaded
           subset only.

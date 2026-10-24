@@ -131,7 +131,7 @@ const TooltipCard = ({ data, position }) => {
   if (!data.hasData) {
       return (
           <div 
-              className="pointer-events-none fixed z-50 rounded-xl border border-border bg-popover p-2 text-xs text-muted-foreground shadow-md"
+              className="pointer-events-none fixed z-50 rounded-xl border border-border bg-popover p-2 text-xs text-muted-foreground shadow-sm"
               style={{ 
                   left: position.x, 
                   top: position.y,
@@ -151,7 +151,7 @@ const TooltipCard = ({ data, position }) => {
   if (data.logs.length === 0) {
     return (
       <div
-        className="pointer-events-none fixed z-50 w-56 rounded-2xl border border-border bg-popover p-3 text-popover-foreground shadow-xl"
+        className="pointer-events-none fixed z-50 w-48 rounded-xl border border-border bg-popover p-2 text-popover-foreground shadow-sm"
         style={{
           left: position.x,
           top: position.y,
@@ -159,7 +159,7 @@ const TooltipCard = ({ data, position }) => {
         }}
       >
         <p className="text-xs font-medium text-muted-foreground">{displayDate}</p>
-        <ul className="mt-2 space-y-1 text-sm">
+        <ul className="mt-1 space-y-1 text-xs">
           {trackedLines.map((line) => (
             <li key={line}>{line}</li>
           ))}
@@ -178,52 +178,52 @@ const TooltipCard = ({ data, position }) => {
 
   return (
     <div 
-      className="pointer-events-none fixed z-50 w-72 rounded-2xl border border-border bg-popover p-4 text-popover-foreground shadow-xl"
+      className="pointer-events-none fixed z-50 w-64 rounded-xl border border-border bg-popover p-3 text-popover-foreground shadow-sm"
       style={{ 
         left: position.x, 
         top: position.y,
         transform: 'translate(-10%, -110%)'
       }}
     >
-      <div className="flex items-start gap-3 mb-3">
+      <div className="flex items-start gap-2 mb-2">
         <img 
           src={primaryLog.user.avatar} 
           alt={primaryLog.user.name} 
-          className="w-10 h-10 rounded-full object-cover border border-border"
+          className="w-8 h-8 rounded-full object-cover border border-border"
         />
         <div>
-          <h4 className="text-sm font-bold text-gray-800 leading-tight">{primaryLog.user.name}</h4>
-          <p className="text-xs text-gray-400">{primaryLog.user.role}</p>
+          <h4 className="text-sm font-bold text-foreground leading-tight">{primaryLog.user.name}</h4>
+          <p className="text-xs text-muted-foreground">{primaryLog.user.role}</p>
         </div>
-        <span className="ml-auto text-xs font-mono bg-gray-50 text-gray-500 px-2 py-1 rounded">
+        <span className="ml-auto text-xs font-mono bg-muted text-muted-foreground px-2 py-1 rounded">
           {totalDurationString}
         </span>
       </div>
       
-      <p className="text-xs text-gray-600 mb-3 leading-relaxed border-l-2 border-primary pl-3">
+      <p className="text-xs text-muted-foreground mb-2 leading-relaxed border-l-2 border-primary pl-2">
         {primaryLog.task}
       </p>
 
       {extraCount > 0 && (
-        <div className="mb-3 text-xs text-blue-black font-medium bg-blue-100 px-2 py-1 rounded-md inline-block">
+        <div className="mb-2 text-xs font-medium bg-card-gold/50 px-2 py-1 rounded inline-block">
           + {extraCount} other tasks recorded this day
         </div>
       )}
 
       {trackedLines.length > 0 ? (
-        <ul className="mb-3 space-y-1 text-xs text-muted-foreground">
+        <ul className="mb-2 space-y-1 text-xs text-muted-foreground">
           {trackedLines.map((line) => (
             <li key={line}>{line}</li>
           ))}
         </ul>
       ) : null}
 
-      <div className="flex items-center justify-between pt-2 border-t border-border">
-        <div className="flex gap-2">
-           <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-           <span className="text-xs text-gray-400">Edit Log</span>
+      <div className="flex items-center justify-between pt-1 border-t border-border">
+        <div className="flex gap-1">
+           <svg className="w-3 h-3 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+          <span className="text-xs text-muted-foreground">Edit Log</span>
         </div>
-        <span className="text-xs text-gray-400 font-medium">{displayDate}</span>
+        <span className="text-xs text-muted-foreground font-medium">{displayDate}</span>
       </div>
     </div>
   );
@@ -254,7 +254,7 @@ const Heatmap = ({ logs, year, activityByDate = {}, onDayClick, onDayHover }) =>
   const scrollRight = () => scrollContainerRef.current?.scrollBy({ left: 300, behavior: 'smooth' });
 
   const getColorClass = (dayData) => {
-    if (dayData.hasData && !dayData.hasRecordedDuration) return 'bg-amber-200';
+    if (dayData.hasData && !dayData.hasRecordedDuration) return 'bg-card-gold';
     switch (dayData.level) {
       case 0: return 'bg-muted';
       case 1: return 'bg-heat-1';
@@ -304,7 +304,7 @@ const Heatmap = ({ logs, year, activityByDate = {}, onDayClick, onDayHover }) =>
           No activity
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded-[2px] bg-amber-200" />
+          <span className="inline-block h-3 w-3 rounded-[2px] bg-card-gold" />
           Log entries, no duration recorded
         </span>
         <span className="flex items-center gap-1.5">
@@ -334,18 +334,18 @@ const Heatmap = ({ logs, year, activityByDate = {}, onDayClick, onDayHover }) =>
       </div>
 
       {/* Navigation Arrows & Container */}
-      <div className="flex items-center justify-end gap-4 lg:mr-16 mb-4">
+      <div className="flex items-center justify-end gap-3 lg:mr-12 mb-3">
         
         <div className="flex gap-2">
           <button 
             onClick={scrollLeft}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground hover:bg-accent"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground hover:bg-accent"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
           <button 
             onClick={scrollRight}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card text-muted-foreground hover:bg-accent"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground hover:bg-accent"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

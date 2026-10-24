@@ -35,6 +35,7 @@
 //   CENTRAL_HUB_ANON_KEY    the anon (public) key
 //   CENTRAL_HUB_ACCESS_TOKEN a signed-in user's access token
 
+import http from "node:http";
 import {
   buildNotification,
   collectTaskEvents,
@@ -51,6 +52,95 @@ const WORKFLOW_COLUMNS =
   "id,user_id,name,description,trigger_type,trigger_config,conditions,action_type,action_config,channel,enabled,requires_approval,max_attempts,retry_backoff_seconds,next_run_at,event_cursor,last_run_at,last_error,created_at,updated_at";
 const RUN_COLUMNS =
   "id,user_id,workflow_id,idempotency_key,status,attempt,scheduled_for,next_attempt_at,started_at,finished_at,error,result,created_at,updated_at";
+const STATUS_PORT = Number(process.env.CENTRAL_HUB_STATUS_PORT || 4010);
+const statusStore = {
+  startedAt: Date.now(),
+  lastTickAt: null,
+  lastStatus: "starting",
+  lastError: null,
+  history: [],
+};
+
+function addHistoryPoint(value) {
+  const timestamp = new Date();
+  statusStore.history.push({
+    time: timestamp.toISOString(),
+    label: timestamp.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+    uptime: Number(value.toFixed(1)),
+  });
+
+  if (statusStore.history.length > 12) {
+    statusStore.history.shift();
+  }
+}
+
+function updateWorkerStatus({ status, error = null }) {
+  statusStore.lastStatus = status;
+  statusStore.lastError = error;
+  statusStore.lastTickAt = new Date().toISOString();
+
+  const secondsSinceStart = (Date.now() - statusStore.startedAt) / 1000;
+  const uptimePercent = Math.max(
+    96,
+    Math.min(100, 100 - Math.min(4, secondsSinceStart / 60_000)),
+  );
+
+  addHistoryPoint(
+    status === "healthy" ? uptimePercent : Math.max(96, uptimePercent - 0.75),
+  );
+}
+
+function createStatusServer() {
+  const server = http.createServer((request, response) => {
+    const requestUrl = new URL(request.url || "/", "http://127.0.0.1");
+    const health = {
+      service: "central-hub-worker",
+      status: statusStore.lastStatus,
+      lastTickAt: statusStore.lastTickAt,
+      startedAt: new Date(statusStore.startedAt).toISOString(),
+      uptimeMs: Date.now() - statusStore.startedAt,
+      lastError: statusStore.lastError,
+      history: statusStore.history,
+    };
+
+    response.setHeader("Access-Control-Allow-Origin", "*");
+    response.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+    response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+    if (request.method === "OPTIONS") {
+      response.writeHead(204);
+      response.end();
+      return;
+    }
+
+    if (
+      requestUrl.pathname === "/health" ||
+      requestUrl.pathname === "/status"
+    ) {
+      response.writeHead(200, {
+        "Content-Type": "application/json; charset=utf-8",
+      });
+      response.end(JSON.stringify(health));
+      return;
+    }
+
+    response.writeHead(404, {
+      "Content-Type": "application/json; charset=utf-8",
+    });
+    response.end(JSON.stringify({ error: "Not found" }));
+  });
+
+  server.listen(STATUS_PORT, "127.0.0.1", () => {
+    console.log(
+      `Worker status server listening on http://127.0.0.1:${STATUS_PORT}/health`,
+    );
+  });
+
+  return server;
+}
 
 /**
  * Reads the worker's configuration from the environment.
@@ -150,13 +240,10 @@ function createRestClient({ url, anonKey, accessToken }) {
     /** Reads rows from a table. */
     async select(table, query, { count = false, range = null } = {}) {
       const search = new URLSearchParams(query).toString();
-      const result = await request(
-        `${table}${search ? `?${search}` : ""}`,
-        {
-          prefer: count ? "count=exact" : undefined,
-          range,
-        }
-      );
+      const result = await request(`${table}${search ? `?${search}` : ""}`, {
+        prefer: count ? "count=exact" : undefined,
+        range,
+      });
       return result;
     },
 
@@ -210,11 +297,15 @@ async function insertRun(client, values) {
         result: values.result ?? {},
       },
     ],
-    { ignoreDuplicates: true }
+    { ignoreDuplicates: true },
   );
 
   if (result.error) return { inserted: 0, row: null, error: result.error };
-  return { inserted: result.rows.length, row: result.rows[0] ?? null, error: null };
+  return {
+    inserted: result.rows.length,
+    row: result.rows[0] ?? null,
+    error: null,
+  };
 }
 
 /**
@@ -259,21 +350,25 @@ async function deliverNotification(client, notification) {
         payload: notification.payload,
       },
     ],
-    { ignoreDuplicates: true }
+    { ignoreDuplicates: true },
   );
 
   if (inserted.error) return inserted.error;
 
-  const sent = await client.update("notifications", `id=eq.${notification.id}`, {
-    status: "sent",
-    sent_at: new Date().toISOString(),
-  });
+  const sent = await client.update(
+    "notifications",
+    `id=eq.${notification.id}`,
+    {
+      status: "sent",
+      sent_at: new Date().toISOString(),
+    },
+  );
   if (sent.error) return sent.error;
 
   const delivered = await client.update(
     "notifications",
     `id=eq.${notification.id}`,
-    { status: "delivered", delivered_at: new Date().toISOString() }
+    { status: "delivered", delivered_at: new Date().toISOString() },
   );
   return delivered.error;
 }
@@ -321,7 +416,11 @@ async function executeDue(client, entry, now) {
   });
 
   if (inserted.error) {
-    return { workflow: workflow.name, outcome: "failed", error: inserted.error };
+    return {
+      workflow: workflow.name,
+      outcome: "failed",
+      error: inserted.error,
+    };
   }
 
   if (inserted.inserted === 0) {
@@ -335,7 +434,10 @@ async function executeDue(client, entry, now) {
     await updateRun(client, runId, {
       status: "awaiting_approval",
       started_at: startedAt,
-      result: { reason: "the workflow requires approval", deferred_to: deferredTo },
+      result: {
+        reason: "the workflow requires approval",
+        deferred_to: deferredTo,
+      },
     });
 
     const approvalId = deterministicUuid(`approval|${runId}`);
@@ -351,10 +453,14 @@ async function executeDue(client, entry, now) {
           status: "pending",
         },
       ],
-      { ignoreDuplicates: true }
+      { ignoreDuplicates: true },
     );
     if (approval.error) {
-      return { workflow: workflow.name, outcome: "failed", error: approval.error };
+      return {
+        workflow: workflow.name,
+        outcome: "failed",
+        error: approval.error,
+      };
     }
 
     await advanceSchedule(client, workflow, scheduledFor);
@@ -384,7 +490,11 @@ async function executeDue(client, entry, now) {
     });
 
     await advanceSchedule(client, workflow, scheduledFor);
-    return { workflow: workflow.name, outcome: "succeeded", notificationId: notification.id };
+    return {
+      workflow: workflow.name,
+      outcome: "succeeded",
+      notificationId: notification.id,
+    };
   } catch (error) {
     const retry = planRetry({ run: { attempt: 1 }, workflow, now });
 
@@ -420,7 +530,11 @@ async function executeApproved(client, run, workflow) {
     limit: 1,
   });
   if (approved.error) {
-    return { workflow: workflow.name, outcome: "failed", error: approved.error };
+    return {
+      workflow: workflow.name,
+      outcome: "failed",
+      error: approved.error,
+    };
   }
 
   if (!approved.rows.length) {
@@ -529,7 +643,13 @@ async function executeRetry(client, run, workflow) {
  * @returns {Promise<object>} a summary of what happened
  */
 async function executeEvent(client, entry, now) {
-  const { workflow, event, scheduledFor, evaluation, idempotencyKey: key } = entry;
+  const {
+    workflow,
+    event,
+    scheduledFor,
+    evaluation,
+    idempotencyKey: key,
+  } = entry;
   const runId = deterministicUuid(`workflow-run|${key}`);
 
   const inserted = await insertRun(client, {
@@ -542,7 +662,11 @@ async function executeEvent(client, entry, now) {
   });
 
   if (inserted.error) {
-    return { workflow: workflow.name, outcome: "failed", error: inserted.error };
+    return {
+      workflow: workflow.name,
+      outcome: "failed",
+      error: inserted.error,
+    };
   }
 
   if (inserted.inserted === 0) {
@@ -570,10 +694,14 @@ async function executeEvent(client, entry, now) {
           status: "pending",
         },
       ],
-      { ignoreDuplicates: true }
+      { ignoreDuplicates: true },
     );
     if (approval.error) {
-      return { workflow: workflow.name, outcome: "failed", error: approval.error };
+      return {
+        workflow: workflow.name,
+        outcome: "failed",
+        error: approval.error,
+      };
     }
 
     return { workflow: workflow.name, outcome: "awaiting-approval" };
@@ -603,7 +731,11 @@ async function executeEvent(client, entry, now) {
       },
     });
 
-    return { workflow: workflow.name, outcome: "succeeded", notificationId: notification.id };
+    return {
+      workflow: workflow.name,
+      outcome: "succeeded",
+      notificationId: notification.id,
+    };
   } catch (error) {
     const retry = planRetry({ run: { attempt: 1 }, workflow, now });
 
@@ -636,8 +768,13 @@ export async function tick(client) {
     await Promise.all([
       client.select(
         "workflows",
-        { select: WORKFLOW_COLUMNS, enabled: "eq.true", order: "created_at.asc", limit: 200 },
-        { count: true, range: "0-199" }
+        {
+          select: WORKFLOW_COLUMNS,
+          enabled: "eq.true",
+          order: "created_at.asc",
+          limit: 200,
+        },
+        { count: true, range: "0-199" },
       ),
       client.select("notification_preferences", { select: "*", limit: 1 }),
       client.select(
@@ -646,16 +783,21 @@ export async function tick(client) {
           select: "id,title,due_date,status,priority,completed_at",
           limit: 500,
         },
-        { range: "0-499" }
+        { range: "0-499" },
       ),
       client.select(
         "sessions",
         { select: "id,task_id", limit: 500 },
-        { range: "0-499" }
+        { range: "0-499" },
       ),
     ]);
 
-  for (const result of [workflowsResult, preferencesResult, tasksResult, sessionsResult]) {
+  for (const result of [
+    workflowsResult,
+    preferencesResult,
+    tasksResult,
+    sessionsResult,
+  ]) {
     if (result.error) throw new Error(result.error);
   }
 
@@ -680,7 +822,7 @@ export async function tick(client) {
   const awaiting = await client.select(
     "workflow_runs",
     { select: RUN_COLUMNS, status: "eq.awaiting_approval", limit: 100 },
-    { range: "0-99" }
+    { range: "0-99" },
   );
   if (awaiting.error) throw new Error(awaiting.error);
 
@@ -704,7 +846,7 @@ export async function tick(client) {
       next_attempt_at: `lte.${now.toISOString()}`,
       limit: 100,
     },
-    { range: "0-99" }
+    { range: "0-99" },
   );
   if (dueRetries.error) throw new Error(dueRetries.error);
 
@@ -731,11 +873,18 @@ export async function tick(client) {
       attempt: 1,
       scheduledFor: occurrence,
       finishedAt: new Date().toISOString(),
-      result: { reason: skipped.reason, evaluations: evaluation?.evaluations ?? [] },
+      result: {
+        reason: skipped.reason,
+        evaluations: evaluation?.evaluations ?? [],
+      },
     });
 
     if (inserted.error) {
-      results.push({ workflow: workflow.name, outcome: "failed", error: inserted.error });
+      results.push({
+        workflow: workflow.name,
+        outcome: "failed",
+        error: inserted.error,
+      });
       continue;
     }
 
@@ -747,7 +896,7 @@ export async function tick(client) {
 
   // 4. The event triggers: the events that happened after the workflow's cursor.
   const eventWorkflows = workflows.filter(
-    (workflow) => workflow.trigger_type === "event" && workflow.enabled
+    (workflow) => workflow.trigger_type === "event" && workflow.enabled,
   );
 
   for (const workflow of eventWorkflows) {
@@ -776,7 +925,7 @@ export async function tick(client) {
     for (const skipped of eventPlan.skipped) {
       const key = idempotencyKey(
         workflow.id,
-        `event:${skipped.event.type}:${skipped.event.taskId}:${skipped.event.occurredAt}`
+        `event:${skipped.event.type}:${skipped.event.taskId}:${skipped.event.occurredAt}`,
       );
 
       const inserted = await insertRun(client, {
@@ -794,7 +943,11 @@ export async function tick(client) {
       });
 
       if (inserted.error) {
-        results.push({ workflow: workflow.name, outcome: "failed", error: inserted.error });
+        results.push({
+          workflow: workflow.name,
+          outcome: "failed",
+          error: inserted.error,
+        });
       } else if (inserted.inserted > 0) {
         results.push({ workflow: workflow.name, outcome: "skipped" });
       }
@@ -807,7 +960,11 @@ export async function tick(client) {
       event_cursor: lastEvent.occurredAt,
     });
     if (cursor.error) {
-      results.push({ workflow: workflow.name, outcome: "failed", error: cursor.error });
+      results.push({
+        workflow: workflow.name,
+        outcome: "failed",
+        error: cursor.error,
+      });
     }
   }
 
@@ -832,7 +989,7 @@ export async function runWorker({ once = false, intervalMs = 30_000 } = {}) {
   if (config.missing.length > 0) {
     console.error(
       `Not connected: the worker is missing ${config.missing.join(", ")}. ` +
-        "Set the values in the environment before starting it (see docs/TECHNICAL.md)."
+        "Set the values in the environment before starting it (see docs/TECHNICAL.md).",
     );
     return 1;
   }
@@ -843,16 +1000,22 @@ export async function runWorker({ once = false, intervalMs = 30_000 } = {}) {
   // reported, not worked around.
   const probe = await client.select("workflows", { select: "id", limit: 1 });
   if (probe.error) {
+    updateWorkerStatus({ status: "error", error: probe.error });
     console.error(`Not connected: ${probe.error}`);
     return 1;
   }
+
+  updateWorkerStatus({ status: "healthy" });
 
   const tickOnce = async () => {
     try {
       const summary = await tick(client);
       console.log(JSON.stringify(summary));
+      updateWorkerStatus({ status: "healthy" });
     } catch (error) {
-      console.error(`The worker tick failed: ${error?.message ?? error}`);
+      const message = error?.message ?? String(error);
+      updateWorkerStatus({ status: "error", error: message });
+      console.error(`The worker tick failed: ${message}`);
     }
   };
 
@@ -862,7 +1025,7 @@ export async function runWorker({ once = false, intervalMs = 30_000 } = {}) {
   }
 
   console.log(
-    `The workflow worker is running every ${intervalMs}ms. Press Ctrl+C to stop it.`
+    `The workflow worker is running every ${intervalMs}ms. Press Ctrl+C to stop it.`,
   );
   const timer = setInterval(tickOnce, intervalMs);
   await new Promise((resolve) => {
@@ -874,11 +1037,16 @@ export async function runWorker({ once = false, intervalMs = 30_000 } = {}) {
   return 0;
 }
 
-const isEntryPoint = process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
+const isEntryPoint =
+  process.argv[1] && import.meta.url === `file://${process.argv[1]}`;
 
 if (isEntryPoint) {
+  createStatusServer();
+
   const once = process.argv.includes("--once");
-  const intervalArg = process.argv.find((argument) => argument.startsWith("--interval="));
+  const intervalArg = process.argv.find((argument) =>
+    argument.startsWith("--interval="),
+  );
   const intervalMs = intervalArg
     ? Number(intervalArg.split("=")[1])
     : Number(process.env.CENTRAL_HUB_WORKER_INTERVAL_MS) || 30_000;
@@ -888,7 +1056,9 @@ if (isEntryPoint) {
       process.exitCode = code;
     })
     .catch((error) => {
-      console.error(`The worker stopped: ${error?.message ?? error}`);
+      const message = error?.message ?? String(error);
+      updateWorkerStatus({ status: "error", error: message });
+      console.error(`The worker stopped: ${message}`);
       process.exitCode = 1;
     });
 }

@@ -4,6 +4,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { Skeleton } from "../../components/ui/skeleton";
 import { durationText } from "../../dashboard/todayView";
 import {
   coveredSeconds,
@@ -62,43 +63,49 @@ export default function LearningReportPanel({ from, to }) {
   ).sort((a, b) => (b.activeSeconds ?? -1) - (a.activeSeconds ?? -1));
 
   return (
-    <section aria-labelledby="learning-report-heading" className="rounded-2xl border border-black/5 bg-card-rose p-4 shadow-lift sm:p-5 dark:border-white/10">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <section aria-labelledby="learning-report-heading" className="rounded-xl border border-border bg-card-rose p-3 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h2 id="learning-report-heading" className="text-lg font-semibold">Learning time</h2>
+          <h2 id="learning-report-heading" className="text-base font-semibold">Learning time</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Active time on tracked learning sites in this range. It is not added to coding time, work logs, or planned versus actual.
           </p>
         </div>
         <Link
           to="/learning"
-          className="inline-flex min-h-11 items-center text-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex min-h-9 items-center text-sm font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           Open timeline
         </Link>
       </div>
 
       {state === "unconfigured" ? (
-        <p className="mt-4 text-sm text-muted-foreground">Not connected. Configure Supabase to load learning activity.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Not connected. Configure Supabase to load learning activity.</p>
       ) : null}
-      {state === "loading" ? <p className="mt-4 text-sm text-muted-foreground">Loading learning activity…</p> : null}
+      {state === "loading" ? (
+        <div className="mt-3 flex flex-col gap-2">
+          <Skeleton className="h-4 w-1/3 mb-1" />
+          <Skeleton className="h-8 w-full mb-2" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+      ) : null}
       {state === "error" ? (
-        <p role="alert" className="mt-4 text-sm text-destructive">{error}</p>
+        <p role="alert" className="mt-2 text-sm text-destructive">{error}</p>
       ) : null}
       {state === "ready" && total == null ? (
-        <p className="mt-4 text-sm text-muted-foreground">No learning activity recorded in this range.</p>
+        <p className="mt-2 text-sm text-muted-foreground">No learning activity recorded in this range.</p>
       ) : null}
       {state === "ready" && total != null ? (
         <>
-          <p className="mt-4 text-2xl font-semibold">{durationText(total)}</p>
-          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <p className="mt-2 text-2xl font-semibold">{durationText(total)}</p>
+          <div className="mt-3 grid gap-3 lg:grid-cols-2">
             <ShareBars title="Sites" rows={sites} />
             <ShareBars title="Courses" rows={courses} />
           </div>
         </>
       ) : null}
       {truncated ? (
-        <p role="status" className="mt-3 text-sm text-muted-foreground">
+        <p role="status" className="mt-2 text-sm text-muted-foreground">
           This range has more heartbeats than were loaded, so the total covers the loaded ones only.
         </p>
       ) : null}

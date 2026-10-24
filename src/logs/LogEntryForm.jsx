@@ -2,12 +2,12 @@ import { Clock3 } from "lucide-react";
 import { DateField } from "../components/ui/date-field";
 
 const inputClass =
-  "w-full rounded-lg border border-border bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-zinc-950 dark:text-gray-100";
+  "w-full rounded-lg border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20  ";
 
 function Field({ label, children }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">{label}</span>
+      <span className="mb-1.5 block text-xs font-medium text-muted-foreground">{label}</span>
       {children}
     </label>
   );
@@ -46,7 +46,7 @@ export default function LogEntryForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <span className="mb-1.5 block text-xs font-medium text-gray-500 dark:text-gray-400">Date</span>
+          <span className="mb-1.5 block text-xs font-medium text-muted-foreground">Date</span>
           <DateField
             value={values.date}
             onChange={(date) => update("date")({ target: { value: date } })}
@@ -60,9 +60,9 @@ export default function LogEntryForm({
               onChange={update("timeSpent")}
               placeholder="e.g. 4h 30m (optional)"
             />
-            <Clock3 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Clock3 className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           </span>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             Leave empty if the time was not recorded — an empty value stays
             &quot;not recorded&quot;, never zero.
           </p>

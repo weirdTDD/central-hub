@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Navigate, Route, Routes, BrowserRouter } from "react-router-dom";
 import AuthPage from "../auth/AuthPage";
 import ProtectedRoute from "../auth/ProtectedRoute";
@@ -25,7 +26,16 @@ import { NotificationsProvider } from "../features/notifications/NotificationsCo
 
 function HomeRedirect() {
   const { isAuthenticated } = useAuth();
-  return <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />;
+  const savedPath = window.sessionStorage.getItem("sentral-hub-return-to");
+  const returnTo = savedPath?.startsWith("/") && !savedPath.startsWith("//")
+    ? savedPath
+    : "/dashboard";
+
+  useEffect(() => {
+    if (isAuthenticated) window.sessionStorage.removeItem("sentral-hub-return-to");
+  }, [isAuthenticated]);
+
+  return <Navigate to={isAuthenticated ? returnTo : "/login"} replace />;
 }
 
 function AppRoutes() {

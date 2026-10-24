@@ -52,7 +52,7 @@ function MicrosoftIcon() {
 const ICONS = {
   google: GoogleIcon,
   microsoft: MicrosoftIcon,
-  saml: () => <Shield className="h-5 w-5 text-gray-500" />,
+  saml: () => <Shield className="h-5 w-5 text-muted-foreground" />,
 };
 
 const CONNECTOR_ICONS = {

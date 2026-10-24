@@ -41,13 +41,13 @@ function StatusBadge({ status }) {
   const base =
     "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium";
   const style = {
-    todo: "bg-gray-100 text-gray-700 dark:bg-zinc-800 dark:text-gray-300",
+    todo: "bg-accent text-foreground  ",
     in_progress: "bg-primary/10 text-primary",
     in_review: "bg-progress/10 text-progress",
-    completed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-    blocked: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-    cancelled: "bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400",
-  }[status] ?? "bg-gray-100 text-gray-700";
+    completed: "bg-success/10 text-success",
+    blocked: "bg-card-gold text-foreground  ",
+    cancelled: "bg-muted text-muted-foreground",
+  }[status] ?? "bg-accent text-foreground";
 
   return (
     <span className={`${base} ${style}`}>{label}</span>
@@ -106,22 +106,22 @@ function NewTaskForm({ onAdd }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mb-6 rounded-2xl border border-border bg-white p-5 dark:bg-zinc-900">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+    <form onSubmit={handleSubmit} className="mb-6 rounded-2xl border border-border bg-card p-5">
+      <h2 className="text-lg font-semibold text-foreground">
         New Task
       </h2>
 
       {error ? (
-        <p role="alert" className="mt-3 text-sm text-red-600">{error}</p>
+        <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>
       ) : null}
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">
+          <label className="block text-xs font-medium text-muted-foreground">
             Title
           </label>
           <input
-            className="mt-1 block w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-zinc-950 dark:text-gray-100"
+            className="mt-1 block w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             value={values.title}
             onChange={update("title")}
             placeholder="What needs to be done?"
@@ -129,7 +129,7 @@ function NewTaskForm({ onAdd }) {
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">
+          <label className="block text-xs font-medium text-muted-foreground">
             Priority
           </label>
           <Select value={values.priority} onValueChange={(priority) => update("priority")({ target: { value: priority } })}>
@@ -144,7 +144,7 @@ function NewTaskForm({ onAdd }) {
           </Select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">
+          <label className="block text-xs font-medium text-muted-foreground">
             Due date
           </label>
           <DateField
@@ -153,23 +153,23 @@ function NewTaskForm({ onAdd }) {
           />
         </div>
         <div className="sm:col-span-2">
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">
+          <label className="block text-xs font-medium text-muted-foreground">
             Estimate
           </label>
           <input
-            className="mt-1 block w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-zinc-950 dark:text-gray-100"
+            className="mt-1 block w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             value={values.estimate}
             onChange={update("estimate")}
             placeholder={ESTIMATE_PLACEHOLDER}
           />
         </div>
         <div className="sm:col-span-2">
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400">
+          <label className="block text-xs font-medium text-muted-foreground">
             Description
           </label>
           <textarea
             rows={3}
-            className="mt-1 block w-full resize-none rounded-lg border border-border bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-zinc-950 dark:text-gray-100"
+            className="mt-1 block w-full resize-none rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             value={values.description}
             onChange={update("description")}
             placeholder="Optional details or acceptance criteria"
@@ -235,9 +235,9 @@ function EditTaskForm({ task, onSave, onCancel, saving, error }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-gray-50 p-4 dark:bg-zinc-950">
+    <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-muted p-4">
       <input
-        className="mb-3 block w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-zinc-950 dark:text-gray-100"
+        className="mb-3 block w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Title"
@@ -245,7 +245,7 @@ function EditTaskForm({ task, onSave, onCancel, saving, error }) {
       />
       <textarea
         rows={3}
-        className="mb-3 block w-full resize-none rounded-lg border border-border bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-zinc-950 dark:text-gray-100"
+        className="mb-3 block w-full resize-none rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Description"
@@ -263,7 +263,7 @@ function EditTaskForm({ task, onSave, onCancel, saving, error }) {
         </Select>
         <DateField value={dueDate} onChange={setDueDate} />
         <input
-          className="block w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:bg-zinc-950 dark:text-gray-100"
+          className="block w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
           value={estimate}
           onChange={(e) => setEstimate(e.target.value)}
           placeholder={ESTIMATE_PLACEHOLDER}
@@ -271,17 +271,17 @@ function EditTaskForm({ task, onSave, onCancel, saving, error }) {
       </div>
 
       {validationError ? (
-        <p role="alert" className="mt-2 text-sm text-red-600">{validationError}</p>
+        <p role="alert" className="mt-2 text-sm text-destructive">{validationError}</p>
       ) : null}
       {error ? (
-        <p role="alert" className="mt-2 text-sm text-red-600">{error}</p>
+        <p role="alert" className="mt-2 text-sm text-destructive">{error}</p>
       ) : null}
 
       <div className="mt-3 flex justify-end gap-2">
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-border bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-zinc-800"
+          className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted"
         >
           Cancel
         </button>
@@ -309,11 +309,11 @@ function TaskRow({ task, onUpdateStatus, onComplete, onReopen, onEdit, onDelete 
       <div className="grid grid-cols-12 items-start gap-3 px-4 py-3 sm:gap-4 sm:px-5">
         <div className="col-span-full flex items-start justify-between sm:col-span-5">
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            <p className="text-sm font-medium text-foreground">
               {task.title}
             </p>
             {task.description ? (
-              <p className="mt-1 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">
+              <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
                 {task.description}
               </p>
             ) : null}
@@ -353,7 +353,7 @@ function TaskRow({ task, onUpdateStatus, onComplete, onReopen, onEdit, onDelete 
             <button
               type="button"
               onClick={() => onReopen(task)}
-              className="inline-flex items-center gap-1 rounded-lg border border-border bg-white px-2.5 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50 dark:bg-zinc-900 dark:text-gray-200 dark:hover:bg-zinc-800"
+              className="inline-flex items-center gap-1 rounded-lg border border-border bg-card px-2.5 py-1 text-xs font-semibold text-foreground hover:bg-muted"
               title="Reopen"
             >
               <X className="h-3.5 w-3.5" /> Reopen
@@ -363,7 +363,7 @@ function TaskRow({ task, onUpdateStatus, onComplete, onReopen, onEdit, onDelete 
           <button
             type="button"
             onClick={() => onEdit(task)}
-            className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-primary dark:hover:bg-zinc-800"
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-primary"
             aria-label={`Edit ${task.title}`}
           >
             <Edit className="h-4 w-4" />
@@ -371,14 +371,14 @@ function TaskRow({ task, onUpdateStatus, onComplete, onReopen, onEdit, onDelete 
           <button
             type="button"
             onClick={() => onDelete(task)}
-            className="rounded-lg p-1.5 text-gray-500 hover:bg-red-100 hover:text-red-600"
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
             aria-label={`Delete ${task.title}`}
           >
             <Trash2 className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="col-span-full flex gap-4 text-xs text-gray-600 sm:col-span-3 sm:col-start-1 dark:text-gray-400">
+        <div className="col-span-full flex gap-4 text-xs text-muted-foreground sm:col-span-3 sm:col-start-1">
           {task.priority ? (
             <span>
               Priority:{" "}
@@ -499,11 +499,11 @@ export default function TasksPage() {
         <div className="mx-auto max-w-5xl">
           <div className="flex flex-col gap-1">
             <h1 className="text-3xl font-bold tracking-tight">Tasks</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Your planned work. {activeCount} active, {completedCount} completed
               of {totalTasks ?? tasks.length}
               {truncated && totalTasks != null && (
-                <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
+                <span className="ml-2 rounded-full bg-card-gold px-2 py-0.5 text-xs font-medium text-foreground">
                   {tasks.length} of {totalTasks} loaded
                 </span>
               )}
@@ -559,7 +559,7 @@ export default function TasksPage() {
           {error ? (
             <div
               role="alert"
-              className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+              className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
             >
               <p className="font-semibold">Could not load tasks</p>
               <p className="mt-1">{error}</p>
@@ -569,7 +569,7 @@ export default function TasksPage() {
           {!isConfigured ? (
             <div
               role="status"
-              className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+              className="rounded-2xl border border-border bg-card-gold px-4 py-3 text-sm text-foreground"
             >
               <p className="font-semibold">Not connected</p>
               <p className="mt-1">
@@ -579,13 +579,13 @@ export default function TasksPage() {
             </div>
           ) : null}
 
-          <section className="mt-6 overflow-hidden rounded-2xl border border-border bg-white shadow-sm dark:bg-zinc-900">
+          <section className="mt-6 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             {loading ? (
-              <p className="px-4 py-10 text-center text-sm text-gray-500">
+              <p className="px-4 py-10 text-center text-sm text-muted-foreground">
                 {emptyMessage}
               </p>
             ) : filtered.length === 0 ? (
-              <p className="px-4 py-10 text-center text-sm text-gray-500">
+              <p className="px-4 py-10 text-center text-sm text-muted-foreground">
                 {emptyMessage}
               </p>
             ) : (
@@ -635,7 +635,7 @@ function FilterButton({ label, active, onClick }) {
       className={`rounded-lg px-3 py-1 text-xs font-medium transition-colors ${
         active
           ? "bg-primary text-primary-foreground"
-          : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-zinc-800 dark:text-gray-400 dark:hover:bg-zinc-700"
+          : "bg-accent text-muted-foreground hover:bg-muted   "
       }`}
     >
       {label}
